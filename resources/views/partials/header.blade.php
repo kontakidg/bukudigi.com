@@ -1,0 +1,74 @@
+<header x-data="{ open: false }" class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
+        <a href="{{ route('home') }}" class="flex items-center gap-2" aria-label="bukudigi.com">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                </svg>
+            </span>
+            <span class="text-lg font-bold tracking-tight text-slate-900">bukudigi<span class="text-brand-600">.com</span></span>
+        </a>
+
+        <form action="{{ route('cari') }}" method="get" class="hidden flex-1 max-w-xl md:flex">
+            <div class="flex w-full overflow-hidden rounded-lg border border-slate-300 bg-white">
+                <input name="q" type="search" placeholder="Cari judul buku, penulis, kategori…"
+                       value="{{ request('q') }}"
+                       class="flex-1 px-3 py-2 text-sm focus:outline-none">
+                <button class="bg-brand-600 px-4 text-white hover:bg-brand-700">Cari</button>
+            </div>
+        </form>
+
+        <nav class="hidden items-center gap-5 text-sm font-medium md:flex">
+            <a href="{{ route('books.index') }}" class="hover:text-brand-600">Semua Buku</a>
+            <a href="{{ route('kategori.index') }}" class="hover:text-brand-600">Kategori</a>
+            <a href="{{ route('jual') }}" class="hover:text-brand-600">Jadi Penulis</a>
+        </nav>
+
+        <div class="hidden items-center gap-2 md:flex">
+            @auth
+                @if(auth()->user()->isAdmin())
+                    <a href="/admin" class="btn-outline !py-1.5 !text-sm">⚙ Admin</a>
+                @elseif(auth()->user()->isAuthor())
+                    <a href="{{ route('author.dashboard') }}" class="btn-outline !py-1.5 !text-sm">✍️ Penulis</a>
+                @else
+                    <a href="{{ route('library') }}" class="btn-outline !py-1.5 !text-sm">📚 Perpustakaan</a>
+                @endif
+            @else
+                <a href="{{ route('login') }}" class="text-sm font-semibold text-slate-700 hover:text-brand-600">Masuk</a>
+                <a href="{{ route('register') }}" class="btn-primary !py-1.5 !text-sm">Daftar Gratis</a>
+            @endauth
+        </div>
+
+        <button @click="open = !open" class="md:hidden" aria-label="Menu">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+    </div>
+
+    <div x-show="open" x-cloak class="border-t border-slate-200 bg-white px-4 py-3 md:hidden">
+        <form action="{{ route('cari') }}" method="get" class="mb-3 flex">
+            <div class="flex w-full overflow-hidden rounded-lg border border-slate-300 bg-white">
+                <input name="q" type="search" placeholder="Cari…" value="{{ request('q') }}"
+                       class="flex-1 px-3 py-2 text-sm focus:outline-none">
+                <button class="bg-brand-600 px-4 text-white">Cari</button>
+            </div>
+        </form>
+        <nav class="grid grid-cols-2 gap-2 text-sm font-medium">
+            <a href="{{ route('books.index') }}" class="rounded p-2 hover:bg-slate-100">📖 Semua Buku</a>
+            <a href="{{ route('kategori.index') }}" class="rounded p-2 hover:bg-slate-100">🗂️ Kategori</a>
+            <a href="{{ route('jual') }}" class="rounded p-2 hover:bg-slate-100">✍️ Jadi Penulis</a>
+            <a href="{{ route('info.bantuan') }}" class="rounded p-2 hover:bg-slate-100">❓ Bantuan</a>
+        </nav>
+        <div class="mt-3 flex gap-2 border-t border-slate-100 pt-3">
+            @auth
+                @if(auth()->user()->isAdmin())
+                    <a href="/admin" class="btn-outline flex-1 !py-2 !text-sm">⚙ Admin</a>
+                @else
+                    <a href="{{ route('library') }}" class="btn-outline flex-1 !py-2 !text-sm">📚 Perpustakaan</a>
+                @endif
+            @else
+                <a href="{{ route('login') }}" class="btn-outline flex-1 !py-2 !text-sm">Masuk</a>
+                <a href="{{ route('register') }}" class="btn-primary flex-1 !py-2 !text-sm">Daftar Gratis</a>
+            @endauth
+        </div>
+    </div>
+</header>

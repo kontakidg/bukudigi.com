@@ -1,0 +1,78 @@
+<?php
+
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\WhatsAppOtpController;
+use App\Http\Controllers\AuthorController;
+use App\Http\Controllers\Author\BookController as AuthorBookController;
+use App\Http\Controllers\BookController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DownloadController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LibraryController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
+
+// === Public ===
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/cari', [HomeController::class, 'search'])->name('cari');
+
+Route::get('/buku', [BookController::class, 'index'])->name('books.index');
+Route::get('/buku/{book:slug}', [BookController::class, 'show'])->name('books.show');
+
+Route::get('/kategori', [CategoryController::class, 'index'])->name('kategori.index');
+Route::get('/kategori/{category:slug}', [CategoryController::class, 'show'])->name('kategori.show');
+
+// === Author landing (public) ===
+Route::get('/jual', [AuthorController::class, 'landing'])->name('jual');
+
+// === Info pages (placeholder) ===
+Route::get('/info/tentang', fn () => app(HomeController::class)->placeholder('tentang'))->name('info.tentang');
+Route::get('/info/bantuan', fn () => app(HomeController::class)->placeholder('bantuan'))->name('info.bantuan');
+Route::get('/info/syarat', fn () => app(HomeController::class)->placeholder('syarat'))->name('info.syarat');
+Route::get('/info/privasi', fn () => app(HomeController::class)->placeholder('privasi'))->name('info.privasi');
+Route::get('/info/komisi', fn () => app(HomeController::class)->placeholder('komisi'))->name('info.komisi');
+Route::get('/info/panduan-penulis', fn () => app(HomeController::class)->placeholder('panduan-penulis'))->name('info.panduan-penulis');
+Route::get('/info/faq', fn () => app(HomeController::class)->placeholder('faq'))->name('info.faq');
+
+// === Social auth ===
+Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
+
+// === Authenticated user ===
+Route::middleware('auth')->group(function () {
+    Route::get('/library', [LibraryController::class, 'index'])->name('library');
+    Route::get('/dashboard', fn () => redirect()->route('library'))->name('dashboard');
+
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // WhatsApp OTP verification
+    Route::get('/wa/verify', [WhatsAppOtpController::class, 'show'])->name('wa.verify.show');
+    Route::post('/wa/verify/send', [WhatsAppOtpController::class, 'send'])->name('wa.verify.send');
+    Route::post('/wa/verify', [WhatsAppOtpController::class, 'verify'])->name('wa.verify.confirm');
+
+    // Author onboarding + dashboard
+    Route::get('/author/register', [AuthorController::class, 'showRegister'])->name('author.register.show');
+    Route::post('/author/register', [AuthorController::class, 'register'])->name('author.register');
+    Route::get('/author/dashboard', [AuthorController::class, 'dashboard'])->name('author.dashboard');
+
+    // Author book CRUD
+    Route::prefix('author/books')->name('author.books.')->group(function () {
+        Route::get('/', [AuthorBookController::class, 'index'])->name('index');
+        Route::get('/create', [AuthorBookController::class, 'create'])->name('create');
+        Route::post('/', [AuthorBookController::class, 'store'])->name('store');
+        Route::get('/{book:slug}/edit', [AuthorBookController::class, 'edit'])->name('edit');
+        Route::patch('/{book:slug}', [AuthorBookController::class, 'update'])->name('update');
+        Route::post('/{book:slug}/submit', [AuthorBookController::class, 'submit'])->name('submit');
+        Route::delete('/{book:slug}', [AuthorBookController::class, 'archive'])->name('archive');
+    });
+
+    // Checkout & Download
+    Route::get('/checkout/buku/{book:slug}', [CheckoutController::class, 'start'])->name('checkout.start');
+    Route::get('/checkout/stub/{orderCode}/pay', [CheckoutController::class, 'stubPay'])->name('checkout.stub.pay');
+    Route::get('/download/{orderCode}', [DownloadController::class, 'show'])->name('download.show');
+});
+
+require __DIR__.'/auth.php';

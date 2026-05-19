@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
+
+class Order extends Model
+{
+    protected $fillable = [
+        'order_code',
+        'user_id',
+        'book_id',
+        'author_id',
+        'gross_amount',
+        'commission',
+        'author_earning',
+        'gateway_fee',
+        'status',
+        'midtrans_order_id',
+        'payment_method',
+        'midtrans_response',
+        'paid_at',
+        'watermarked_pdf_path',
+        'watermarked_at',
+        'download_expires_at',
+        'download_count',
+        'refunded_at',
+        'refund_reason',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'midtrans_response' => 'array',
+            'paid_at' => 'datetime',
+            'watermarked_at' => 'datetime',
+            'download_expires_at' => 'datetime',
+            'refunded_at' => 'datetime',
+            'gross_amount' => 'integer',
+            'commission' => 'integer',
+            'author_earning' => 'integer',
+            'gateway_fee' => 'integer',
+            'download_count' => 'integer',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Order $order) {
+            if (empty($order->order_code)) {
+                $order->order_code = 'BD-' . strtoupper(Str::random(10));
+            }
+        });
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function book(): BelongsTo
+    {
+        return $this->belongsTo(Book::class);
+    }
+
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(Author::class);
+    }
+
+    public function downloadLogs(): HasMany
+    {
+        return $this->hasMany(DownloadLog::class);
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'order_code';
+    }
+
+    public function canDownload(): bool
+    {
+        if ($this->status !== 'ready') {
+            return false;
+        }
+        if ($this->download_expires_at && now()->gt($this->download_expires_at)) {
+            return false;
+        }
+        if ($this->download_count >= 5) {
+            return false;
+        }
+        return true;
+    }
+}
