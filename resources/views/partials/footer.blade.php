@@ -4,7 +4,7 @@
             <a href="{{ route('home') }}" class="inline-flex" aria-label="BukuDigi.com">
                 <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
                      width="1200" height="279"
-                     class="h-8 w-auto md:h-9">
+                     class="h-auto w-[200px]">
             </a>
             <p class="mt-3 text-sm text-slate-400">
                 Marketplace ebook PDF dari penulis Indonesia. Beli, baca, dan dukung karya lokal — bayar pakai QRIS, instan download.

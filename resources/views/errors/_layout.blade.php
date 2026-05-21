@@ -21,7 +21,7 @@
         <a href="{{ url('/') }}" class="mb-8 inline-flex" aria-label="BukuDigi.com">
             <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
                  width="1200" height="279"
-                 class="h-10 w-auto">
+                 class="h-auto w-[200px]">
         </a>
 
         <div class="text-7xl md:text-8xl">{{ $emoji }}</div>

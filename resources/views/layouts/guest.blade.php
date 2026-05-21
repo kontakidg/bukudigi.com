@@ -22,10 +22,10 @@
             <svg class="absolute -right-20 -top-20 h-96 w-96" fill="none" viewBox="0 0 200 200"><defs><pattern id="p" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="white"/></pattern></defs><rect width="200" height="200" fill="url(#p)"/></svg>
         </div>
 
-        <a href="{{ route('home') }}" class="relative inline-flex w-fit rounded-xl bg-white/95 px-4 py-2 shadow-sm backdrop-blur">
+        <a href="{{ route('home') }}" class="relative inline-flex w-fit rounded-lg bg-white/95 px-4 py-2 shadow-sm backdrop-blur">
             <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
                  width="1200" height="279"
-                 class="h-9 w-auto">
+                 class="h-auto w-[200px]">
         </a>
 
         <div class="relative">
@@ -49,7 +49,7 @@
             <a href="{{ route('home') }}" class="mb-8 inline-flex md:hidden">
                 <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
                      width="1200" height="279"
-                     class="h-9 w-auto">
+                     class="h-auto w-[160px]">
             </a>
 
             {{ $slot }}
