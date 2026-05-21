@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+    $pageTitle = 'Kategori Ebook — bukudigi.com';
+    $pageDescription = 'Jelajahi kategori ebook lokal Indonesia: bisnis, edukasi, fiksi, resep, religi, self-help, dan lainnya.';
+@endphp
+
 @section('content')
 <section class="mx-auto max-w-7xl px-4 py-8">
     <h1 class="text-2xl font-bold">Kategori Ebook</h1>

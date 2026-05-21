@@ -1,5 +1,42 @@
 @extends('layouts.app')
 
+@php
+    $bookCoverUrl = $book->cover_path && \Illuminate\Support\Str::startsWith($book->cover_path, ['http://', 'https://'])
+        ? $book->cover_path
+        : ($book->cover_path ? asset('storage/'.$book->cover_path) : asset('og-default.png'));
+
+    $pageTitle = $book->title . ' — ' . ($book->author->display_name ?? 'bukudigi.com');
+    $pageDescription = \Illuminate\Support\Str::limit(strip_tags($book->description), 155);
+    $pageImage = $bookCoverUrl;
+    $ogType = 'book';
+
+    $jsonLd = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Book',
+        'name' => $book->title,
+        'description' => \Illuminate\Support\Str::limit(strip_tags($book->description), 500),
+        'image' => $bookCoverUrl,
+        'url' => route('books.show', $book->slug),
+        'bookFormat' => 'https://schema.org/EBook',
+        'inLanguage' => 'id',
+        'numberOfPages' => $book->page_count,
+        'author' => [
+            '@type' => 'Person',
+            'name' => $book->author->display_name ?? 'Anonim',
+        ],
+        'offers' => [
+            '@type' => 'Offer',
+            'price' => (string) $book->price,
+            'priceCurrency' => 'IDR',
+            'availability' => 'https://schema.org/InStock',
+            'url' => route('books.show', $book->slug),
+        ],
+    ];
+    if ($book->category) {
+        $jsonLd['genre'] = $book->category->name;
+    }
+@endphp
+
 @section('content')
 <section class="mx-auto max-w-6xl px-4 py-8">
     <nav class="mb-4 text-xs text-slate-500">

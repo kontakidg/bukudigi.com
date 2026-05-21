@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+    $pageTitle = 'Semua Buku — bukudigi.com';
+    $pageDescription = 'Jelajahi ' . $books->total() . ' ebook PDF dari penulis Indonesia di bukudigi.com.';
+@endphp
+
 @section('content')
 <section class="mx-auto max-w-7xl px-4 py-8">
     <div class="flex flex-wrap items-center justify-between gap-4">

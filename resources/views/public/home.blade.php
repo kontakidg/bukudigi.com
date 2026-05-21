@@ -1,5 +1,26 @@
 @extends('layouts.app')
 
+@php
+    $pageTitle = 'bukudigi.com — Marketplace Ebook PDF dari Penulis Indonesia';
+    $pageDescription = 'Beli ' . number_format($stats['total_books']) . '+ ebook PDF lokal Indonesia. Bayar QRIS, instan download, watermark personal. Komisi adil untuk penulis. Mulai dari Rp 15.000.';
+    $jsonLd = [
+        '@context' => 'https://schema.org',
+        '@type' => 'WebSite',
+        'name' => 'bukudigi.com',
+        'url' => route('home'),
+        'description' => 'Marketplace ebook PDF dari penulis Indonesia',
+        'inLanguage' => 'id',
+        'potentialAction' => [
+            '@type' => 'SearchAction',
+            'target' => [
+                '@type' => 'EntryPoint',
+                'urlTemplate' => route('cari') . '?q={search_term_string}',
+            ],
+            'query-input' => 'required name=search_term_string',
+        ],
+    ];
+@endphp
+
 @section('content')
 <section class="relative overflow-hidden py-16 text-white md:py-24">
     {{-- Background image --}}

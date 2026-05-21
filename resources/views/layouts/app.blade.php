@@ -10,7 +10,17 @@
         'title' => $pageTitle ?? null,
         'description' => $pageDescription ?? null,
         'image' => $pageImage ?? null,
+        'ogType' => $ogType ?? null,
+        'canonical' => $canonical ?? null,
+        'noindex' => $noindex ?? null,
+        'jsonLd' => $jsonLd ?? null,
     ])
+
+    {{-- Favicon --}}
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />

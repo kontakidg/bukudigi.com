@@ -1,2 +1,24 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api
+Disallow: /api/*
+Disallow: /auth/*
+Disallow: /author/*
+Disallow: /checkout/*
+Disallow: /download/*
+Disallow: /library
+Disallow: /profile
+Disallow: /wa/*
+Disallow: /storage/book-previews/*/page-*.png
+
+# Search results — biarkan crawl tapi jangan di-index
+Disallow: /cari
+
+# Allow specific Googlebot
+User-agent: Googlebot
+Allow: /
+
+# Sitemap
+Sitemap: https://bukudigi.com/sitemap.xml

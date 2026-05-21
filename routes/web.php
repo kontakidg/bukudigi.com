@@ -11,7 +11,11 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
+
+// === SEO ===
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 // === Public ===
 Route::get('/', [HomeController::class, 'index'])->name('home');

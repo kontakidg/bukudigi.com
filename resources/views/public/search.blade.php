@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+    $pageTitle = ($q !== '' ? 'Hasil "'.$q.'" — ' : 'Pencarian — ') . 'bukudigi.com';
+    $noindex = true; // search result pages biasanya tidak perlu di-index
+@endphp
+
 @section('content')
 <section class="mx-auto max-w-7xl px-4 py-8">
     <h1 class="text-2xl font-bold">
