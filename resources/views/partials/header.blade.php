@@ -24,7 +24,7 @@
         <div class="hidden items-center gap-2 md:flex">
             @auth
                 {{-- User dropdown --}}
-                <div class="relative" @click.away="userMenu = false">
+                <div class="relative inline-block" @click.away="userMenu = false">
                     <button @click="userMenu = !userMenu"
                             class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm hover:border-brand-500"
                             :aria-expanded="userMenu">

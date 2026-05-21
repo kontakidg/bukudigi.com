@@ -25,3 +25,8 @@
 }
 
 [x-cloak] { display: none !important; }
+
+/* Cegah horizontal scroll dari elemen absolute-positioned (mis. dropdown overflow). */
+html, body {
+    overflow-x: hidden;
+}

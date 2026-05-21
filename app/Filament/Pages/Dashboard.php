@@ -15,14 +15,13 @@ class Dashboard extends BaseDashboard
     {
         return [
             \App\Filament\Widgets\PlatformStatsOverview::class,
-            \App\Filament\Widgets\TopViewedBooksChart::class,
-            \App\Filament\Widgets\BestSellerChart::class,
+            \App\Filament\Widgets\TrendsChart::class,
         ];
     }
 
     public function getColumns(): int|string|array
     {
-        return 2;
+        return 1;
     }
 
     public function filtersForm(Form $form): Form
