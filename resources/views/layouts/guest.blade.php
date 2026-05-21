@@ -22,13 +22,10 @@
             <svg class="absolute -right-20 -top-20 h-96 w-96" fill="none" viewBox="0 0 200 200"><defs><pattern id="p" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="white"/></pattern></defs><rect width="200" height="200" fill="url(#p)"/></svg>
         </div>
 
-        <a href="{{ route('home') }}" class="relative flex items-center gap-2">
-            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
-                </svg>
-            </span>
-            <span class="text-xl font-bold tracking-tight">bukudigi<span class="text-brand-200">.com</span></span>
+        <a href="{{ route('home') }}" class="relative inline-flex w-fit rounded-xl bg-white/95 px-4 py-2 shadow-sm backdrop-blur">
+            <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
+                 width="1200" height="279"
+                 class="h-9 w-auto">
         </a>
 
         <div class="relative">
@@ -49,11 +46,10 @@
     <main class="flex flex-col justify-center px-6 py-10 sm:px-10">
         <div class="mx-auto w-full max-w-sm">
             {{-- Mobile logo --}}
-            <a href="{{ route('home') }}" class="mb-8 inline-flex items-center gap-2 md:hidden">
-                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-                </span>
-                <span class="text-lg font-bold">bukudigi<span class="text-brand-600">.com</span></span>
+            <a href="{{ route('home') }}" class="mb-8 inline-flex md:hidden">
+                <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
+                     width="1200" height="279"
+                     class="h-9 w-auto">
             </a>
 
             {{ $slot }}

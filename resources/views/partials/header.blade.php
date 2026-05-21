@@ -1,12 +1,9 @@
 <header x-data="{ open: false }" class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-        <a href="{{ route('home') }}" class="flex items-center gap-2" aria-label="bukudigi.com">
-            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
-                </svg>
-            </span>
-            <span class="text-lg font-bold tracking-tight text-slate-900">bukudigi<span class="text-brand-600">.com</span></span>
+        <a href="{{ route('home') }}" class="flex items-center" aria-label="BukuDigi.com">
+            <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
+                 width="1200" height="279"
+                 class="h-7 w-auto md:h-9">
         </a>
 
         <form action="{{ route('cari') }}" method="get" class="hidden flex-1 max-w-xl md:flex">
