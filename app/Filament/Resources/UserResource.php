@@ -58,7 +58,7 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('name')->searchable()->weight('semibold'),
                 Tables\Columns\TextColumn::make('email')->searchable(),
                 Tables\Columns\TextColumn::make('phone')->toggleable(),
-                Tables\Columns\TextColumn::make('role')->badge()->color(fn (string $r) => match ($r) {
+                Tables\Columns\TextColumn::make('role')->badge()->color(fn (string $state) => match ($state) {
                     'admin' => 'danger', 'author' => 'info', default => 'gray',
                 }),
                 Tables\Columns\IconColumn::make('email_verified_at')->label('Email')->boolean()->trueIcon('heroicon-o-check-circle')->falseIcon('heroicon-o-x-circle')->toggleable(),

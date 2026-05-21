@@ -69,7 +69,7 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')->label('Pembeli')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('book.title')->label('Buku')->limit(40)->searchable(),
                 Tables\Columns\TextColumn::make('gross_amount')->label('Total')->money('IDR')->sortable(),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn (string $s) => match ($s) {
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn (string $state) => match ($state) {
                     'ready' => 'success', 'paid', 'watermarking' => 'info',
                     'refunded', 'failed', 'expired' => 'danger', default => 'gray',
                 }),

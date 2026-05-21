@@ -82,7 +82,7 @@ class AuthorResource extends Resource
                 Tables\Columns\TextColumn::make('display_name')->label('Nama')->searchable()->weight('semibold'),
                 Tables\Columns\TextColumn::make('user.email')->label('Email')->searchable(),
                 Tables\Columns\TextColumn::make('bank_name')->label('Bank')->toggleable(),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn (string $s) => match ($s) {
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn (string $state) => match ($state) {
                     'verified' => 'success', 'pending' => 'warning', 'suspended' => 'danger', default => 'gray',
                 }),
                 Tables\Columns\TextColumn::make('balance_available')->label('Saldo')->money('IDR')->sortable(),
