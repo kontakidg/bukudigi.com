@@ -36,11 +36,11 @@
             📚 {{ number_format($stats['total_books']) }} ebook · {{ number_format($stats['total_authors']) }} penulis · {{ number_format($stats['total_orders']) }} pembaca
         </span>
         <h1 class="mt-4 mb-3 text-3xl font-bold leading-tight drop-shadow-md md:text-5xl">
-            Ebook PDF dari Penulis Indonesia<br class="hidden md:inline">
-            <span class="text-brand-200">Bayar QRIS, Baca Sekarang</span>
+            {{ \App\Models\Setting::get('hero_tagline_1', 'Ebook PDF dari Penulis Indonesia') }}<br class="hidden md:inline">
+            <span class="text-brand-200">{{ \App\Models\Setting::get('hero_tagline_2', 'Bayar QRIS, Baca Sekarang') }}</span>
         </h1>
         <p class="mx-auto mb-8 max-w-2xl text-base text-brand-100 drop-shadow md:text-lg">
-            Marketplace ebook untuk komunitas pembaca &amp; penulis lokal. Watermark personal di setiap halaman, dukungan langsung ke penulis.
+            {{ \App\Models\Setting::get('hero_subtagline', 'Marketplace ebook untuk komunitas pembaca & penulis lokal. Watermark personal di setiap halaman, dukungan langsung ke penulis.') }}
         </p>
 
         <form action="{{ route('cari') }}" method="get" class="mx-auto max-w-2xl">

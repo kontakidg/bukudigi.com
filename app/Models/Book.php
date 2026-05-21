@@ -102,6 +102,11 @@ class Book extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function views(): HasMany
+    {
+        return $this->hasMany(BookView::class);
+    }
+
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');

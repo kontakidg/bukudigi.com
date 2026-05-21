@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\BookView;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BookController extends Controller
 {
@@ -24,10 +26,23 @@ class BookController extends Controller
         return view('public.books-index', compact('books', 'sort'));
     }
 
-    public function show(Book $book)
+    public function show(Request $request, Book $book)
     {
         abort_unless($book->status === 'active', 404);
         $book->load(['author', 'penName', 'category', 'tags']);
+
+        // Track view (dedupe: 1 view per IP per book per hour)
+        $cacheKey = sprintf('book-view:%d:%s', $book->id, sha1($request->ip() ?? 'anon'));
+        if (! Cache::has($cacheKey)) {
+            Cache::put($cacheKey, true, now()->addHour());
+            BookView::create([
+                'book_id' => $book->id,
+                'ip' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 512),
+                'viewed_at' => now(),
+            ]);
+            $book->increment('views_count');
+        }
 
         $related = Book::active()
             ->where('id', '!=', $book->id)
