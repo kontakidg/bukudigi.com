@@ -3,7 +3,7 @@
         <a href="{{ route('home') }}" class="flex items-center" aria-label="BukuDigi.com">
             <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
                  width="1200" height="279"
-                 class="h-auto w-[160px] md:w-[200px]">
+                 class="h-auto w-32 md:w-40">
         </a>
 
         <form action="{{ route('cari') }}" method="get" class="hidden flex-1 max-w-xl md:flex">

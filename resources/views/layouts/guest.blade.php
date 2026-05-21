@@ -25,7 +25,7 @@
         <a href="{{ route('home') }}" class="relative inline-flex w-fit rounded-lg bg-white/95 px-4 py-2 shadow-sm backdrop-blur">
             <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
                  width="1200" height="279"
-                 class="h-auto w-[200px]">
+                 class="h-auto w-40">
         </a>
 
         <div class="relative">
@@ -49,7 +49,7 @@
             <a href="{{ route('home') }}" class="mb-8 inline-flex md:hidden">
                 <img src="{{ asset('logo.png') }}" alt="BukuDigi.com"
                      width="1200" height="279"
-                     class="h-auto w-[160px]">
+                     class="h-auto w-40">
             </a>
 
             {{ $slot }}
