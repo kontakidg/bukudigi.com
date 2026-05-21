@@ -24,9 +24,7 @@
         <h3 class="line-clamp-2 text-sm font-semibold text-slate-900 group-hover:text-brand-600">
             {{ $book->title }}
         </h3>
-        @if($book->author)
-            <p class="mt-1 text-xs text-slate-500">{{ $book->author->display_name }}</p>
-        @endif
+        <p class="mt-1 text-xs text-slate-500">{{ $book->displayAuthor() }}</p>
         <div class="mt-auto pt-3">
             <span class="text-base font-bold text-brand-600">{{ $book->formattedPrice() }}</span>
         </div>

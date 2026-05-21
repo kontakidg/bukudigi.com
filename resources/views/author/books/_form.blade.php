@@ -26,6 +26,25 @@
                 <input id="title" name="title" type="text" required maxlength="255"
                        value="{{ old('title', $book->title ?? '') }}" class="input">
             </div>
+
+            @if(! empty($penNames) && $penNames->count() > 0)
+                <div class="md:col-span-2">
+                    <label for="pen_name_id" class="mb-1 block text-sm font-medium text-slate-700">
+                        🖋️ Publish sebagai
+                        <a href="{{ route('author.pen-names.index') }}" class="ml-1 text-xs font-normal text-brand-600 hover:underline">Kelola pen name →</a>
+                    </label>
+                    <select id="pen_name_id" name="pen_name_id" required class="input">
+                        @foreach($penNames as $pn)
+                            <option value="{{ $pn->id }}"
+                                @selected(old('pen_name_id', $book->pen_name_id ?? optional($penNames->firstWhere('is_default', true))->id) == $pn->id)>
+                                {{ $pn->name }}{{ $pn->is_default ? ' (default)' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500">Nama yang akan tampil sebagai penulis buku ini di publik.</p>
+                </div>
+            @endif
+
             <div>
                 <label for="category_id" class="mb-1 block text-sm font-medium text-slate-700">Kategori</label>
                 <select id="category_id" name="category_id" required class="input">

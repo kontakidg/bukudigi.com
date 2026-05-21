@@ -22,7 +22,7 @@ class CategoryController extends Controller
     {
         $books = Book::active()
             ->where('category_id', $category->id)
-            ->with(['author'])
+            ->with(['author', 'penName'])
             ->latest('approved_at')
             ->paginate(24);
 

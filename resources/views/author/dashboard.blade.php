@@ -14,8 +14,9 @@
                     <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">⛔ Suspended</span>
                 @endif
                 @if($author->status === 'verified')
-                    <a href="{{ route('author.books.index') }}" class="btn-outline !py-1.5 !text-sm">📕 Kelola Buku</a>
-                    <a href="{{ route('author.books.create') }}" class="btn-primary !py-1.5 !text-sm">+ Upload Buku</a>
+                    <a href="{{ route('author.pen-names.index') }}" class="btn-outline !py-1.5 !text-sm">🖋️ Pen Name</a>
+                    <a href="{{ route('author.books.index') }}" class="btn-outline !py-1.5 !text-sm">📕 Buku</a>
+                    <a href="{{ route('author.books.create') }}" class="btn-primary !py-1.5 !text-sm">+ Upload</a>
                 @endif
             </div>
         </div>

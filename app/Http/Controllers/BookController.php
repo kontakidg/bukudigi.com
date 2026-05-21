@@ -12,7 +12,7 @@ class BookController extends Controller
         $sort = $request->input('sort', 'newest');
 
         $books = Book::active()
-            ->with(['author', 'category'])
+            ->with(['author', 'penName', 'category'])
             ->when($sort === 'popular', fn ($q) => $q->orderByDesc('sales_count'))
             ->when($sort === 'price_low', fn ($q) => $q->orderBy('price'))
             ->when($sort === 'price_high', fn ($q) => $q->orderByDesc('price'))
@@ -27,12 +27,12 @@ class BookController extends Controller
     public function show(Book $book)
     {
         abort_unless($book->status === 'active', 404);
-        $book->load(['author', 'category', 'tags']);
+        $book->load(['author', 'penName', 'category', 'tags']);
 
         $related = Book::active()
             ->where('id', '!=', $book->id)
             ->where('category_id', $book->category_id)
-            ->with(['author'])
+            ->with(['author', 'penName'])
             ->take(5)
             ->get();
 

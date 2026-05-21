@@ -15,7 +15,7 @@
             </div>
             <div class="flex-1">
                 <h2 class="font-bold">{{ $order->book->title }}</h2>
-                <p class="mt-1 text-xs text-slate-500">oleh {{ $order->book->author->display_name }}</p>
+                <p class="mt-1 text-xs text-slate-500">oleh {{ $order->book->displayAuthor() }}</p>
                 <p class="mt-3 text-xl font-bold text-brand-600">Rp {{ number_format($order->gross_amount, 0, ',', '.') }}</p>
             </div>
         </div>

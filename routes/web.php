@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\WhatsAppOtpController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\Author\BookController as AuthorBookController;
+use App\Http\Controllers\Author\PenNameController as AuthorPenNameController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DownloadController;
@@ -63,6 +64,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/author/dashboard', [AuthorController::class, 'dashboard'])->name('author.dashboard');
     Route::get('/author/bank', [AuthorController::class, 'showBank'])->name('author.bank.edit');
     Route::patch('/author/bank', [AuthorController::class, 'updateBank'])->name('author.bank.update');
+
+    // Author pen names CRUD
+    Route::prefix('author/pen-names')->name('author.pen-names.')->group(function () {
+        Route::get('/', [AuthorPenNameController::class, 'index'])->name('index');
+        Route::get('/create', [AuthorPenNameController::class, 'create'])->name('create');
+        Route::post('/', [AuthorPenNameController::class, 'store'])->name('store');
+        Route::get('/{penName:slug}/edit', [AuthorPenNameController::class, 'edit'])->name('edit');
+        Route::patch('/{penName:slug}', [AuthorPenNameController::class, 'update'])->name('update');
+        Route::delete('/{penName:slug}', [AuthorPenNameController::class, 'destroy'])->name('destroy');
+    });
 
     // Author book CRUD
     Route::prefix('author/books')->name('author.books.')->group(function () {

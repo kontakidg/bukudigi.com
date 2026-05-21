@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Author extends Model
 {
@@ -47,6 +48,16 @@ class Author extends Model
     public function books(): HasMany
     {
         return $this->hasMany(Book::class);
+    }
+
+    public function penNames(): HasMany
+    {
+        return $this->hasMany(PenName::class);
+    }
+
+    public function defaultPenName(): HasOne
+    {
+        return $this->hasOne(PenName::class)->where('is_default', true);
     }
 
     public function orders(): HasMany

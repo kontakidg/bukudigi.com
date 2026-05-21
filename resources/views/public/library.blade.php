@@ -37,7 +37,7 @@
                         </div>
                         <div class="flex flex-1 flex-col">
                             <h3 class="line-clamp-2 text-sm font-semibold text-slate-900">{{ $order->book->title }}</h3>
-                            <p class="mt-1 text-xs text-slate-500">{{ $order->book->author->display_name ?? '—' }}</p>
+                            <p class="mt-1 text-xs text-slate-500">{{ $order->book->displayAuthor() }}</p>
                             <div class="mt-auto pt-2">
                                 @if($order->status === 'ready' && $order->canDownload())
                                     <a href="{{ route('download.show', $order->order_code) }}" class="btn-primary w-full !py-2 !text-xs">⬇ Download PDF</a>

@@ -39,9 +39,17 @@ class BookController extends Controller
             return $author;
         }
 
+        // Author harus punya minimal 1 pen name sebelum upload buku
+        $penNames = $author->penNames()->orderByDesc('is_default')->orderBy('name')->get();
+        if ($penNames->isEmpty()) {
+            return redirect()->route('author.pen-names.create')
+                ->with('status', 'Buat pen name dulu sebelum upload buku.');
+        }
+
         return view('author.books.create', [
             'categories' => Category::where('is_active', true)->whereNull('parent_id')->orderBy('sort_order')->get(),
             'tagOptions' => Tag::orderBy('name')->pluck('name')->all(),
+            'penNames' => $penNames,
         ]);
     }
 
@@ -54,6 +62,9 @@ class BookController extends Controller
 
         $data = $this->validateBookForm($request, isCreate: true);
 
+        // Validate pen_name_id milik author ini
+        $penNameId = $this->resolvePenNameId($author, $data['pen_name_id'] ?? null);
+
         $slug = $this->makeSlug($data['title']);
 
         $coverPath = $this->storeCover($request->file('cover'), $author->id, $slug);
@@ -61,9 +72,10 @@ class BookController extends Controller
         $this->validateUploadedPdf($pdfPath);
         $pdfSize = Storage::disk('local')->size($pdfPath);
 
-        $book = DB::transaction(function () use ($author, $data, $slug, $coverPath, $pdfPath, $pdfSize) {
+        $book = DB::transaction(function () use ($author, $data, $slug, $coverPath, $pdfPath, $pdfSize, $penNameId) {
             $book = Book::create([
                 'author_id' => $author->id,
+                'pen_name_id' => $penNameId,
                 'category_id' => $data['category_id'],
                 'title' => $data['title'],
                 'slug' => $slug,
@@ -106,6 +118,7 @@ class BookController extends Controller
             'book' => $book->load('tags'),
             'categories' => Category::where('is_active', true)->whereNull('parent_id')->orderBy('sort_order')->get(),
             'tagOptions' => Tag::orderBy('name')->pluck('name')->all(),
+            'penNames' => $author->penNames()->orderByDesc('is_default')->orderBy('name')->get(),
         ]);
     }
 
@@ -120,7 +133,10 @@ class BookController extends Controller
 
         $data = $this->validateBookForm($request, isCreate: false);
 
+        $penNameId = $this->resolvePenNameId($author, $data['pen_name_id'] ?? null);
+
         $updates = [
+            'pen_name_id' => $penNameId,
             'category_id' => $data['category_id'],
             'title' => $data['title'],
             'description' => $data['description'],
@@ -229,6 +245,7 @@ class BookController extends Controller
             'description' => ['required', 'string', 'max:5000'],
             'table_of_contents' => ['nullable', 'string', 'max:3000'],
             'category_id' => ['required', 'exists:categories,id'],
+            'pen_name_id' => ['nullable', 'integer', 'exists:pen_names,id'],
             'price' => ['required', 'integer', 'min:15000', 'max:500000'],
             'page_count' => ['nullable', 'integer', 'min:1', 'max:5000'],
             'tags' => ['nullable', 'string', 'max:255'],
@@ -244,6 +261,22 @@ class BookController extends Controller
             'cover.max' => 'Cover maksimal 5 MB.',
             'agree_terms.accepted' => 'Kamu harus mengkonfirmasi bahwa konten asli/berhak dijual.',
         ]);
+    }
+
+    /**
+     * Validate pen_name_id milik author; fallback ke default pen name kalau null/invalid.
+     */
+    private function resolvePenNameId(\App\Models\Author $author, ?int $requestedId): ?int
+    {
+        if ($requestedId) {
+            $belongs = $author->penNames()->where('id', $requestedId)->exists();
+            if ($belongs) {
+                return $requestedId;
+            }
+        }
+        // Fallback: default pen name
+        $default = $author->defaultPenName ?? $author->penNames()->first();
+        return $default?->id;
     }
 
     private function makeSlug(string $title): string

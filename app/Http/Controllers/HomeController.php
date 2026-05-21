@@ -24,12 +24,12 @@ class HomeController extends Controller
                 ->take(9)
                 ->get(),
             'newestBooks' => Book::active()
-                ->with(['author', 'category'])
+                ->with(['author', 'penName', 'category'])
                 ->latest('approved_at')
                 ->take(10)
                 ->get(),
             'popularBooks' => Book::active()
-                ->with(['author', 'category'])
+                ->with(['author', 'penName', 'category'])
                 ->orderByDesc('sales_count')
                 ->take(10)
                 ->get(),
@@ -40,7 +40,7 @@ class HomeController extends Controller
     {
         $q = trim((string) $request->input('q', ''));
         $books = Book::active()
-            ->with(['author', 'category'])
+            ->with(['author', 'penName', 'category'])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($w) use ($q) {
                     $w->where('title', 'LIKE', "%{$q}%")

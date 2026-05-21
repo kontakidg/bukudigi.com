@@ -12,6 +12,7 @@ class Book extends Model
 {
     protected $fillable = [
         'author_id',
+        'pen_name_id',
         'category_id',
         'title',
         'slug',
@@ -69,6 +70,21 @@ class Book extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(Author::class);
+    }
+
+    public function penName(): BelongsTo
+    {
+        return $this->belongsTo(PenName::class);
+    }
+
+    /**
+     * Display name di publik — pakai pen_name kalau ada, fallback ke author.display_name.
+     */
+    public function displayAuthor(): string
+    {
+        return $this->penName?->name
+            ?? $this->author?->display_name
+            ?? 'Anonim';
     }
 
     public function category(): BelongsTo

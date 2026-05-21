@@ -43,8 +43,16 @@ class BookResource extends Resource
                     Forms\Components\TextInput::make('title')->label('Judul')->required()->maxLength(255)->live(onBlur: true)
                         ->afterStateUpdated(fn ($state, $set) => $set('slug', \Illuminate\Support\Str::slug($state).'-'.\Illuminate\Support\Str::random(6))),
                     Forms\Components\TextInput::make('slug')->required()->maxLength(255)->unique(ignoreRecord: true),
-                    Forms\Components\Select::make('author_id')->label('Penulis')
-                        ->relationship('author', 'display_name')->searchable()->preload()->required(),
+                    Forms\Components\Select::make('author_id')->label('Author Account')
+                        ->relationship('author', 'display_name')->searchable()->preload()->required()
+                        ->live()
+                        ->afterStateUpdated(fn ($set) => $set('pen_name_id', null)),
+                    Forms\Components\Select::make('pen_name_id')->label('Pen Name (publish sebagai)')
+                        ->options(fn ($get) => $get('author_id')
+                            ? \App\Models\PenName::where('author_id', $get('author_id'))->pluck('name', 'id')
+                            : []
+                        )->searchable()->preload()
+                        ->helperText('Nama yang tampil sebagai penulis di publik. Kosong = default pen name.'),
                     Forms\Components\Select::make('category_id')->label('Kategori')
                         ->relationship('category', 'name')->searchable()->preload(),
                     Forms\Components\Select::make('tags')->label('Tag')
@@ -94,7 +102,10 @@ class BookResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('cover_path')->label('')->size(48),
                 Tables\Columns\TextColumn::make('title')->label('Judul')->searchable()->sortable()->limit(50)->weight('semibold'),
-                Tables\Columns\TextColumn::make('author.display_name')->label('Penulis')->searchable(),
+                Tables\Columns\TextColumn::make('penName.name')->label('Pen Name')->searchable()
+                    ->placeholder('— default —'),
+                Tables\Columns\TextColumn::make('author.display_name')->label('Author Account')->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('category.name')->label('Kategori')->badge(),
                 Tables\Columns\TextColumn::make('price')->label('Harga')->money('IDR')->sortable(),
                 Tables\Columns\TextColumn::make('status')->badge()->color(fn (string $state): string => match ($state) {

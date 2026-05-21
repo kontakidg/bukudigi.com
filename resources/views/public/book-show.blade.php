@@ -5,7 +5,7 @@
         ? $book->cover_path
         : ($book->cover_path ? asset('storage/'.$book->cover_path) : asset('og-default.png'));
 
-    $pageTitle = $book->title . ' — ' . ($book->author->display_name ?? 'bukudigi.com');
+    $pageTitle = $book->title . ' — ' . $book->displayAuthor();
     $pageDescription = \Illuminate\Support\Str::limit(strip_tags($book->description), 155);
     $pageImage = $bookCoverUrl;
     $ogType = 'book';
@@ -22,7 +22,7 @@
         'numberOfPages' => $book->page_count,
         'author' => [
             '@type' => 'Person',
-            'name' => $book->author->display_name ?? 'Anonim',
+            'name' => $book->displayAuthor(),
         ],
         'offers' => [
             '@type' => 'Offer',
@@ -66,9 +66,7 @@
 
         <div class="md:col-span-2">
             <h1 class="text-3xl font-bold text-slate-900">{{ $book->title }}</h1>
-            @if($book->author)
-                <p class="mt-1 text-sm text-slate-600">oleh <span class="font-semibold text-slate-800">{{ $book->author->display_name }}</span></p>
-            @endif
+            <p class="mt-1 text-sm text-slate-600">oleh <span class="font-semibold text-slate-800">{{ $book->displayAuthor() }}</span></p>
 
             <div class="mt-4 flex items-center gap-3">
                 <span class="text-3xl font-bold text-brand-600">{{ $book->formattedPrice() }}</span>
