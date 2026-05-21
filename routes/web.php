@@ -61,6 +61,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/author/register', [AuthorController::class, 'showRegister'])->name('author.register.show');
     Route::post('/author/register', [AuthorController::class, 'register'])->name('author.register');
     Route::get('/author/dashboard', [AuthorController::class, 'dashboard'])->name('author.dashboard');
+    Route::get('/author/bank', [AuthorController::class, 'showBank'])->name('author.bank.edit');
+    Route::patch('/author/bank', [AuthorController::class, 'updateBank'])->name('author.bank.update');
 
     // Author book CRUD
     Route::prefix('author/books')->name('author.books.')->group(function () {

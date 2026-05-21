@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="text-2xl font-bold">✍️ Daftar sebagai Penulis</h1>
-        <p class="mt-1 text-sm text-slate-500">Isi data verifikasi. Admin review 1-2 hari kerja.</p>
+        <p class="mt-1 text-sm text-slate-500">Cuma butuh nama tampil dan persetujuan syarat. Data bank bisa diisi nanti saat siap payout.</p>
     </x-slot>
 
     <div class="mx-auto max-w-2xl px-4 py-8">
@@ -34,39 +34,48 @@
             </div>
 
             <div class="card p-6">
-                <h2 class="text-lg font-bold">Data Verifikasi</h2>
+                <h2 class="text-lg font-bold">Data Pajak <span class="text-sm font-normal text-slate-500">(opsional)</span></h2>
+                <p class="mt-1 text-sm text-slate-500">Isi kalau sudah punya NPWP. Memengaruhi tarif PPh 23 saat payout royalti.</p>
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <div class="md:col-span-2">
-                        <label for="nik" class="mb-1 block text-sm font-medium text-slate-700">NIK (16 digit)</label>
-                        <input id="nik" name="nik" type="text" inputmode="numeric" value="{{ old('nik') }}" required maxlength="16" pattern="\d{16}" class="input">
-                        <p class="mt-1 text-xs text-slate-500">Hanya untuk verifikasi identitas dan pelaporan pajak. Disimpan terenkripsi.</p>
+                        <label for="nik" class="mb-1 block text-sm font-medium text-slate-700">NIK <span class="text-slate-400">(opsional, 16 digit)</span></label>
+                        <input id="nik" name="nik" type="text" inputmode="numeric" value="{{ old('nik') }}" maxlength="16" pattern="\d{16}" class="input">
+                        <p class="mt-1 text-xs text-slate-500">Diperlukan untuk pelaporan pajak saat penjualan pertama.</p>
                     </div>
                     <div class="md:col-span-2">
                         <label for="npwp" class="mb-1 block text-sm font-medium text-slate-700">NPWP <span class="text-slate-400">(opsional)</span></label>
                         <input id="npwp" name="npwp" type="text" value="{{ old('npwp') }}" maxlength="32" class="input">
                         <p class="mt-1 text-xs text-slate-500">PPh 23 dipotong 2% (dengan NPWP) atau 4% (tanpa NPWP) dari royalti.</p>
                     </div>
+                </div>
+            </div>
+
+            {{-- TODO v2: Foto KTP & Selfie wajib saat KYC mendalam diaktifkan
+            <div class="card p-6">
+                <h2 class="text-lg font-bold">Verifikasi Identitas</h2>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <div>
                         <label for="ktp_image" class="mb-1 block text-sm font-medium text-slate-700">Foto KTP</label>
-                        <input id="ktp_image" name="ktp_image" type="file" accept="image/*" required class="input !py-1.5">
+                        <input id="ktp_image" name="ktp_image" type="file" accept="image/*" class="input !py-1.5">
                         <p class="mt-1 text-xs text-slate-500">Max 5 MB, JPG/PNG.</p>
                     </div>
                     <div>
                         <label for="selfie_image" class="mb-1 block text-sm font-medium text-slate-700">Selfie + KTP</label>
-                        <input id="selfie_image" name="selfie_image" type="file" accept="image/*" required class="input !py-1.5">
+                        <input id="selfie_image" name="selfie_image" type="file" accept="image/*" class="input !py-1.5">
                         <p class="mt-1 text-xs text-slate-500">Foto kamu memegang KTP.</p>
                     </div>
                 </div>
             </div>
+            --}}
 
             <div class="card p-6">
-                <h2 class="text-lg font-bold">Rekening Bank</h2>
-                <p class="mt-1 text-sm text-slate-500">Untuk transfer royalti bulanan.</p>
+                <h2 class="text-lg font-bold">Rekening Bank <span class="text-sm font-normal text-slate-500">(opsional)</span></h2>
+                <p class="mt-1 text-sm text-slate-500">Bisa diisi nanti dari dashboard saat saldo royalti sudah masuk. Tanpa rekening, payout tidak bisa diproses.</p>
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <div>
                         <label for="bank_name" class="mb-1 block text-sm font-medium text-slate-700">Nama Bank</label>
-                        <select id="bank_name" name="bank_name" required class="input">
-                            <option value="">Pilih bank…</option>
+                        <select id="bank_name" name="bank_name" class="input">
+                            <option value="">— belum diisi —</option>
                             @foreach(['BCA','BNI','BRI','Mandiri','BSI','CIMB Niaga','Permata','Danamon','BTN','Mega','OCBC NISP','Maybank','Lainnya'] as $b)
                                 <option value="{{ $b }}" @selected(old('bank_name')===$b)>{{ $b }}</option>
                             @endforeach
@@ -74,12 +83,11 @@
                     </div>
                     <div>
                         <label for="bank_account" class="mb-1 block text-sm font-medium text-slate-700">Nomor Rekening</label>
-                        <input id="bank_account" name="bank_account" type="text" value="{{ old('bank_account') }}" required maxlength="64" class="input">
+                        <input id="bank_account" name="bank_account" type="text" value="{{ old('bank_account') }}" maxlength="64" class="input">
                     </div>
                     <div class="md:col-span-2">
                         <label for="bank_holder" class="mb-1 block text-sm font-medium text-slate-700">Nama Pemilik Rekening</label>
-                        <input id="bank_holder" name="bank_holder" type="text" value="{{ old('bank_holder', auth()->user()->name) }}" required maxlength="120" class="input">
-                        <p class="mt-1 text-xs text-slate-500">Harus sesuai KTP.</p>
+                        <input id="bank_holder" name="bank_holder" type="text" value="{{ old('bank_holder') }}" maxlength="120" class="input" placeholder="Sesuai KTP — bisa diisi nanti">
                     </div>
                 </div>
             </div>

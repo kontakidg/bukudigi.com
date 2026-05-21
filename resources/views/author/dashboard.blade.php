@@ -29,7 +29,20 @@
         @if($author->status === 'pending')
             <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                 <p class="font-semibold">⏳ Pendaftaran kamu sedang di-review</p>
-                <p class="mt-1">Admin akan verifikasi data KTP dan rekening kamu dalam 1-2 hari kerja. Kamu akan dapat notifikasi WhatsApp begitu disetujui.</p>
+                <p class="mt-1">Admin akan verifikasi pendaftaran kamu dalam 1-2 hari kerja. Kamu akan dapat notifikasi WhatsApp begitu disetujui.</p>
+            </div>
+        @endif
+
+        @if(! empty($showBankReminder))
+            <div class="mb-6 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+                <p class="font-semibold">💳 Lengkapi data rekening bank</p>
+                <p class="mt-1">Kamu sudah punya saldo / penjualan, tapi data rekening belum lengkap. Royalti tidak bisa di-transfer sampai data bank diisi.</p>
+                <a href="{{ route('author.bank.edit') }}" class="mt-2 inline-block font-semibold text-orange-900 hover:underline">Isi data bank di profile →</a>
+            </div>
+        @elseif(! empty($needsBankInfo) && $author->status === 'verified')
+            <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <p class="font-semibold">📝 Data bank belum diisi</p>
+                <p class="mt-1">Tidak wajib sekarang — bisa diisi nanti saat siap menerima payout royalti. <a href="{{ route('author.bank.edit') }}" class="font-semibold text-brand-600 hover:underline">Lengkapi →</a></p>
             </div>
         @endif
 
