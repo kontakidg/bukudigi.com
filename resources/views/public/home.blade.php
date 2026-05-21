@@ -1,10 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="relative overflow-hidden bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 py-16 text-white md:py-24">
-    <div class="absolute inset-0 opacity-20" aria-hidden="true">
-        <svg class="absolute -right-20 -top-20 h-96 w-96" fill="none" viewBox="0 0 200 200"><defs><pattern id="p" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="white"/></pattern></defs><rect width="200" height="200" fill="url(#p)"/></svg>
-    </div>
+<section class="relative overflow-hidden py-16 text-white md:py-24">
+    {{-- Background image --}}
+    <img src="{{ asset('bg.jpg') }}" alt=""
+         loading="eager" fetchpriority="high"
+         class="absolute inset-0 h-full w-full object-cover"
+         aria-hidden="true">
+    {{-- Dark overlay supaya teks tetap terbaca (gradient indigo dim) --}}
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-900/75 via-brand-900/65 to-brand-700/55" aria-hidden="true"></div>
 
     <div class="relative mx-auto max-w-7xl px-4 text-center">
         <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">

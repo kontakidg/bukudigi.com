@@ -26,14 +26,14 @@ Route::get('/kategori/{category:slug}', [CategoryController::class, 'show'])->na
 // === Author landing (public) ===
 Route::get('/jual', [AuthorController::class, 'landing'])->name('jual');
 
-// === Info pages (placeholder) ===
-Route::get('/info/tentang', fn () => app(HomeController::class)->placeholder('tentang'))->name('info.tentang');
-Route::get('/info/bantuan', fn () => app(HomeController::class)->placeholder('bantuan'))->name('info.bantuan');
-Route::get('/info/syarat', fn () => app(HomeController::class)->placeholder('syarat'))->name('info.syarat');
-Route::get('/info/privasi', fn () => app(HomeController::class)->placeholder('privasi'))->name('info.privasi');
-Route::get('/info/komisi', fn () => app(HomeController::class)->placeholder('komisi'))->name('info.komisi');
-Route::get('/info/panduan-penulis', fn () => app(HomeController::class)->placeholder('panduan-penulis'))->name('info.panduan-penulis');
-Route::get('/info/faq', fn () => app(HomeController::class)->placeholder('faq'))->name('info.faq');
+// === Info pages ===
+Route::view('/info/tentang', 'info.tentang')->name('info.tentang');
+Route::view('/info/bantuan', 'info.bantuan')->name('info.bantuan');
+Route::view('/info/syarat', 'info.syarat')->name('info.syarat');
+Route::view('/info/privasi', 'info.privasi')->name('info.privasi');
+Route::view('/info/komisi', 'info.komisi')->name('info.komisi');
+Route::view('/info/panduan-penulis', 'info.panduan-penulis')->name('info.panduan-penulis');
+Route::view('/info/faq', 'info.faq')->name('info.faq');
 
 // === Social auth ===
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
