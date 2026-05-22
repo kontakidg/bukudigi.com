@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BookResource\Pages;
 use App\Jobs\GeneratePreviewJob;
+use App\Mail\BookApprovedMail;
+use App\Mail\BookRejectedMail;
 use App\Models\Book;
 use App\Models\ModerationLog;
 use App\Services\FonnteWhatsApp;
@@ -14,6 +16,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class BookResource extends Resource
 {
@@ -156,6 +160,15 @@ class BookResource extends Resource
                             );
                         }
 
+                        // Email notif ke author
+                        if ($author?->email) {
+                            try {
+                                Mail::to($author->email)->queue(new BookApprovedMail($r));
+                            } catch (\Throwable $e) {
+                                Log::warning('BookApprovedMail queue failed: '.$e->getMessage());
+                            }
+                        }
+
                         Notification::make()->title('Buku disetujui & author dinotifikasi')->success()->send();
                     }),
                 Tables\Actions\Action::make('reject')->label('Reject')
@@ -181,6 +194,15 @@ class BookResource extends Resource
                                 $author->phone,
                                 "Halo {$author->name},\n\nBuku \"{$r->title}\" belum bisa kami publikasikan.\n\nAlasan: {$data['reason']}\n\nKamu bisa edit & submit ulang dari dashboard penulis."
                             );
+                        }
+
+                        // Email notif rejection
+                        if ($author?->email) {
+                            try {
+                                Mail::to($author->email)->queue(new BookRejectedMail($r, $data['reason']));
+                            } catch (\Throwable $e) {
+                                Log::warning('BookRejectedMail queue failed: '.$e->getMessage());
+                            }
                         }
 
                         Notification::make()->title('Buku ditolak & author dinotifikasi')->warning()->send();

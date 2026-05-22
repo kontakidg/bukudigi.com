@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Author;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\GeneratePreviewJob;
+use App\Mail\BookSubmittedMail;
 use App\Models\Book;
 use App\Models\Category;
 use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -100,6 +103,13 @@ class BookController extends Controller
         });
 
         GeneratePreviewJob::dispatch($book->id);
+
+        // Email konfirmasi submit
+        try {
+            Mail::to($author->user->email)->queue(new BookSubmittedMail($book));
+        } catch (\Throwable $e) {
+            Log::warning('BookSubmittedMail queue failed: '.$e->getMessage());
+        }
 
         return redirect()->route('author.books.index')
             ->with('status', "Buku \"{$book->title}\" berhasil dikirim untuk moderasi. Admin akan review dalam 1-2 hari kerja.");

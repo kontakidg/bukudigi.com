@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\WatermarkPdfJob;
+use App\Mail\OrderPaidMail;
 use App\Models\Book;
 use App\Models\Order;
 use App\Services\MidtransService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class CheckoutController extends Controller
@@ -82,6 +85,14 @@ class CheckoutController extends Controller
 
             // Dispatch watermark job
             WatermarkPdfJob::dispatch($order->id);
+
+            // Email konfirmasi pembayaran + link download
+            try {
+                $order->load('book.author', 'book.penName', 'user');
+                Mail::to($order->user->email)->queue(new OrderPaidMail($order));
+            } catch (\Throwable $e) {
+                Log::warning('OrderPaidMail queue failed: '.$e->getMessage());
+            }
         }
 
         return redirect()->route('library')

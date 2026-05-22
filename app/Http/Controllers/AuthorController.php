@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\AuthorRegisteredMail;
 use App\Models\Author;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -93,7 +96,7 @@ class AuthorController extends Controller
             $selfiePath = $request->file('selfie_image')->store('author-docs/'.$user->id, 'local');
         }
 
-        Author::create([
+        $author = Author::create([
             'user_id' => $user->id,
             'display_name' => $data['display_name'],
             'bio' => $data['bio'] ?? null,
@@ -108,6 +111,13 @@ class AuthorController extends Controller
         ]);
 
         $user->update(['role' => 'author']);
+
+        // Email notif "pendaftaran sedang di-review"
+        try {
+            Mail::to($user->email)->queue(new AuthorRegisteredMail($author));
+        } catch (\Throwable $e) {
+            Log::warning('AuthorRegisteredMail queue failed: '.$e->getMessage());
+        }
 
         return redirect()->route('author.dashboard')
             ->with('status', 'Pendaftaran author berhasil! Admin akan review dalam 1-2 hari kerja.');

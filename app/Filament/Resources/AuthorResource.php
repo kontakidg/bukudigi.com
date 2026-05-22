@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AuthorResource\Pages;
+use App\Mail\AuthorVerifiedMail;
 use App\Models\Author;
 use App\Services\FonnteWhatsApp;
 use Filament\Forms;
@@ -12,6 +13,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AuthorResource extends Resource
 {
@@ -107,6 +110,15 @@ class AuthorResource extends Resource
                                 $r->user->phone,
                                 "Halo {$r->display_name}! 🎉\n\nAkun penulis kamu di bukudigi.com sudah terverifikasi. Kamu sekarang bisa upload buku via dashboard:\n\n".route('author.books.create')
                             );
+                        }
+
+                        // Email notif
+                        if ($r->user?->email) {
+                            try {
+                                Mail::to($r->user->email)->queue(new AuthorVerifiedMail($r));
+                            } catch (\Throwable $e) {
+                                Log::warning('AuthorVerifiedMail queue failed: '.$e->getMessage());
+                            }
                         }
 
                         Notification::make()->title('Author terverifikasi & dinotifikasi')->success()->send();
