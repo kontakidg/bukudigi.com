@@ -10,12 +10,14 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -27,8 +29,12 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('bukudigi')
+            ->brandLogo(asset('logo.png'))
+            ->brandLogoHeight('1.75rem')
+            ->favicon(asset('favicon.svg'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Indigo,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -40,6 +46,37 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\PlatformStatsOverview::class,
                 \App\Filament\Widgets\TrendsChart::class,
             ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): HtmlString => new HtmlString(<<<'HTML'
+                    <style>
+                        /* Topbar background slate-900 (samakan dengan footer homepage) */
+                        .fi-topbar > nav {
+                            background-color: #0f172a !important;
+                            border-bottom-color: #1e293b !important;
+                        }
+                        .fi-topbar > nav .fi-logo,
+                        .fi-topbar > nav button,
+                        .fi-topbar > nav a {
+                            color: #f1f5f9 !important;
+                        }
+                        .fi-topbar > nav button:hover,
+                        .fi-topbar > nav a:hover {
+                            color: #ffffff !important;
+                        }
+                        .fi-topbar > nav .fi-icon-btn {
+                            color: #cbd5e1 !important;
+                        }
+                        /* Brand image — hilangkan text "bukudigi" karena logo sudah punya teks */
+                        .fi-topbar .fi-logo span {
+                            display: none !important;
+                        }
+                        .fi-topbar .fi-logo img {
+                            filter: brightness(1) !important;
+                        }
+                    </style>
+                HTML)
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
