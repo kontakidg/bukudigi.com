@@ -1,7 +1,19 @@
 <x-app-layout>
+    @php
+        $level = $verificationLevel ?? 1;
+        $levelLabels = [
+            1 => 'Level 1 — Nama saja',
+            2 => 'Level 2 — Nama + WhatsApp',
+            3 => 'Level 3 — Lengkap (NIK + KTP + Selfie wajib)',
+        ];
+    @endphp
+
     <x-slot name="header">
         <h1 class="text-2xl font-bold">✍️ Daftar sebagai Penulis</h1>
-        <p class="mt-1 text-sm text-slate-500">Cuma butuh nama tampil dan persetujuan syarat. Data bank bisa diisi nanti saat siap payout.</p>
+        <p class="mt-1 text-sm text-slate-500">
+            Mode verifikasi saat ini:
+            <span class="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700">{{ $levelLabels[$level] }}</span>
+        </p>
     </x-slot>
 
     <div class="mx-auto max-w-2xl px-4 py-8">
@@ -11,6 +23,13 @@
                 <ul class="ml-4 mt-1 list-disc">
                     @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
                 </ul>
+            </div>
+        @endif
+
+        @if($level >= 2)
+            <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                <p class="font-semibold">📱 WhatsApp terdaftar: <code class="rounded bg-white px-1.5 py-0.5">{{ auth()->user()->phone }}</code></p>
+                <p class="mt-1">Pastikan benar — akan dipakai untuk notifikasi pesanan & verifikasi. <a href="{{ route('profile.edit') }}" class="font-semibold underline">Ubah di profile →</a></p>
             </div>
         @endif
 
@@ -34,43 +53,61 @@
             </div>
 
             <div class="card p-6">
-                <h2 class="text-lg font-bold">Data Pajak <span class="text-sm font-normal text-slate-500">(opsional)</span></h2>
-                <p class="mt-1 text-sm text-slate-500">Isi kalau sudah punya NPWP. Memengaruhi tarif PPh 23 saat payout royalti.</p>
+                <h2 class="text-lg font-bold">
+                    Data Pajak
+                    @if($level < 3)
+                        <span class="text-sm font-normal text-slate-500">(opsional)</span>
+                    @endif
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    @if($level >= 3)
+                        NIK wajib untuk verifikasi Level 3.
+                    @else
+                        Isi kalau sudah siap untuk pelaporan pajak nanti.
+                    @endif
+                </p>
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <div class="md:col-span-2">
-                        <label for="nik" class="mb-1 block text-sm font-medium text-slate-700">NIK <span class="text-slate-400">(opsional, 16 digit)</span></label>
-                        <input id="nik" name="nik" type="text" inputmode="numeric" value="{{ old('nik') }}" maxlength="16" pattern="\d{16}" class="input">
-                        <p class="mt-1 text-xs text-slate-500">Diperlukan untuk pelaporan pajak saat penjualan pertama.</p>
+                        <label for="nik" class="mb-1 block text-sm font-medium text-slate-700">
+                            NIK (16 digit)
+                            @if($level < 3) <span class="text-slate-400">— opsional</span> @endif
+                        </label>
+                        <input id="nik" name="nik" type="text" inputmode="numeric"
+                               value="{{ old('nik') }}" maxlength="16" pattern="\d{16}"
+                               {{ $level >= 3 ? 'required' : '' }}
+                               class="input">
+                        <p class="mt-1 text-xs text-slate-500">Untuk pelaporan pajak. Disimpan terenkripsi.</p>
                     </div>
                     <div class="md:col-span-2">
                         <label for="npwp" class="mb-1 block text-sm font-medium text-slate-700">NPWP <span class="text-slate-400">(opsional)</span></label>
                         <input id="npwp" name="npwp" type="text" value="{{ old('npwp') }}" maxlength="32" class="input">
-                        <p class="mt-1 text-xs text-slate-500">PPh 23 dipotong 2% (dengan NPWP) atau 4% (tanpa NPWP) dari royalti.</p>
+                        <p class="mt-1 text-xs text-slate-500">PPh 23 dipotong 2% (dengan NPWP) atau 4% (tanpa NPWP).</p>
                     </div>
                 </div>
             </div>
 
-            {{-- TODO v2: Foto KTP & Selfie wajib saat KYC mendalam diaktifkan
-            <div class="card p-6">
-                <h2 class="text-lg font-bold">Verifikasi Identitas</h2>
-                <div class="mt-4 grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label for="ktp_image" class="mb-1 block text-sm font-medium text-slate-700">Foto KTP</label>
-                        <input id="ktp_image" name="ktp_image" type="file" accept="image/*" class="input !py-1.5">
-                        <p class="mt-1 text-xs text-slate-500">Max 5 MB, JPG/PNG.</p>
-                    </div>
-                    <div>
-                        <label for="selfie_image" class="mb-1 block text-sm font-medium text-slate-700">Selfie + KTP</label>
-                        <input id="selfie_image" name="selfie_image" type="file" accept="image/*" class="input !py-1.5">
-                        <p class="mt-1 text-xs text-slate-500">Foto kamu memegang KTP.</p>
+            @if($level >= 3)
+                <div class="card p-6">
+                    <h2 class="text-lg font-bold">Verifikasi Identitas <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">WAJIB</span></h2>
+                    <p class="mt-1 text-sm text-slate-500">Foto KTP &amp; selfie untuk verifikasi identitas. Disimpan privat, hanya admin verifikator yang akses.</p>
+                    <div class="mt-4 grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label for="ktp_image" class="mb-1 block text-sm font-medium text-slate-700">Foto KTP</label>
+                            <input id="ktp_image" name="ktp_image" type="file" accept="image/*" required class="input !py-1.5">
+                            <p class="mt-1 text-xs text-slate-500">Max 5 MB, JPG/PNG.</p>
+                        </div>
+                        <div>
+                            <label for="selfie_image" class="mb-1 block text-sm font-medium text-slate-700">Selfie + KTP</label>
+                            <input id="selfie_image" name="selfie_image" type="file" accept="image/*" required class="input !py-1.5">
+                            <p class="mt-1 text-xs text-slate-500">Foto kamu memegang KTP.</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            --}}
+            @endif
 
             <div class="card p-6">
                 <h2 class="text-lg font-bold">Rekening Bank <span class="text-sm font-normal text-slate-500">(opsional)</span></h2>
-                <p class="mt-1 text-sm text-slate-500">Bisa diisi nanti dari dashboard saat saldo royalti sudah masuk. Tanpa rekening, payout tidak bisa diproses.</p>
+                <p class="mt-1 text-sm text-slate-500">Bisa diisi nanti dari dashboard saat saldo royalti sudah masuk.</p>
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <div>
                         <label for="bank_name" class="mb-1 block text-sm font-medium text-slate-700">Nama Bank</label>

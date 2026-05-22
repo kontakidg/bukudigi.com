@@ -31,6 +31,7 @@ class SiteSettings extends Page implements HasForms
             'hero_tagline_2' => Setting::get('hero_tagline_2'),
             'hero_subtagline' => Setting::get('hero_subtagline'),
             'site_tagline_meta' => Setting::get('site_tagline_meta'),
+            'author_verification_level' => Setting::get('author_verification_level', '1'),
         ]);
     }
 
@@ -45,7 +46,7 @@ class SiteSettings extends Page implements HasForms
                         ->maxLength(255)
                         ->placeholder('Ebook PDF dari Penulis Indonesia'),
                     Forms\Components\TextInput::make('hero_tagline_2')
-                        ->label('Tagline baris 2 (highlight, warna terang)')
+                        ->label('Tagline baris 2 (highlight)')
                         ->maxLength(255)
                         ->placeholder('Bayar QRIS, Baca Sekarang'),
                     Forms\Components\Textarea::make('hero_subtagline')
@@ -63,6 +64,21 @@ class SiteSettings extends Page implements HasForms
                         ->maxLength(160)
                         ->helperText('Max 160 karakter (rekomendasi Google).'),
                 ]),
+
+            Forms\Components\Section::make('Verifikasi Penulis')
+                ->description('Berapa ketat data wajib saat penulis baru daftar di /jual / /author/register.')
+                ->schema([
+                    Forms\Components\Select::make('author_verification_level')
+                        ->label('Level verifikasi pendaftaran penulis')
+                        ->required()
+                        ->options([
+                            '1' => 'Level 1 — Nama saja (paling longgar)',
+                            '2' => 'Level 2 — Nama + No. WhatsApp wajib',
+                            '3' => 'Level 3 — Lengkap: NIK + KTP + Selfie wajib',
+                        ])
+                        ->default('1')
+                        ->helperText('Level lebih tinggi = lebih aman tapi friction onboarding lebih besar. Bisa diubah kapan saja; hanya berlaku untuk pendaftaran baru.'),
+                ]),
         ]);
     }
 
@@ -70,9 +86,16 @@ class SiteSettings extends Page implements HasForms
     {
         $data = $this->form->getState();
 
+        $groupMap = [
+            'hero_tagline_1' => 'homepage',
+            'hero_tagline_2' => 'homepage',
+            'hero_subtagline' => 'homepage',
+            'site_tagline_meta' => 'seo',
+            'author_verification_level' => 'author',
+        ];
+
         foreach ($data as $key => $value) {
-            $group = str_starts_with($key, 'hero_') ? 'homepage' : 'seo';
-            Setting::set($key, $value, $group);
+            Setting::set($key, $value, $groupMap[$key] ?? 'general');
         }
 
         Notification::make()->title('Settings tersimpan')->success()->send();

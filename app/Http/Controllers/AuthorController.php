@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Author;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,6 +16,15 @@ class AuthorController extends Controller
         return view('public.jual');
     }
 
+    /**
+     * Level verifikasi penulis dari Site Settings.
+     * 1 = nama saja, 2 = nama + WA, 3 = nama + WA + NIK + KTP + selfie
+     */
+    private function verificationLevel(): int
+    {
+        return max(1, min(3, (int) Setting::get('author_verification_level', '1')));
+    }
+
     public function showRegister(Request $request): View|RedirectResponse
     {
         $user = $request->user();
@@ -23,7 +33,15 @@ class AuthorController extends Controller
             return redirect()->route('author.dashboard');
         }
 
-        return view('author.register');
+        $level = $this->verificationLevel();
+
+        // Level 2+: butuh phone di user account. Kalau belum diisi, redirect ke profile.
+        if ($level >= 2 && empty($user->phone)) {
+            return redirect()->route('profile.edit')
+                ->with('status', 'Lengkapi nomor WhatsApp di profile dulu sebelum daftar penulis (Level '.$level.' butuh WA).');
+        }
+
+        return view('author.register', ['verificationLevel' => $level]);
     }
 
     public function register(Request $request): RedirectResponse
@@ -31,20 +49,39 @@ class AuthorController extends Controller
         $user = $request->user();
         abort_if($user->author, 422, 'Akun sudah terdaftar sebagai author.');
 
-        $data = $request->validate([
+        $level = $this->verificationLevel();
+
+        // Level 2+: phone wajib ada di user
+        if ($level >= 2 && empty($user->phone)) {
+            return redirect()->route('profile.edit')
+                ->withErrors(['phone' => 'Lengkapi nomor WhatsApp di profile dulu.']);
+        }
+
+        $rules = [
             'display_name' => ['required', 'string', 'max:120'],
             'bio' => ['nullable', 'string', 'max:1000'],
-            'nik' => ['nullable', 'string', 'size:16', 'regex:/^[0-9]+$/'],
             'npwp' => ['nullable', 'string', 'max:32'],
-            // Bank & KYC opsional — bisa diisi nanti di profile saat mau payout
             'bank_name' => ['nullable', 'string', 'max:64'],
             'bank_account' => ['nullable', 'string', 'max:64'],
             'bank_holder' => ['nullable', 'string', 'max:120'],
-            'ktp_image' => ['nullable', 'image', 'max:5120'],
-            'selfie_image' => ['nullable', 'image', 'max:5120'],
             'agree_tos' => ['accepted'],
-        ], [
+        ];
+
+        if ($level >= 3) {
+            $rules['nik'] = ['required', 'string', 'size:16', 'regex:/^[0-9]+$/'];
+            $rules['ktp_image'] = ['required', 'image', 'max:5120'];
+            $rules['selfie_image'] = ['required', 'image', 'max:5120'];
+        } else {
+            $rules['nik'] = ['nullable', 'string', 'size:16', 'regex:/^[0-9]+$/'];
+            $rules['ktp_image'] = ['nullable', 'image', 'max:5120'];
+            $rules['selfie_image'] = ['nullable', 'image', 'max:5120'];
+        }
+
+        $data = $request->validate($rules, [
             'agree_tos.accepted' => 'Kamu harus menyetujui syarat author.',
+            'nik.required' => 'NIK wajib diisi (Level 3 verifikasi).',
+            'ktp_image.required' => 'Foto KTP wajib diupload (Level 3 verifikasi).',
+            'selfie_image.required' => 'Foto selfie + KTP wajib diupload (Level 3 verifikasi).',
         ]);
 
         $ktpPath = null;
