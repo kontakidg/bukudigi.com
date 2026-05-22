@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
@@ -45,6 +47,7 @@ class GoogleController extends Controller
             ->orWhere('email', $googleUser->getEmail())
             ->first();
 
+        $isNewUser = false;
         if (! $user) {
             $user = User::create([
                 'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'User',
@@ -53,8 +56,18 @@ class GoogleController extends Controller
                 'password' => bcrypt(Str::random(32)),
                 'email_verified_at' => now(),
             ]);
+            $isNewUser = true;
         } elseif (! $user->google_id) {
             $user->update(['google_id' => $googleUser->getId()]);
+        }
+
+        // Welcome mail untuk user baru (Google signup)
+        if ($isNewUser) {
+            try {
+                Mail::to($user->email)->queue(new WelcomeMail($user));
+            } catch (Throwable $e) {
+                Log::warning('WelcomeMail (Google signup) queue failed: '.$e->getMessage());
+            }
         }
 
         Auth::login($user, remember: true);
