@@ -29,13 +29,16 @@ class EpubWatermarkService
         }
         $check->close();
 
-        // 2) Copy master ke destinasi (kita modify in-place di copy)
+        // 2) Copy master ke destinasi (kita modify in-place di copy).
+        //    Skip kalau master == dest (in-place mode, e.g. dari --recover).
         $destDir = dirname($destPath);
         if (! is_dir($destDir)) {
             @mkdir($destDir, 0775, true);
         }
-        if (! @copy($masterPath, $destPath)) {
-            throw new RuntimeException("Failed to copy EPUB to {$destPath}");
+        if (realpath($masterPath) !== realpath($destPath)) {
+            if (! @copy($masterPath, $destPath)) {
+                throw new RuntimeException("Failed to copy EPUB to {$destPath}");
+            }
         }
 
         // 3) Try inject watermark. Kalau gagal di langkah manapun, fallback ke unwatermarked copy.
