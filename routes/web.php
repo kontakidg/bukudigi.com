@@ -90,6 +90,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout/buku/{book:slug}', [CheckoutController::class, 'start'])->name('checkout.start');
     Route::get('/checkout/stub/{orderCode}/pay', [CheckoutController::class, 'stubPay'])->name('checkout.stub.pay');
     Route::get('/download/{orderCode}', [DownloadController::class, 'show'])->name('download.show');
+    Route::get('/download/{orderCode}/epub', [DownloadController::class, 'epub'])->name('download.epub');
+    Route::get('/read/{orderCode}', [DownloadController::class, 'readEpub'])->name('download.epub.read');
+    Route::get('/read/{orderCode}/stream', [DownloadController::class, 'streamEpub'])->name('download.epub.stream');
 });
 
 require __DIR__.'/auth.php';

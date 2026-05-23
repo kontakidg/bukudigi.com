@@ -75,7 +75,13 @@ class BookController extends Controller
         $this->validateUploadedPdf($pdfPath);
         $pdfSize = Storage::disk('local')->size($pdfPath);
 
-        $book = DB::transaction(function () use ($author, $data, $slug, $coverPath, $pdfPath, $pdfSize, $penNameId) {
+        $epubPath = null;
+        if ($request->hasFile('epub')) {
+            $epubPath = $this->storeEpub($request->file('epub'), $slug);
+            $this->validateUploadedEpub($epubPath);
+        }
+
+        $book = DB::transaction(function () use ($author, $data, $slug, $coverPath, $pdfPath, $pdfSize, $epubPath, $penNameId) {
             $book = Book::create([
                 'author_id' => $author->id,
                 'pen_name_id' => $penNameId,
@@ -86,6 +92,7 @@ class BookController extends Controller
                 'table_of_contents' => $data['table_of_contents'] ?? null,
                 'cover_path' => $coverPath,
                 'pdf_master_path' => $pdfPath,
+                'epub_master_path' => $epubPath,
                 'price' => $data['price'],
                 'page_count' => $data['page_count'] ?? null,
                 'file_size_bytes' => $pdfSize,
@@ -165,6 +172,11 @@ class BookController extends Controller
             $updates['pdf_master_path'] = $this->storePdf($request->file('pdf'), $book->slug);
             $this->validateUploadedPdf($updates['pdf_master_path']);
             $updates['file_size_bytes'] = Storage::disk('local')->size($updates['pdf_master_path']);
+        }
+
+        if ($request->hasFile('epub')) {
+            $updates['epub_master_path'] = $this->storeEpub($request->file('epub'), $book->slug);
+            $this->validateUploadedEpub($updates['epub_master_path']);
         }
 
         DB::transaction(function () use ($book, $updates, $data) {
@@ -261,6 +273,7 @@ class BookController extends Controller
             'tags' => ['nullable', 'string', 'max:255'],
             'cover' => [$isCreate ? 'required' : 'nullable', 'image', 'max:5120', 'mimes:jpg,jpeg,png,webp'],
             'pdf' => [$isCreate ? 'required' : 'nullable', 'file', 'max:51200', 'mimes:pdf'],
+            'epub' => ['nullable', 'file', 'max:51200', 'mimes:epub,zip'],
             'ai_disclosure' => ['nullable', 'boolean'],
             'ai_platforms' => ['nullable', 'string', 'max:255'],
             'agree_terms' => ['accepted'],
@@ -268,6 +281,8 @@ class BookController extends Controller
             'price.min' => 'Harga minimum Rp 15.000.',
             'price.max' => 'Harga maksimum Rp 500.000.',
             'pdf.max' => 'PDF maksimal 50 MB.',
+            'epub.max' => 'EPUB maksimal 50 MB.',
+            'epub.mimes' => 'File harus berformat .epub.',
             'cover.max' => 'Cover maksimal 5 MB.',
             'agree_terms.accepted' => 'Kamu harus mengkonfirmasi bahwa konten asli/berhak dijual.',
         ]);
@@ -310,6 +325,36 @@ class BookController extends Controller
     private function storePdf(UploadedFile $file, string $slug): string
     {
         return $file->storeAs("books/{$slug}", 'master.pdf', 'local');
+    }
+
+    private function storeEpub(UploadedFile $file, string $slug): string
+    {
+        return $file->storeAs("books/{$slug}", 'master.epub', 'local');
+    }
+
+    /**
+     * Pastikan EPUB beneran archive zip dengan content.opf (struktur EPUB valid).
+     * Kalau invalid, hapus + throw validation error.
+     */
+    private function validateUploadedEpub(string $relPath): void
+    {
+        $abs = Storage::disk('local')->path($relPath);
+        $zip = new \ZipArchive();
+        if ($zip->open($abs) !== true) {
+            @unlink($abs);
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'epub' => 'File EPUB rusak atau bukan archive zip valid.',
+            ]);
+        }
+        $hasContainer = $zip->locateName('META-INF/container.xml') !== false;
+        $zip->close();
+
+        if (! $hasContainer) {
+            @unlink($abs);
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'epub' => 'File EPUB tidak valid (META-INF/container.xml tidak ditemukan).',
+            ]);
+        }
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\WatermarkEpubJob;
 use App\Jobs\WatermarkPdfJob;
 use App\Mail\OrderPaidMail;
 use App\Models\Book;
@@ -85,6 +86,11 @@ class CheckoutController extends Controller
 
             // Dispatch watermark job
             WatermarkPdfJob::dispatch($order->id);
+
+            // Kalau buku punya EPUB master, dispatch EPUB watermark job juga (parallel)
+            if ($order->book->epub_master_path) {
+                WatermarkEpubJob::dispatch($order->id);
+            }
 
             // Email konfirmasi pembayaran + link download
             try {

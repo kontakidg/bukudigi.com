@@ -24,6 +24,7 @@ class Order extends Model
         'midtrans_response',
         'paid_at',
         'watermarked_pdf_path',
+        'watermarked_epub_path',
         'watermarked_at',
         'download_expires_at',
         'download_count',

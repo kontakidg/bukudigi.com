@@ -111,6 +111,19 @@
                     <p class="mt-2 text-xs text-slate-600">📄 File saat ini: <code class="rounded bg-slate-100 px-1.5 py-0.5">{{ basename($book->pdf_master_path) }}</code></p>
                 @endif
             </div>
+
+            <div>
+                <label for="epub" class="mb-1 block text-sm font-medium text-slate-700">
+                    EPUB Master <span class="text-slate-400">(opsional)</span>
+                </label>
+                <input id="epub" name="epub" type="file" accept=".epub,application/epub+zip" class="input !py-1.5">
+                <p class="mt-1 text-xs text-slate-500">
+                    Max 50 MB · format <strong>.epub</strong>. Kalau di-upload, pembeli bisa baca online di bukudigi.com + download .epub untuk app lain (Kindle, Apple Books). Watermark personal otomatis di-inject ke metadata.
+                </p>
+                @if($isEdit && $book->epub_master_path)
+                    <p class="mt-2 text-xs text-green-700">📖 EPUB sudah ada: <code class="rounded bg-green-50 px-1.5 py-0.5">{{ basename($book->epub_master_path) }}</code></p>
+                @endif
+            </div>
         </div>
     </div>
 

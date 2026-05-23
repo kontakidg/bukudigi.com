@@ -71,6 +71,8 @@ class BookResource extends Resource
                         ->helperText('URL https://... atau path R2 relatif'),
                     Forms\Components\TextInput::make('pdf_master_path')->label('PDF master path')->required()->columnSpanFull()
                         ->helperText('Path file PDF di R2 private bucket'),
+                    Forms\Components\TextInput::make('epub_master_path')->label('EPUB master path (opsional)')->columnSpanFull()
+                        ->helperText('Path file .epub di local/private storage. Kosongkan kalau buku ini hanya tersedia dalam format PDF.'),
                     Forms\Components\TextInput::make('price')->label('Harga (IDR)')->required()->numeric()
                         ->prefix('Rp')->minValue(15000)->maxValue(500000),
                     Forms\Components\TextInput::make('page_count')->label('Jumlah Halaman')->numeric(),
