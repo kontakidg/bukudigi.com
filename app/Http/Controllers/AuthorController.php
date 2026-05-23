@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -336,8 +337,15 @@ class AuthorController extends Controller
                 $sRow[] = (int) ($saleMap[$key]->c ?? 0);
             }
 
-            $views[] = ['label' => $book->title, 'data' => $vRow];
-            $sales[] = ['label' => $book->title, 'data' => $sRow];
+            // Singkat judul untuk legenda chart (max 4 kata + …) — judul panjang bikin legend pecah
+            $shortTitle = Str::words($book->title, 4, '');
+            $shortTitle = rtrim($shortTitle, " \t\n\r\0\x0B—–-:,;.|/");
+            if (mb_strlen($shortTitle) < mb_strlen($book->title)) {
+                $shortTitle .= '…';
+            }
+
+            $views[] = ['label' => $shortTitle, 'data' => $vRow];
+            $sales[] = ['label' => $shortTitle, 'data' => $sRow];
         }
 
         return [
