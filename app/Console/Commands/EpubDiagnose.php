@@ -4,13 +4,16 @@ namespace App\Console\Commands;
 
 use App\Jobs\WatermarkEpubJob;
 use App\Models\Order;
+use App\Services\EpubWatermarkService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
 class EpubDiagnose extends Command
 {
-    protected $signature = 'epub:diagnose {order_code} {--rewatermark : Re-run watermark job after diagnose}';
+    protected $signature = 'epub:diagnose {order_code}
+                            {--rewatermark : Re-run watermark job dari master EPUB}
+                            {--recover : Re-apply watermark service ke watermarked file langsung (kalau master hilang)}';
 
     protected $description = 'Inspect EPUB master + watermarked untuk order tertentu, debug masalah reader.';
 
@@ -46,6 +49,29 @@ class EpubDiagnose extends Command
             $wmAbs = Storage::disk('local')->path($wmRel);
             $this->info('--- WATERMARKED EPUB ---');
             $this->inspectEpub($wmAbs);
+        }
+
+        if ($this->option('recover')) {
+            if (! $wmRel) {
+                $this->error('Tidak ada watermarked file untuk recover.');
+                return self::FAILURE;
+            }
+            $this->info('');
+            $this->info('Recovering: re-apply watermark service ke watermarked file (idempotent — strip old marker + inject new clean watermark)...');
+            $wmAbs = Storage::disk('local')->path($wmRel);
+            try {
+                app(EpubWatermarkService::class)->apply($wmAbs, $wmAbs, [
+                    'name' => $order->user->name ?? 'Anonim',
+                    'email' => $order->user->email ?? '-',
+                    'order_code' => $order->order_code,
+                ]);
+                $this->info('Done. Re-inspecting...');
+                $this->inspectEpub($wmAbs);
+            } catch (\Throwable $e) {
+                $this->error('Recovery failed: '.$e->getMessage());
+                return self::FAILURE;
+            }
+            return self::SUCCESS;
         }
 
         if ($this->option('rewatermark')) {
