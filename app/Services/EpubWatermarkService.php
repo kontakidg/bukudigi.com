@@ -104,22 +104,25 @@ class EpubWatermarkService
             $metadata->removeChild($node);
         }
 
-        // Build watermark elements pakai DOM proper
-        $name = $buyer['name'] ?? 'Anonim';
-        $email = $buyer['email'] ?? '-';
-        $orderCode = $buyer['order_code'] ?? '-';
+        // Build watermark elements pakai DOM proper. Pakai createTextNode supaya
+        // karakter spesial (<, >, &) di-escape otomatis sesuai XML spec.
+        $name = $this->stripUnsafe($buyer['name'] ?? 'Anonim');
+        $email = $this->stripUnsafe($buyer['email'] ?? '-');
+        $orderCode = $this->stripUnsafe($buyer['order_code'] ?? '-');
         $timestamp = date('Y-m-d H:i');
 
         $dcNs = 'http://purl.org/dc/elements/1.1/';
 
-        $contributor = $dom->createElementNS($dcNs, 'dc:contributor', "{$name} <{$email}>");
+        $contributor = $dom->createElementNS($dcNs, 'dc:contributor');
         $contributor->setAttribute('id', 'bukudigi-buyer');
+        $contributor->appendChild($dom->createTextNode("{$name} ({$email})"));
         $metadata->appendChild($contributor);
 
-        $rights = $dom->createElementNS($dcNs, 'dc:rights',
-            "Dibeli oleh {$name} ({$email}) - Order {$orderCode} - {$timestamp} - via bukudigi.com"
-        );
+        $rights = $dom->createElementNS($dcNs, 'dc:rights');
         $rights->setAttribute('id', 'bukudigi-rights');
+        $rights->appendChild($dom->createTextNode(
+            "Dibeli oleh {$name} ({$email}) - Order {$orderCode} - {$timestamp} - via bukudigi.com"
+        ));
         $metadata->appendChild($rights);
 
         $newOpf = $dom->saveXML();
@@ -142,6 +145,17 @@ class EpubWatermarkService
             throw new RuntimeException('container.xml hilang setelah modifikasi');
         }
         $verify->close();
+    }
+
+    /**
+     * Strip karakter yang berisiko break XML serialization meski sudah ke-escape.
+     * (defensive — DOMDocument createTextNode harusnya safe, tapi extra layer.)
+     */
+    private function stripUnsafe(string $s): string
+    {
+        // Hapus karakter control + angle brackets (paranoid)
+        $s = preg_replace('/[\x00-\x1F\x7F<>]/u', '', $s);
+        return trim($s);
     }
 
     private function findOpfPath(ZipArchive $zip): ?string

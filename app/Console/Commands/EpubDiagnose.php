@@ -120,6 +120,29 @@ class EpubDiagnose extends Command
                     $this->line('  content.opf XML: valid ✓');
                     $hasBuyer = str_contains($opf, 'bukudigi-buyer');
                     $this->line('  watermark marker: '.($hasBuyer ? 'present ✓' : 'absent'));
+
+                    // Cek tiap item di manifest beneran ada di zip
+                    $items = $dom->getElementsByTagName('item');
+                    $opfDir = trim(dirname($opfPath), '.');
+                    $missing = [];
+                    $count = 0;
+                    foreach ($items as $item) {
+                        $href = $item->getAttribute('href');
+                        if (! $href) continue;
+                        $count++;
+                        $full = $opfDir ? "{$opfDir}/{$href}" : $href;
+                        if ($zip->locateName($full) === false && $zip->locateName($href) === false) {
+                            $missing[] = $href;
+                        }
+                    }
+                    if (empty($missing)) {
+                        $this->line("  manifest:    {$count} items, all present ✓");
+                    } else {
+                        $this->error('  manifest:    '.count($missing).' MISSING items (dari '.$count.'):');
+                        foreach (array_slice($missing, 0, 5) as $m) {
+                            $this->error("    - {$m}");
+                        }
+                    }
                 }
             }
         }
