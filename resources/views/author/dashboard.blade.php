@@ -34,6 +34,162 @@
             </div>
         @endif
 
+        {{-- ===== Performance Chart (30 hari) ===== --}}
+        @if($allBooks->isNotEmpty())
+            <div class="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm" x-data="{ pickerOpen: false }">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold">📈 Performa Buku (30 hari)</h2>
+                        <p class="mt-0.5 text-xs text-slate-500">
+                            {{ $selectedBooks->count() }} dari {{ $allBooks->count() }} buku ditampilkan.
+                            Klik nama buku di legenda untuk hide/show garis.
+                        </p>
+                    </div>
+
+                    @if($allBooks->count() > 5)
+                        <button type="button" @click="pickerOpen = !pickerOpen"
+                                class="btn-outline !py-1.5 !text-xs">
+                            ⚙️ Pilih buku (max 5)
+                        </button>
+                    @endif
+                </div>
+
+                {{-- Book picker (kalau >5 buku) --}}
+                @if($allBooks->count() > 5)
+                    <form method="GET" x-show="pickerOpen" x-cloak x-transition
+                          class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                        <p class="mb-2 text-xs font-semibold text-slate-700">Pilih maksimal 5 buku:</p>
+                        <div class="grid gap-2 sm:grid-cols-2 md:grid-cols-3"
+                             x-data="{ count: {{ $selectedBooks->count() }} }">
+                            @foreach($allBooks as $b)
+                                <label class="flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm hover:border-brand-400">
+                                    <input type="checkbox" name="books[]" value="{{ $b->id }}"
+                                           @checked($selectedBooks->contains('id', $b->id))
+                                           @change="
+                                               if ($el.checked) { count++ } else { count-- }
+                                               // Disable unchecked kalau sudah 5
+                                               $root.querySelectorAll('input[name=\'books[]\']:not(:checked)').forEach(i => i.disabled = count >= 5);
+                                           "
+                                           class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                                    <span class="flex-1 truncate" title="{{ $b->title }}">{{ $b->title }}</span>
+                                    <span class="text-[10px] text-slate-400">{{ $b->sales_count }}×</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <div class="mt-3 flex items-center gap-2">
+                            <button type="submit" class="btn-primary !py-1.5 !text-xs">Terapkan</button>
+                            <a href="{{ route('author.dashboard') }}" class="btn-ghost !py-1.5 !text-xs">Reset ke Top 5</a>
+                            <span class="ml-auto text-[10px] text-slate-500" x-text="`${count}/5 buku dipilih`"></span>
+                        </div>
+                    </form>
+                @endif
+
+                @if($selectedBooks->isEmpty())
+                    <p class="mt-6 rounded-lg bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                        Belum ada buku untuk ditampilkan di chart.
+                    </p>
+                @else
+                    <div class="mt-5">
+                        <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600">
+                            <span class="inline-flex items-center gap-1.5">
+                                <svg width="22" height="2" viewBox="0 0 22 2"><line x1="0" y1="1" x2="22" y2="1" stroke="#475569" stroke-width="2"/></svg>
+                                <span>Garis solid = 👁 Views</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5">
+                                <svg width="22" height="2" viewBox="0 0 22 2"><line x1="0" y1="1" x2="22" y2="1" stroke="#475569" stroke-width="2" stroke-dasharray="4 3"/></svg>
+                                <span>Garis putus = 🛒 Sales</span>
+                            </span>
+                            <span class="ml-auto text-slate-400">Warna sama = buku yang sama</span>
+                        </div>
+                        <div class="relative h-80">
+                            <canvas id="chart-performance"></canvas>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            @push('scripts')
+                <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+                <script>
+                    (function () {
+                        const labels = @json($chart['labels']);
+                        const viewsData = @json($chart['views']);
+                        const salesData = @json($chart['sales']);
+                        // Palette 5 warna kontras (1 warna = 1 buku, dipakai untuk views + sales line)
+                        const palette = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444'];
+
+                        // Build datasets: 2 line per buku (views solid kiri-axis, sales dashed kanan-axis)
+                        const datasets = [];
+                        viewsData.forEach((s, i) => {
+                            const color = palette[i % palette.length];
+                            datasets.push({
+                                label: s.label + ' — Views',
+                                data: s.data,
+                                borderColor: color,
+                                backgroundColor: color + '22',
+                                tension: 0.3,
+                                borderWidth: 2.5,
+                                pointRadius: 2,
+                                pointHoverRadius: 5,
+                                fill: false,
+                                yAxisID: 'yViews',
+                            });
+                            datasets.push({
+                                label: s.label + ' — Sales',
+                                data: (salesData[i] || { data: [] }).data,
+                                borderColor: color,
+                                backgroundColor: color + '22',
+                                borderDash: [5, 4],
+                                tension: 0.3,
+                                borderWidth: 2,
+                                pointRadius: 2,
+                                pointHoverRadius: 5,
+                                pointStyle: 'rectRot',
+                                fill: false,
+                                yAxisID: 'ySales',
+                            });
+                        });
+
+                        const opts = {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { boxWidth: 14, padding: 8, font: { size: 11 }, usePointStyle: false }
+                                },
+                                tooltip: { mode: 'index', intersect: false }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 },
+                                    grid: { display: false }
+                                },
+                                yViews: {
+                                    type: 'linear', position: 'left',
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Views', font: { size: 11, weight: 'bold' }, color: '#475569' },
+                                    ticks: { precision: 0, font: { size: 10 } },
+                                    grid: { color: '#f1f5f9' }
+                                },
+                                ySales: {
+                                    type: 'linear', position: 'right',
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Sales', font: { size: 11, weight: 'bold' }, color: '#475569' },
+                                    ticks: { precision: 0, font: { size: 10 } },
+                                    grid: { drawOnChartArea: false }  // jangan double grid
+                                }
+                            }
+                        };
+
+                        const el = document.getElementById('chart-performance');
+                        if (el) new Chart(el, { type: 'line', data: { labels, datasets }, options: opts });
+                    })();
+                </script>
+            @endpush
+        @endif
+
         @if(! empty($showBankReminder))
             <div class="mb-6 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
                 <p class="font-semibold">💳 Lengkapi data rekening bank</p>

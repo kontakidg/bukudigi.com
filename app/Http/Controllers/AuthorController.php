@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Mail\AuthorRegisteredMail;
 use App\Models\Author;
+use App\Models\Book;
+use App\Models\BookView;
+use App\Models\Order;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -177,6 +182,97 @@ class AuthorController extends Controller
             || ($stats['total_sales'] > 0);
         $showBankReminder = $needsBankInfo && $hasIncome;
 
-        return view('author.dashboard', compact('author', 'books', 'stats', 'showBankReminder', 'needsBankInfo'));
+        // ===== Chart performance — views & sales 30 hari terakhir =====
+        $allBooks = $author->books()->orderByDesc('sales_count')->orderByDesc('views_count')->get(['id', 'title', 'sales_count', 'views_count']);
+
+        // Buku yang dipilih user (max 5). Default = top 5 by sales.
+        $requestedIds = collect($request->input('books', []))
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->take(5)
+            ->values();
+
+        $selectedBooks = $requestedIds->isNotEmpty()
+            ? $allBooks->whereIn('id', $requestedIds->all())->values()
+            : $allBooks->take(5)->values();
+
+        $chart = $this->buildPerformanceChart($selectedBooks);
+
+        return view('author.dashboard', compact(
+            'author', 'books', 'stats', 'showBankReminder', 'needsBankInfo',
+            'allBooks', 'selectedBooks', 'chart'
+        ));
+    }
+
+    /**
+     * Bangun data chart 30 hari terakhir untuk buku-buku terpilih.
+     * Output:
+     *   labels: ['1 May', '2 May', ...]
+     *   views:  [['label' => 'Buku A', 'data' => [0,2,5,...]], ...]
+     *   sales:  [['label' => 'Buku A', 'data' => [0,1,0,...]], ...]
+     */
+    private function buildPerformanceChart($books): array
+    {
+        $days = 30;
+        $end = Carbon::today();
+        $start = $end->copy()->subDays($days - 1);
+
+        // Labels x-axis: 30 tanggal
+        $labels = [];
+        $dateKeys = [];
+        for ($i = 0; $i < $days; $i++) {
+            $d = $start->copy()->addDays($i);
+            $labels[] = $d->format('j M');
+            $dateKeys[] = $d->format('Y-m-d');
+        }
+
+        if ($books->isEmpty()) {
+            return ['labels' => $labels, 'views' => [], 'sales' => [], 'days' => $days];
+        }
+
+        $bookIds = $books->pluck('id')->all();
+
+        // Aggregate views per (book_id, date)
+        $viewRows = BookView::whereIn('book_id', $bookIds)
+            ->whereBetween('viewed_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
+            ->select('book_id', DB::raw('DATE(viewed_at) as d'), DB::raw('COUNT(*) as c'))
+            ->groupBy('book_id', 'd')
+            ->get()
+            ->groupBy('book_id');
+
+        // Aggregate sales (orders paid/watermarking/ready) per (book_id, paid_at date)
+        $saleRows = Order::whereIn('book_id', $bookIds)
+            ->whereIn('status', ['paid', 'watermarking', 'ready'])
+            ->whereNotNull('paid_at')
+            ->whereBetween('paid_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
+            ->select('book_id', DB::raw('DATE(paid_at) as d'), DB::raw('COUNT(*) as c'))
+            ->groupBy('book_id', 'd')
+            ->get()
+            ->groupBy('book_id');
+
+        $views = [];
+        $sales = [];
+        foreach ($books as $book) {
+            $viewMap = ($viewRows[$book->id] ?? collect())->keyBy('d');
+            $saleMap = ($saleRows[$book->id] ?? collect())->keyBy('d');
+
+            $vRow = [];
+            $sRow = [];
+            foreach ($dateKeys as $key) {
+                $vRow[] = (int) ($viewMap[$key]->c ?? 0);
+                $sRow[] = (int) ($saleMap[$key]->c ?? 0);
+            }
+
+            $views[] = ['label' => $book->title, 'data' => $vRow];
+            $sales[] = ['label' => $book->title, 'data' => $sRow];
+        }
+
+        return [
+            'labels' => $labels,
+            'views' => $views,
+            'sales' => $sales,
+            'days' => $days,
+        ];
     }
 }
