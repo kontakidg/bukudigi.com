@@ -239,53 +239,70 @@ class AuthorController extends Controller
     }
 
     /**
-     * Bangun data chart untuk rentang $start..$end (daily granularity).
-     * Output:
-     *   labels:   ['1 May', '2 May', ...]
-     *   views:    [['label' => 'Buku A', 'data' => [0,2,5,...]], ...]
-     *   sales:    [['label' => 'Buku A', 'data' => [0,1,0,...]], ...]
-     *   days:     total hari di rentang
-     *   showYear: true kalau rentang lewat batas tahun (auto label format)
+     * Bangun data chart untuk rentang $start..$end.
+     * Granularity otomatis:
+     *   - rentang <= 180 hari: per-hari (daily)
+     *   - rentang > 180 hari : per-bulan (monthly) supaya ga berdempetan
      */
     private function buildPerformanceChart($books, Carbon $start, Carbon $end): array
     {
         $startD = $start->copy()->startOfDay();
         $endD = $end->copy()->endOfDay();
-        // Hitung hari pakai midnight-to-midnight supaya bebas off-by-one dari endOfDay
         $days = (int) $startD->diffInDays($end->copy()->startOfDay()) + 1;
 
-        // Kalau rentang >180 hari, tampilkan tahun di label biar ga ambigu lintas tahun
-        $showYear = $days > 180;
-        $labelFormat = $showYear ? 'j M y' : 'j M';
+        $granularity = $days > 180 ? 'monthly' : 'daily';
 
+        // Generate labels & keys sesuai granularity
         $labels = [];
         $dateKeys = [];
-        for ($i = 0; $i < $days; $i++) {
-            $d = $startD->copy()->addDays($i);
-            $labels[] = $d->format($labelFormat);
-            $dateKeys[] = $d->format('Y-m-d');
+        if ($granularity === 'daily') {
+            $showYear = $days > 180; // jaga-jaga (tapi cabang ini ga ke-hit)
+            $labelFormat = $showYear ? 'j M y' : 'j M';
+            for ($i = 0; $i < $days; $i++) {
+                $d = $startD->copy()->addDays($i);
+                $labels[] = $d->format($labelFormat);
+                $dateKeys[] = $d->format('Y-m-d');
+            }
+        } else {
+            // Monthly: iterasi bulan dari start sampai end
+            $cursor = $startD->copy()->startOfMonth();
+            $lastMonth = $endD->copy()->startOfMonth();
+            while ($cursor->lte($lastMonth)) {
+                $labels[] = $cursor->format('M y');   // "May 26"
+                $dateKeys[] = $cursor->format('Y-m'); // "2026-05"
+                $cursor->addMonth();
+            }
         }
 
         if ($books->isEmpty()) {
-            return ['labels' => $labels, 'views' => [], 'sales' => [], 'days' => $days, 'showYear' => $showYear];
+            return [
+                'labels' => $labels, 'views' => [], 'sales' => [],
+                'days' => $days, 'granularity' => $granularity,
+            ];
         }
 
         $bookIds = $books->pluck('id')->all();
 
-        // Aggregate views per (book_id, date)
+        // SQL expression untuk group key sesuai granularity
+        $viewKey = $granularity === 'daily'
+            ? DB::raw('DATE(viewed_at) as d')
+            : DB::raw("DATE_FORMAT(viewed_at, '%Y-%m') as d");
+        $saleKey = $granularity === 'daily'
+            ? DB::raw('DATE(paid_at) as d')
+            : DB::raw("DATE_FORMAT(paid_at, '%Y-%m') as d");
+
         $viewRows = BookView::whereIn('book_id', $bookIds)
             ->whereBetween('viewed_at', [$startD, $endD])
-            ->select('book_id', DB::raw('DATE(viewed_at) as d'), DB::raw('COUNT(*) as c'))
+            ->select('book_id', $viewKey, DB::raw('COUNT(*) as c'))
             ->groupBy('book_id', 'd')
             ->get()
             ->groupBy('book_id');
 
-        // Aggregate sales (orders paid/watermarking/ready) per (book_id, paid_at date)
         $saleRows = Order::whereIn('book_id', $bookIds)
             ->whereIn('status', ['paid', 'watermarking', 'ready'])
             ->whereNotNull('paid_at')
             ->whereBetween('paid_at', [$startD, $endD])
-            ->select('book_id', DB::raw('DATE(paid_at) as d'), DB::raw('COUNT(*) as c'))
+            ->select('book_id', $saleKey, DB::raw('COUNT(*) as c'))
             ->groupBy('book_id', 'd')
             ->get()
             ->groupBy('book_id');
@@ -312,7 +329,7 @@ class AuthorController extends Controller
             'views' => $views,
             'sales' => $sales,
             'days' => $days,
-            'showYear' => $showYear,
+            'granularity' => $granularity,
         ];
     }
 }
