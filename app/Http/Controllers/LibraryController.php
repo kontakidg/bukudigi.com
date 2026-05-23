@@ -15,6 +15,9 @@ class LibraryController extends Controller
             ->latest('created_at')
             ->paginate(20);
 
-        return view('public.library', compact('orders'));
+        // Auto-refresh halaman kalau masih ada order yang sedang diproses (watermark job)
+        $hasProcessing = $orders->contains(fn ($o) => in_array($o->status, ['paid', 'watermarking']));
+
+        return view('public.library', compact('orders', 'hasProcessing'));
     }
 }
