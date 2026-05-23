@@ -65,33 +65,79 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.88/dist/epub.min.js"></script>
 <script>
-    (function () {
+    (async function () {
         const url = @json($epubStreamUrl);
-        const book = ePub(url, { openAs: 'epub' });
-        const rendition = book.renderTo('viewer', {
-            width: '100%',
-            height: '100%',
-            spread: 'auto',
-            flow: 'paginated',
-            allowScriptedContent: false,
-        });
-
-        rendition.themes.fontSize('110%');
-
+        const downloadUrl = @json(route('download.epub', $order->order_code));
         const loading = document.getElementById('loading');
         const tocList = document.getElementById('tocList');
         const tocPanel = document.getElementById('tocPanel');
 
-        book.ready.then(() => {
-            return rendition.display();
-        }).then(() => {
-            loading.style.display = 'none';
-        }).catch((err) => {
-            loading.innerHTML = '<div class="reader-error">Gagal memuat EPUB: ' + (err?.message || err) + '<br><br><a href="{{ route('download.epub', $order->order_code) }}" style="color:#4f46e5;">Download saja untuk dibaca offline</a></div>';
-        });
+        const showError = (msg, raw) => {
+            console.error('[EPUB Reader]', msg, raw);
+            loading.innerHTML =
+                '<div class="reader-error">' +
+                '<strong>Gagal memuat EPUB di reader.</strong><br><br>' +
+                'Detail: ' + (msg || 'unknown') + '<br><br>' +
+                '<a href="' + downloadUrl + '" style="color:#4f46e5;font-weight:600;">⬇ Download .epub saja</a> — baca pakai apk lain (Calibre, Apple Books, dll).' +
+                '</div>';
+        };
 
+        // 1) Fetch EPUB sebagai ArrayBuffer — supaya HTTP error langsung ke-detect
+        let buffer;
+        try {
+            const resp = await fetch(url, { credentials: 'same-origin' });
+            if (! resp.ok) {
+                showError('HTTP ' + resp.status + ' ' + resp.statusText);
+                return;
+            }
+            buffer = await resp.arrayBuffer();
+            if (! buffer || buffer.byteLength < 100) {
+                showError('File EPUB kosong atau terlalu kecil (' + (buffer?.byteLength || 0) + ' bytes)');
+                return;
+            }
+        } catch (e) {
+            showError('Network error: ' + e.message, e);
+            return;
+        }
+
+        // 2) Pass ArrayBuffer ke ePub() — lebih reliable daripada URL-based loading
+        let book, rendition;
+        try {
+            book = ePub(buffer);
+            rendition = book.renderTo('viewer', {
+                width: '100%',
+                height: '100%',
+                spread: 'auto',
+                flow: 'paginated',
+                allowScriptedContent: false,
+            });
+            rendition.themes.fontSize('110%');
+        } catch (e) {
+            showError('Init reader error: ' + e.message, e);
+            return;
+        }
+
+        // 3) Timeout fallback — kalau lebih 20 detik masih loading, tampilkan opsi download
+        const timeoutId = setTimeout(() => {
+            if (loading.style.display !== 'none') {
+                showError('Loading timeout (lebih dari 20 detik). EPUB mungkin tidak kompatibel dengan reader inline.');
+            }
+        }, 20000);
+
+        try {
+            await book.ready;
+            await rendition.display();
+            loading.style.display = 'none';
+            clearTimeout(timeoutId);
+        } catch (e) {
+            clearTimeout(timeoutId);
+            showError('Render error: ' + (e?.message || e), e);
+            return;
+        }
+
+        // 4) TOC sidebar
         book.loaded.navigation.then((nav) => {
             tocList.innerHTML = '';
             const renderToc = (items, depth = 0) => {
@@ -100,7 +146,7 @@
                     const a = document.createElement('a');
                     a.href = '#';
                     a.style.paddingLeft = (depth * 12 + 8) + 'px';
-                    a.textContent = item.label.trim() || '(Untitled)';
+                    a.textContent = (item.label || '').trim() || '(Untitled)';
                     a.onclick = (e) => {
                         e.preventDefault();
                         rendition.display(item.href);
@@ -113,11 +159,14 @@
                     }
                 });
             };
-            if (nav.toc.length) {
+            if (nav.toc && nav.toc.length) {
                 renderToc(nav.toc);
             } else {
                 tocList.innerHTML = '<li style="color:#94a3b8;font-size:12px;">TOC tidak tersedia.</li>';
             }
+        }).catch((e) => {
+            console.warn('[EPUB Reader] TOC load failed:', e);
+            tocList.innerHTML = '<li style="color:#94a3b8;font-size:12px;">TOC gagal dimuat.</li>';
         });
 
         // Controls
@@ -125,7 +174,6 @@
         document.getElementById('nextBtn').onclick = () => rendition.next();
         document.getElementById('tocBtn').onclick = () => tocPanel.classList.toggle('open');
 
-        // Keyboard nav
         document.addEventListener('keyup', (e) => {
             if (e.key === 'ArrowLeft') rendition.prev();
             if (e.key === 'ArrowRight') rendition.next();
@@ -135,7 +183,6 @@
             if (e.key === 'ArrowRight') rendition.next();
         });
 
-        // Close TOC on outside click
         document.addEventListener('click', (e) => {
             if (!tocPanel.contains(e.target) && e.target.id !== 'tocBtn' && tocPanel.classList.contains('open')) {
                 tocPanel.classList.remove('open');

@@ -81,10 +81,23 @@ XML;
             throw new RuntimeException('Failed to inject watermark — <metadata> tag missing in content.opf');
         }
 
-        // 4) Replace content.opf di zip
-        $zip->deleteName($opfPath);
+        // 4) Replace content.opf di zip pakai flag overwrite (lebih aman dari deleteName)
         $zip->addFromString($opfPath, $newOpf);
         $zip->close();
+
+        // 5) Verify file masih readable sebagai EPUB valid setelah modifikasi
+        $verify = new ZipArchive();
+        if ($verify->open($destPath, ZipArchive::CHECKCONS) !== true) {
+            // Cleanup file rusak
+            @unlink($destPath);
+            throw new RuntimeException('EPUB corrupt setelah inject watermark. File mungkin awalnya sudah malformed.');
+        }
+        if ($verify->locateName('META-INF/container.xml') === false) {
+            $verify->close();
+            @unlink($destPath);
+            throw new RuntimeException('container.xml hilang setelah watermark.');
+        }
+        $verify->close();
     }
 
     /**
