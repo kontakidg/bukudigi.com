@@ -55,7 +55,11 @@
                             {{ $selectedBooks->count() }} dari {{ $allBooks->count() }} buku ·
                             {{ \Illuminate\Support\Carbon::parse($chartRange['start'])->format('j M Y') }} – {{ \Illuminate\Support\Carbon::parse($chartRange['end'])->format('j M Y') }}
                             <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
-                                {{ ($chart['granularity'] ?? 'daily') === 'monthly' ? 'per-bulan' : 'per-hari' }}
+                                @switch($chart['granularity'] ?? 'daily')
+                                    @case('monthly') per-bulan @break
+                                    @case('weekly')  per-minggu @break
+                                    @default        per-hari
+                                @endswitch
                             </span>
                         </p>
                     </div>

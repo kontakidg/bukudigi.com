@@ -241,8 +241,9 @@ class AuthorController extends Controller
     /**
      * Bangun data chart untuk rentang $start..$end.
      * Granularity otomatis:
-     *   - rentang <= 180 hari: per-hari (daily)
-     *   - rentang > 180 hari : per-bulan (monthly) supaya ga berdempetan
+     *   - rentang <= 45 hari:    per-hari    (daily)
+     *   - rentang 46-200 hari:   per-minggu  (weekly)
+     *   - rentang > 200 hari:    per-bulan   (monthly)
      */
     private function buildPerformanceChart($books, Carbon $start, Carbon $end): array
     {
@@ -250,21 +251,32 @@ class AuthorController extends Controller
         $endD = $end->copy()->endOfDay();
         $days = (int) $startD->diffInDays($end->copy()->startOfDay()) + 1;
 
-        $granularity = $days > 180 ? 'monthly' : 'daily';
+        $granularity = match (true) {
+            $days <= 45  => 'daily',
+            $days <= 200 => 'weekly',
+            default      => 'monthly',
+        };
 
         // Generate labels & keys sesuai granularity
         $labels = [];
         $dateKeys = [];
         if ($granularity === 'daily') {
-            $showYear = $days > 180; // jaga-jaga (tapi cabang ini ga ke-hit)
-            $labelFormat = $showYear ? 'j M y' : 'j M';
             for ($i = 0; $i < $days; $i++) {
                 $d = $startD->copy()->addDays($i);
-                $labels[] = $d->format($labelFormat);
+                $labels[] = $d->format('j M');
                 $dateKeys[] = $d->format('Y-m-d');
             }
+        } elseif ($granularity === 'weekly') {
+            // Iterasi minggu (Monday-Sunday). Pakai ISO week (%x-%v)
+            $cursor = $startD->copy()->startOfWeek(); // Monday
+            $lastWeek = $endD->copy()->startOfWeek();
+            while ($cursor->lte($lastWeek)) {
+                $labels[] = $cursor->format('j M');    // "11 May" (Senin awal minggu)
+                $dateKeys[] = $cursor->format('o-W');  // ISO year-week, e.g. "2026-20"
+                $cursor->addWeek();
+            }
         } else {
-            // Monthly: iterasi bulan dari start sampai end
+            // Monthly: iterasi bulan
             $cursor = $startD->copy()->startOfMonth();
             $lastMonth = $endD->copy()->startOfMonth();
             while ($cursor->lte($lastMonth)) {
@@ -284,12 +296,16 @@ class AuthorController extends Controller
         $bookIds = $books->pluck('id')->all();
 
         // SQL expression untuk group key sesuai granularity
-        $viewKey = $granularity === 'daily'
-            ? DB::raw('DATE(viewed_at) as d')
-            : DB::raw("DATE_FORMAT(viewed_at, '%Y-%m') as d");
-        $saleKey = $granularity === 'daily'
-            ? DB::raw('DATE(paid_at) as d')
-            : DB::raw("DATE_FORMAT(paid_at, '%Y-%m') as d");
+        $viewKey = match ($granularity) {
+            'daily'   => DB::raw('DATE(viewed_at) as d'),
+            'weekly'  => DB::raw("DATE_FORMAT(viewed_at, '%x-%v') as d"),
+            'monthly' => DB::raw("DATE_FORMAT(viewed_at, '%Y-%m') as d"),
+        };
+        $saleKey = match ($granularity) {
+            'daily'   => DB::raw('DATE(paid_at) as d'),
+            'weekly'  => DB::raw("DATE_FORMAT(paid_at, '%x-%v') as d"),
+            'monthly' => DB::raw("DATE_FORMAT(paid_at, '%Y-%m') as d"),
+        };
 
         $viewRows = BookView::whereIn('book_id', $bookIds)
             ->whereBetween('viewed_at', [$startD, $endD])
