@@ -90,7 +90,7 @@ class Order extends Model
         if ($this->download_expires_at && now()->gt($this->download_expires_at)) {
             return false;
         }
-        if ($this->download_count >= 5) {
+        if ($this->download_count >= 10) {
             return false;
         }
         return true;

@@ -12,7 +12,7 @@
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold">📚 Perpustakaan Saya</h1>
-            <p class="mt-1 text-sm text-slate-500">Buku yang sudah kamu beli. Re-download kapan saja (maks 5x dalam 30 hari per buku).</p>
+            <p class="mt-1 text-sm text-slate-500">Buku yang sudah kamu beli. Re-download kapan saja (maks 10x dalam 30 hari per buku).</p>
         </div>
         <div class="flex gap-2">
             <a href="{{ route('books.index') }}" class="btn-outline !py-2 !text-sm">🛍️ Beli Buku Lagi</a>
