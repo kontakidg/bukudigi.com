@@ -2,31 +2,34 @@
 
 namespace App\Services;
 
+use DOMDocument;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use ZipArchive;
 
 /**
  * Watermark EPUB via inject metadata tag dc:rights + dc:contributor
- * di content.opf (file XML utama struktur EPUB).
+ * di content.opf. Pakai DOMDocument (proper XML parser) supaya tidak corrupt file.
  *
- * Tidak modifikasi konten halaman — cuma metadata identitas pembeli.
- * Reader epub.js + kebanyakan reader desktop (Calibre, Kindle Previewer)
- * akan display info ini di bagian "About this book" / properties.
+ * Kalau XML parsing gagal, fallback: copy master as-is (deliver unwatermarked
+ * tapi tetap readable) supaya UX tidak putus.
  */
 class EpubWatermarkService
 {
-    /**
-     * @param  string  $masterPath  Absolute path EPUB master (read-only)
-     * @param  string  $destPath    Absolute path EPUB hasil watermark
-     * @param  array   $buyer       ['name' => string, 'email' => string, 'order_code' => string]
-     */
     public function apply(string $masterPath, string $destPath, array $buyer): void
     {
         if (! is_file($masterPath)) {
             throw new RuntimeException("EPUB master not found: {$masterPath}");
         }
 
-        // 1) Copy master ke destinasi (EPUB = zip, kita modify in-place di copy)
+        // 1) Validasi master EPUB readable sebagai zip
+        $check = new ZipArchive();
+        if ($check->open($masterPath) !== true) {
+            throw new RuntimeException("EPUB master corrupt (not a valid zip): {$masterPath}");
+        }
+        $check->close();
+
+        // 2) Copy master ke destinasi (kita modify in-place di copy)
         $destDir = dirname($destPath);
         if (! is_dir($destDir)) {
             @mkdir($destDir, 0775, true);
@@ -35,74 +38,112 @@ class EpubWatermarkService
             throw new RuntimeException("Failed to copy EPUB to {$destPath}");
         }
 
-        // 2) Open zip dan cari content.opf
+        // 3) Try inject watermark. Kalau gagal di langkah manapun, fallback ke unwatermarked copy.
+        try {
+            $this->injectMetadata($destPath, $buyer);
+        } catch (\Throwable $e) {
+            Log::warning('[EpubWatermark] Inject failed, delivering as-is', [
+                'master' => $masterPath,
+                'error' => $e->getMessage(),
+            ]);
+            // File hasil = copy persis master (sudah di-copy di step 2). OK as fallback.
+        }
+    }
+
+    private function injectMetadata(string $epubPath, array $buyer): void
+    {
         $zip = new ZipArchive();
-        if ($zip->open($destPath) !== true) {
-            throw new RuntimeException("Failed to open EPUB zip: {$destPath}");
+        if ($zip->open($epubPath) !== true) {
+            throw new RuntimeException('Failed to reopen EPUB copy');
         }
 
         $opfPath = $this->findOpfPath($zip);
         if (! $opfPath) {
             $zip->close();
-            throw new RuntimeException('content.opf not found in EPUB (file mungkin bukan EPUB valid).');
+            throw new RuntimeException('content.opf not found in EPUB');
         }
 
         $opfXml = $zip->getFromName($opfPath);
-        if ($opfXml === false) {
+        if ($opfXml === false || empty($opfXml)) {
             $zip->close();
             throw new RuntimeException("Failed to read {$opfPath}");
         }
 
-        // 3) Inject metadata watermark
-        $name = htmlspecialchars($buyer['name'] ?? 'Anonim', ENT_XML1 | ENT_QUOTES, 'UTF-8');
-        $email = htmlspecialchars($buyer['email'] ?? '-', ENT_XML1 | ENT_QUOTES, 'UTF-8');
-        $orderCode = htmlspecialchars($buyer['order_code'] ?? '-', ENT_XML1 | ENT_QUOTES, 'UTF-8');
-        $timestamp = date('Y-m-d H:i');
+        // Parse pakai DOMDocument supaya tidak korup XML
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = true;
+        $dom->formatOutput = false;
 
-        $watermarkXml = <<<XML
+        // Suppress XML warnings — we'll detect parse failure via loadXML return
+        $prevLibxml = libxml_use_internal_errors(true);
+        $loaded = $dom->loadXML($opfXml);
+        libxml_clear_errors();
+        libxml_use_internal_errors($prevLibxml);
 
-    <!-- bukudigi.com watermark -->
-    <dc:contributor opf:role="oth" id="bukudigi-buyer">{$name} &lt;{$email}&gt;</dc:contributor>
-    <dc:rights>Dibeli oleh {$name} ({$email}) · Order {$orderCode} · {$timestamp} · via bukudigi.com</dc:rights>
-
-XML;
-
-        // Inject sebelum </metadata> closing tag. Replace pertama saja (kalau ada nested, lebih aman).
-        $newOpf = preg_replace(
-            '#</metadata>#u',
-            $watermarkXml.'</metadata>',
-            $opfXml,
-            1,
-            $count
-        );
-
-        if (! $count || $newOpf === null) {
+        if (! $loaded) {
             $zip->close();
-            throw new RuntimeException('Failed to inject watermark — <metadata> tag missing in content.opf');
+            throw new RuntimeException('content.opf is not valid XML');
         }
 
-        // 4) Replace content.opf di zip pakai flag overwrite (lebih aman dari deleteName)
+        $metadataNodes = $dom->getElementsByTagName('metadata');
+        if ($metadataNodes->length === 0) {
+            $zip->close();
+            throw new RuntimeException('<metadata> tag missing in content.opf');
+        }
+        $metadata = $metadataNodes->item(0);
+
+        // Hapus watermark lama (kalau ada dari run sebelumnya, biar idempotent)
+        $existingIds = ['bukudigi-buyer', 'bukudigi-rights'];
+        $toRemove = [];
+        foreach ($metadata->childNodes as $child) {
+            if ($child->nodeType === XML_ELEMENT_NODE && in_array($child->getAttribute('id'), $existingIds, true)) {
+                $toRemove[] = $child;
+            }
+        }
+        foreach ($toRemove as $node) {
+            $metadata->removeChild($node);
+        }
+
+        // Build watermark elements pakai DOM proper
+        $name = $buyer['name'] ?? 'Anonim';
+        $email = $buyer['email'] ?? '-';
+        $orderCode = $buyer['order_code'] ?? '-';
+        $timestamp = date('Y-m-d H:i');
+
+        $dcNs = 'http://purl.org/dc/elements/1.1/';
+
+        $contributor = $dom->createElementNS($dcNs, 'dc:contributor', "{$name} <{$email}>");
+        $contributor->setAttribute('id', 'bukudigi-buyer');
+        $metadata->appendChild($contributor);
+
+        $rights = $dom->createElementNS($dcNs, 'dc:rights',
+            "Dibeli oleh {$name} ({$email}) - Order {$orderCode} - {$timestamp} - via bukudigi.com"
+        );
+        $rights->setAttribute('id', 'bukudigi-rights');
+        $metadata->appendChild($rights);
+
+        $newOpf = $dom->saveXML();
+        if (! $newOpf) {
+            $zip->close();
+            throw new RuntimeException('Failed to serialize modified content.opf');
+        }
+
+        // Replace dalam zip (addFromString overwrite filename yang sudah ada)
         $zip->addFromString($opfPath, $newOpf);
         $zip->close();
 
-        // 5) Verify file masih readable sebagai EPUB valid setelah modifikasi
+        // Verify hasil masih readable
         $verify = new ZipArchive();
-        if ($verify->open($destPath, ZipArchive::CHECKCONS) !== true) {
-            // Cleanup file rusak
-            @unlink($destPath);
-            throw new RuntimeException('EPUB corrupt setelah inject watermark. File mungkin awalnya sudah malformed.');
+        if ($verify->open($epubPath) !== true) {
+            throw new RuntimeException('EPUB corrupt setelah modifikasi');
         }
         if ($verify->locateName('META-INF/container.xml') === false) {
             $verify->close();
-            @unlink($destPath);
-            throw new RuntimeException('container.xml hilang setelah watermark.');
+            throw new RuntimeException('container.xml hilang setelah modifikasi');
         }
         $verify->close();
     }
 
-    /**
-     * Cari path content.opf via META-INF/container.xml (lokasi standar EPUB).
-     */
     private function findOpfPath(ZipArchive $zip): ?string
     {
         $container = $zip->getFromName('META-INF/container.xml');
@@ -114,7 +155,6 @@ XML;
             return $m[1];
         }
 
-        // Fallback: scan file .opf di root
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $name = $zip->getNameIndex($i);
             if ($name && str_ends_with($name, '.opf')) {
