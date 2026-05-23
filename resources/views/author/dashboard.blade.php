@@ -34,15 +34,26 @@
             </div>
         @endif
 
-        {{-- ===== Performance Chart (30 hari) ===== --}}
+        {{-- ===== Performance Chart ===== --}}
         @if($allBooks->isNotEmpty())
-            <div class="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm" x-data="{ pickerOpen: false }">
+            @php
+                $rangeLabels = [
+                    '14' => '14 hari',
+                    '30' => '1 bulan',
+                    '180' => '6 bulan',
+                    '365' => '1 tahun',
+                    'custom' => 'Custom',
+                ];
+                $activeRangeLabel = $rangeLabels[$chartRange['preset']] ?? '1 bulan';
+            @endphp
+            <div class="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                 x-data="{ pickerOpen: false, customOpen: {{ $chartRange['preset'] === 'custom' ? 'true' : 'false' }} }">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h2 class="text-lg font-bold">📈 Performa Buku (30 hari)</h2>
+                        <h2 class="text-lg font-bold">📈 Performa Buku <span class="text-slate-400">({{ $activeRangeLabel }})</span></h2>
                         <p class="mt-0.5 text-xs text-slate-500">
-                            {{ $selectedBooks->count() }} dari {{ $allBooks->count() }} buku ditampilkan.
-                            Klik nama buku di legenda untuk hide/show garis.
+                            {{ $selectedBooks->count() }} dari {{ $allBooks->count() }} buku ditampilkan ·
+                            {{ \Illuminate\Support\Carbon::parse($chartRange['start'])->format('j M Y') }} – {{ \Illuminate\Support\Carbon::parse($chartRange['end'])->format('j M Y') }}
                         </p>
                     </div>
 
@@ -54,10 +65,71 @@
                     @endif
                 </div>
 
+                {{-- Range selector --}}
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                    @foreach(['14' => '14 hari', '30' => '1 bulan', '180' => '6 bulan', '365' => '1 tahun'] as $r => $label)
+                        @php
+                            $params = array_filter([
+                                'range' => $r,
+                                'books' => $selectedBooks->pluck('id')->all() ?: null,
+                            ]);
+                            $url = route('author.dashboard', $params);
+                            $isActive = $chartRange['preset'] === $r;
+                        @endphp
+                        <a href="{{ $url }}"
+                           class="rounded-lg px-3 py-1.5 text-xs font-semibold transition
+                                  {{ $isActive
+                                      ? 'bg-brand-600 text-white shadow-sm'
+                                      : 'border border-slate-200 bg-white text-slate-700 hover:border-brand-400 hover:text-brand-600' }}">
+                            {{ $label }}
+                        </a>
+                    @endforeach
+                    <button type="button" @click="customOpen = !customOpen"
+                            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition
+                                   {{ $chartRange['preset'] === 'custom'
+                                       ? 'bg-brand-600 text-white shadow-sm'
+                                       : 'border border-slate-200 bg-white text-slate-700 hover:border-brand-400 hover:text-brand-600' }}">
+                        📅 Custom
+                    </button>
+                </div>
+
+                {{-- Custom date range form --}}
+                <form method="GET" x-show="customOpen" x-cloak x-transition
+                      class="mt-3 flex flex-wrap items-end gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <input type="hidden" name="range" value="custom">
+                    @foreach($selectedBooks as $b)
+                        <input type="hidden" name="books[]" value="{{ $b->id }}">
+                    @endforeach
+                    <div>
+                        <label class="block text-[10px] font-semibold uppercase text-slate-600">Mulai</label>
+                        <input type="date" name="start"
+                               value="{{ $chartRange['preset'] === 'custom' ? $chartRange['start'] : '' }}"
+                               max="{{ \Illuminate\Support\Carbon::today()->format('Y-m-d') }}"
+                               required
+                               class="input !py-1.5 !text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold uppercase text-slate-600">Sampai</label>
+                        <input type="date" name="end"
+                               value="{{ $chartRange['preset'] === 'custom' ? $chartRange['end'] : '' }}"
+                               max="{{ \Illuminate\Support\Carbon::today()->format('Y-m-d') }}"
+                               required
+                               class="input !py-1.5 !text-xs">
+                    </div>
+                    <button type="submit" class="btn-primary !py-1.5 !text-xs">Terapkan</button>
+                    <span class="ml-auto text-[10px] text-slate-500">Maks 2 tahun ke belakang</span>
+                </form>
+
                 {{-- Book picker (kalau >5 buku) --}}
                 @if($allBooks->count() > 5)
                     <form method="GET" x-show="pickerOpen" x-cloak x-transition
                           class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                        {{-- Preserve range selection saat ganti buku --}}
+                        <input type="hidden" name="range" value="{{ $chartRange['preset'] }}">
+                        @if($chartRange['preset'] === 'custom')
+                            <input type="hidden" name="start" value="{{ $chartRange['start'] }}">
+                            <input type="hidden" name="end" value="{{ $chartRange['end'] }}">
+                        @endif
                         <p class="mb-2 text-xs font-semibold text-slate-700">Pilih maksimal 5 buku:</p>
                         <div class="grid gap-2 sm:grid-cols-2 md:grid-cols-3"
                              x-data="{ count: {{ $selectedBooks->count() }} }">
@@ -78,7 +150,14 @@
                         </div>
                         <div class="mt-3 flex items-center gap-2">
                             <button type="submit" class="btn-primary !py-1.5 !text-xs">Terapkan</button>
-                            <a href="{{ route('author.dashboard') }}" class="btn-ghost !py-1.5 !text-xs">Reset ke Top 5</a>
+                            @php
+                                $resetParams = array_filter([
+                                    'range' => $chartRange['preset'] !== '30' ? $chartRange['preset'] : null,
+                                    'start' => $chartRange['preset'] === 'custom' ? $chartRange['start'] : null,
+                                    'end' => $chartRange['preset'] === 'custom' ? $chartRange['end'] : null,
+                                ]);
+                            @endphp
+                            <a href="{{ route('author.dashboard', $resetParams) }}" class="btn-ghost !py-1.5 !text-xs">Reset ke Top 5</a>
                             <span class="ml-auto text-[10px] text-slate-500" x-text="`${count}/5 buku dipilih`"></span>
                         </div>
                     </form>

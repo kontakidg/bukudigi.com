@@ -197,45 +197,84 @@ class AuthorController extends Controller
             ? $allBooks->whereIn('id', $requestedIds->all())->values()
             : $allBooks->take(5)->values();
 
-        $chart = $this->buildPerformanceChart($selectedBooks);
+        // Range chart: 14|30|180|365|custom (default 30 hari)
+        $range = (string) $request->input('range', '30');
+        if (! in_array($range, ['14', '30', '180', '365', 'custom'], true)) {
+            $range = '30';
+        }
+
+        $end = Carbon::today()->endOfDay();
+        if ($range === 'custom') {
+            $startInput = $request->input('start');
+            $endInput = $request->input('end');
+            try {
+                $start = $startInput ? Carbon::parse($startInput)->startOfDay() : Carbon::today()->subDays(29)->startOfDay();
+                $end = $endInput ? Carbon::parse($endInput)->endOfDay() : $end;
+            } catch (\Throwable $e) {
+                $start = Carbon::today()->subDays(29)->startOfDay();
+            }
+            if ($end->lt($start)) {
+                [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+            }
+            // Safety: cap range max 2 tahun supaya query ga jebol
+            if ($start->lt($end->copy()->subDays(730))) {
+                $start = $end->copy()->subDays(730)->startOfDay();
+            }
+        } else {
+            $days = (int) $range;
+            $start = Carbon::today()->subDays($days - 1)->startOfDay();
+        }
+
+        $chart = $this->buildPerformanceChart($selectedBooks, $start, $end);
+        $chartRange = [
+            'preset' => $range,
+            'start' => $start->format('Y-m-d'),
+            'end' => $end->format('Y-m-d'),
+        ];
 
         return view('author.dashboard', compact(
             'author', 'books', 'stats', 'showBankReminder', 'needsBankInfo',
-            'allBooks', 'selectedBooks', 'chart'
+            'allBooks', 'selectedBooks', 'chart', 'chartRange'
         ));
     }
 
     /**
-     * Bangun data chart 30 hari terakhir untuk buku-buku terpilih.
+     * Bangun data chart untuk rentang $start..$end (daily granularity).
      * Output:
-     *   labels: ['1 May', '2 May', ...]
-     *   views:  [['label' => 'Buku A', 'data' => [0,2,5,...]], ...]
-     *   sales:  [['label' => 'Buku A', 'data' => [0,1,0,...]], ...]
+     *   labels:   ['1 May', '2 May', ...]
+     *   views:    [['label' => 'Buku A', 'data' => [0,2,5,...]], ...]
+     *   sales:    [['label' => 'Buku A', 'data' => [0,1,0,...]], ...]
+     *   days:     total hari di rentang
+     *   showYear: true kalau rentang lewat batas tahun (auto label format)
      */
-    private function buildPerformanceChart($books): array
+    private function buildPerformanceChart($books, Carbon $start, Carbon $end): array
     {
-        $days = 30;
-        $end = Carbon::today();
-        $start = $end->copy()->subDays($days - 1);
+        $startD = $start->copy()->startOfDay();
+        $endD = $end->copy()->endOfDay();
+        // Hitung hari pakai midnight-to-midnight supaya bebas off-by-one dari endOfDay
+        $days = (int) $startD->diffInDays($end->copy()->startOfDay()) + 1;
 
-        // Labels x-axis: 30 tanggal
+        // Kalau rentang >180 hari, tampilkan tahun di label biar ga ambigu lintas tahun
+        $showYear = $days > 180;
+        $labelFormat = $showYear ? 'j M y' : 'j M';
+
         $labels = [];
         $dateKeys = [];
         for ($i = 0; $i < $days; $i++) {
-            $d = $start->copy()->addDays($i);
-            $labels[] = $d->format('j M');
+            $d = $startD->copy()->addDays($i);
+            $labels[] = $d->format($labelFormat);
             $dateKeys[] = $d->format('Y-m-d');
         }
 
         if ($books->isEmpty()) {
-            return ['labels' => $labels, 'views' => [], 'sales' => [], 'days' => $days];
+            return ['labels' => $labels, 'views' => [], 'sales' => [], 'days' => $days, 'showYear' => $showYear];
         }
 
         $bookIds = $books->pluck('id')->all();
 
         // Aggregate views per (book_id, date)
         $viewRows = BookView::whereIn('book_id', $bookIds)
-            ->whereBetween('viewed_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
+            ->whereBetween('viewed_at', [$startD, $endD])
             ->select('book_id', DB::raw('DATE(viewed_at) as d'), DB::raw('COUNT(*) as c'))
             ->groupBy('book_id', 'd')
             ->get()
@@ -245,7 +284,7 @@ class AuthorController extends Controller
         $saleRows = Order::whereIn('book_id', $bookIds)
             ->whereIn('status', ['paid', 'watermarking', 'ready'])
             ->whereNotNull('paid_at')
-            ->whereBetween('paid_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
+            ->whereBetween('paid_at', [$startD, $endD])
             ->select('book_id', DB::raw('DATE(paid_at) as d'), DB::raw('COUNT(*) as c'))
             ->groupBy('book_id', 'd')
             ->get()
@@ -273,6 +312,7 @@ class AuthorController extends Controller
             'views' => $views,
             'sales' => $sales,
             'days' => $days,
+            'showYear' => $showYear,
         ];
     }
 }
