@@ -25,6 +25,17 @@
                         @case('religi') 🕌 @break
                         @case('self-help') 💡 @break
                         @case('anak') 🧸 @break
+                        @case('hiburan') 🎬 @break
+                        @case('sejarah') 🏛️ @break
+                        @case('teknologi-it') 💻 @break
+                        @case('seni-desain') 🎨 @break
+                        @case('olahraga-fitness') 🏋️ @break
+                        @case('travel-wisata') ✈️ @break
+                        @case('parenting') 👨‍👩‍👧 @break
+                        @case('keuangan-pribadi') 💰 @break
+                        @case('marketing-media-sosial') 📣 @break
+                        @case('penulisan-jurnalistik') ✍️ @break
+                        @case('non-fiksi-sains') 🔬 @break
                         @default 📚
                     @endswitch
                 </span>
