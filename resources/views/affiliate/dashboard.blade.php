@@ -172,9 +172,9 @@
             $defaultCodeId = $codes->firstWhere('is_default', true)?->id ?? $codes->first()->id;
         @endphp
         <div class="mt-6 card p-6"
-             x-data="affiliateLinkGen({{ $codesJson->toJson() }}, {{ $linkableBooks->toJson() }}, {{ $defaultCodeId }})">
+             x-data="affiliateLinkGen({{ $codesJson->toJson() }}, {{ $linkableBooks->toJson() }}, {{ $defaultCodeId }}, '{{ url('/r') }}')">
             <h2 class="text-lg font-bold">🔗 Generator Link Buku</h2>
-            <p class="mt-1 text-sm text-slate-500">Pilih buku + pilih kode → langsung dapat link siap share. Format: <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">https://bukudigi.com/buku/SLUG?ref=KODE</code></p>
+            <p class="mt-1 text-sm text-slate-500">Pilih buku + pilih kode → dapat link siap share. Default pakai <strong>short link</strong> (lebih ringkas).</p>
 
             <div class="mt-4 grid gap-4 md:grid-cols-2">
                 {{-- Pilih buku --}}
@@ -183,10 +183,10 @@
                     <input x-model="search" type="search" placeholder="Ketik judul buku…"
                            class="input">
                     <div class="mt-2 max-h-56 overflow-y-auto rounded-lg border border-slate-200">
-                        <template x-for="b in filteredBooks" :key="b.slug">
-                            <button type="button" @click="selectedSlug = b.slug; selectedTitle = b.title; selectedUrl = b.url"
+                        <template x-for="b in filteredBooks" :key="b.id">
+                            <button type="button" @click="selectBook(b)"
                                     class="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-emerald-50"
-                                    :class="selectedSlug === b.slug ? 'bg-emerald-100 font-semibold' : ''">
+                                    :class="selectedId === b.id ? 'bg-emerald-100 font-semibold' : ''">
                                 <span x-text="b.title" class="text-slate-800"></span>
                                 <span class="text-xs text-slate-500" x-text="' · ' + b.price"></span>
                             </button>
@@ -212,7 +212,21 @@
                         </template>
                     </div>
 
-                    <label class="mt-4 mb-1 block text-xs font-medium text-slate-700">3. Atau URL kustom <span class="text-slate-400">(opsional)</span></label>
+                    <label class="mt-4 mb-1 block text-xs font-medium text-slate-700">3. Format link</label>
+                    <div class="flex gap-2">
+                        <button type="button" @click="mode = 'short'; customUrl = ''"
+                                class="rounded-lg border px-3 py-1.5 text-xs font-medium"
+                                :class="mode === 'short' ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600'">
+                            🔗 Short (lebih ringkas)
+                        </button>
+                        <button type="button" @click="mode = 'long'; customUrl = ''"
+                                class="rounded-lg border px-3 py-1.5 text-xs font-medium"
+                                :class="mode === 'long' ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600'">
+                            📄 Long (deskriptif/SEO)
+                        </button>
+                    </div>
+
+                    <label class="mt-3 mb-1 block text-xs font-medium text-slate-700">Atau URL kustom <span class="text-slate-400">(opsional, override pilihan buku)</span></label>
                     <input x-model="customUrl" type="text" placeholder="https://bukudigi.com/buku/slug-buku"
                            class="input font-mono text-xs">
 
@@ -239,17 +253,26 @@
 
         @push('scripts')
         <script>
-            function affiliateLinkGen(codes, books, defaultCodeId) {
+            function affiliateLinkGen(codes, books, defaultCodeId, shortBase) {
                 return {
                     codes,
                     books,
+                    shortBase,
                     search: '',
+                    selectedId: books.length ? books[0].id : null,
                     selectedSlug: books.length ? books[0].slug : '',
                     selectedTitle: books.length ? books[0].title : '',
                     selectedUrl: books.length ? books[0].url : 'https://bukudigi.com',
                     selectedCodeId: defaultCodeId,
+                    mode: 'short',
                     customUrl: '',
                     copied: false,
+                    selectBook(b) {
+                        this.selectedId = b.id;
+                        this.selectedSlug = b.slug;
+                        this.selectedTitle = b.title;
+                        this.selectedUrl = b.url;
+                    },
                     get filteredBooks() {
                         if (!this.search) return this.books;
                         const s = this.search.toLowerCase();
@@ -259,9 +282,23 @@
                         return this.codes.find(c => c.id === this.selectedCodeId) || this.codes[0];
                     },
                     get finalUrl() {
-                        const base = (this.customUrl || this.selectedUrl || 'https://bukudigi.com').trim();
+                        const code = this.currentCode?.code || '';
+                        // Custom URL override (selalu pakai long format dengan ?ref=)
+                        if (this.customUrl) {
+                            const base = this.customUrl.trim();
+                            const sep = base.includes('?') ? '&' : '?';
+                            return base + sep + 'ref=' + code;
+                        }
+                        // Short link mode: /r/CODE atau /r/CODE/ID
+                        if (this.mode === 'short') {
+                            return this.selectedId
+                                ? `${this.shortBase}/${code}/${this.selectedId}`
+                                : `${this.shortBase}/${code}`;
+                        }
+                        // Long mode: full URL + ?ref=
+                        const base = (this.selectedUrl || 'https://bukudigi.com').trim();
                         const sep = base.includes('?') ? '&' : '?';
-                        return base + sep + 'ref=' + (this.currentCode?.code || '');
+                        return base + sep + 'ref=' + code;
                     },
                     copy() {
                         navigator.clipboard.writeText(this.finalUrl);

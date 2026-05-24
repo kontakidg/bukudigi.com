@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\AffiliateTracker;
 use App\Models\Affiliate;
 use App\Models\AffiliateClick;
 use App\Models\AffiliateCode;
@@ -10,6 +11,7 @@ use App\Models\Book;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -18,6 +20,68 @@ class AffiliateController extends Controller
     public function landing(): View
     {
         return view('affiliate.landing');
+    }
+
+    /**
+     * Short-link redirect: /r/{code} atau /r/{code}/{book}
+     * - Set cookie ref + log click (idempotent harian per ip)
+     * - Redirect 302 ke homepage / halaman buku
+     *
+     * $bookKey bisa ID numerik atau slug.
+     */
+    public function shortRedirect(Request $request, string $code, ?string $bookKey = null): RedirectResponse
+    {
+        $code = strtoupper(trim($code));
+        $affCode = AffiliateCode::with('affiliate')->where('code', $code)->first();
+
+        // Resolve destinasi (buku spesifik atau homepage). Walaupun code invalid, tetap redirect ke target.
+        $book = null;
+        if ($bookKey) {
+            $book = is_numeric($bookKey)
+                ? Book::where('id', (int) $bookKey)->where('status', 'active')->first()
+                : Book::where('slug', $bookKey)->where('status', 'active')->first();
+        }
+        $destination = $book
+            ? route('books.show', ['book' => $book->slug])
+            : route('home');
+
+        // Tracking (mirror logic AffiliateTracker, tapi inline supaya redirect bisa langsung)
+        if ($affCode && $affCode->affiliate && $affCode->affiliate->status === 'approved') {
+            $affiliate = $affCode->affiliate;
+            $userId = $request->user()?->id;
+            $isSelf = $userId && (int) $affiliate->user_id === (int) $userId;
+
+            if (! $isSelf) {
+                Cookie::queue(
+                    AffiliateTracker::COOKIE_NAME,
+                    $affCode->code,
+                    AffiliateTracker::COOKIE_DAYS * 24 * 60
+                );
+
+                $ip = $request->ip();
+                $today = Carbon::today();
+                $exists = AffiliateClick::where('affiliate_code_id', $affCode->id)
+                    ->where('ip', $ip)
+                    ->where('clicked_at', '>=', $today)
+                    ->exists();
+
+                if (! $exists) {
+                    AffiliateClick::create([
+                        'affiliate_id' => $affiliate->id,
+                        'affiliate_code_id' => $affCode->id,
+                        'book_id' => $book?->id,
+                        'ip' => $ip,
+                        'ua_hash' => substr(md5((string) $request->userAgent()), 0, 32),
+                        'referer' => substr((string) $request->headers->get('referer'), 0, 500),
+                        'clicked_at' => now(),
+                    ]);
+                    $affCode->increment('clicks_count');
+                    $affiliate->increment('clicks_count');
+                }
+            }
+        }
+
+        return redirect()->away($destination, 302);
     }
 
     public function showRegister(Request $request): View|RedirectResponse
@@ -137,6 +201,7 @@ class AffiliateController extends Controller
             ->limit(60)
             ->get(['id', 'slug', 'title', 'price'])
             ->map(fn ($b) => [
+                'id' => $b->id,
                 'slug' => $b->slug,
                 'title' => $b->title,
                 'price' => 'Rp '.number_format((int) $b->price, 0, ',', '.'),

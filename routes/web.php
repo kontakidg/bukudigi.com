@@ -35,6 +35,12 @@ Route::get('/jual', [AuthorController::class, 'landing'])->name('jual');
 // === Affiliate landing (public) ===
 Route::get('/affiliate', [AffiliateController::class, 'landing'])->name('affiliate.landing');
 
+// === Affiliate short redirect (public): /r/{code} atau /r/{code}/{book} ===
+Route::get('/r/{code}/{book?}', [AffiliateController::class, 'shortRedirect'])
+    ->where('code', '[A-Za-z0-9_-]{3,32}')
+    ->where('book', '[A-Za-z0-9_\-]+')
+    ->name('affiliate.short');
+
 // === Info pages ===
 Route::view('/info/tentang', 'info.tentang')->name('info.tentang');
 Route::view('/info/bantuan', 'info.bantuan')->name('info.bantuan');
