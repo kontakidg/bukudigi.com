@@ -32,6 +32,11 @@ class SiteSettings extends Page implements HasForms
             'hero_subtagline' => Setting::get('hero_subtagline'),
             'site_tagline_meta' => Setting::get('site_tagline_meta'),
             'author_verification_level' => Setting::get('author_verification_level', '1'),
+            'maintenance_enabled' => (bool) Setting::get('maintenance_enabled'),
+            'maintenance_title' => Setting::get('maintenance_title', 'Lagi rapi-rapi rak buku 📚'),
+            'maintenance_message' => Setting::get('maintenance_message', 'Halo! bukudigi.com sedang upgrade biar makin nyaman dibaca. Tenang, semua buku kamu di Perpustakaan aman tersimpan. Sebentar ya, kami segera kembali!'),
+            'maintenance_estimated_end' => Setting::get('maintenance_estimated_end'),
+            'maintenance_show_contact' => (bool) Setting::get('maintenance_show_contact', true),
         ]);
     }
 
@@ -79,6 +84,42 @@ class SiteSettings extends Page implements HasForms
                         ->default('1')
                         ->helperText('Level lebih tinggi = lebih aman tapi friction onboarding lebih besar. Bisa diubah kapan saja; hanya berlaku untuk pendaftaran baru.'),
                 ]),
+
+            Forms\Components\Section::make('🚧 Maintenance Mode')
+                ->description('Aktifkan untuk menutup site dari publik (admin tetap bisa akses /admin). Cocok untuk deployment, update DB, atau tweak besar.')
+                ->schema([
+                    Forms\Components\Toggle::make('maintenance_enabled')
+                        ->label('Aktifkan Maintenance Mode')
+                        ->helperText('Saat ON, semua user non-admin akan lihat halaman maintenance dengan response 503. Admin yang sudah login + path /admin tetap bisa diakses.')
+                        ->live()
+                        ->columnSpanFull(),
+
+                    Forms\Components\TextInput::make('maintenance_title')
+                        ->label('Judul halaman maintenance')
+                        ->maxLength(120)
+                        ->placeholder('Lagi rapi-rapi rak buku 📚')
+                        ->helperText('Boleh pakai emoji. Tampil sebagai heading utama.')
+                        ->columnSpanFull(),
+
+                    Forms\Components\Textarea::make('maintenance_message')
+                        ->label('Pesan ke user')
+                        ->rows(4)
+                        ->maxLength(500)
+                        ->placeholder('Halo! bukudigi.com sedang upgrade biar makin nyaman dibaca...')
+                        ->helperText('Tone friendly. Jelasin singkat kenapa down + janji kapan balik.')
+                        ->columnSpanFull(),
+
+                    Forms\Components\DateTimePicker::make('maintenance_estimated_end')
+                        ->label('Perkiraan selesai (opsional)')
+                        ->helperText('Kalau diisi, akan tampil countdown ke waktu ini di halaman maintenance.')
+                        ->seconds(false),
+
+                    Forms\Components\Toggle::make('maintenance_show_contact')
+                        ->label('Tampilkan tombol "Hubungi Support"')
+                        ->helperText('Default ON. Link ke mailto:support@bukudigi.com.')
+                        ->default(true),
+                ])->columns(2)
+                ->collapsed(fn (callable $get) => ! $get('maintenance_enabled')),
         ]);
     }
 
@@ -92,6 +133,11 @@ class SiteSettings extends Page implements HasForms
             'hero_subtagline' => 'homepage',
             'site_tagline_meta' => 'seo',
             'author_verification_level' => 'author',
+            'maintenance_enabled' => 'maintenance',
+            'maintenance_title' => 'maintenance',
+            'maintenance_message' => 'maintenance',
+            'maintenance_estimated_end' => 'maintenance',
+            'maintenance_show_contact' => 'maintenance',
         ];
 
         foreach ($data as $key => $value) {

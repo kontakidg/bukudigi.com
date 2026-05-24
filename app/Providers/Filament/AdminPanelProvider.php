@@ -47,6 +47,16 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\TrendsChart::class,
             ])
             ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn (): HtmlString => new HtmlString(
+                    \App\Models\Setting::get('maintenance_enabled')
+                        ? '<div style="background:#fef3c7;border-bottom:2px solid #f59e0b;color:#78350f;padding:10px 16px;font-size:13px;font-weight:600;text-align:center;position:sticky;top:0;z-index:50;">
+                            🚧 MAINTENANCE MODE AKTIF — User publik melihat halaman maintenance. Site Settings → Maintenance untuk matikan.
+                          </div>'
+                        : ''
+                )
+            )
+            ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): HtmlString => new HtmlString(<<<'HTML'
                     <style>

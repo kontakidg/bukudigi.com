@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/midtrans/notify',
         ]);
+
+        // Soft maintenance mode (toggleable via admin Site Settings)
+        $middleware->web(append: [
+            \App\Http\Middleware\MaintenanceMode::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
