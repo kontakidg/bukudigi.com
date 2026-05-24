@@ -76,7 +76,9 @@ return [
             'region' => 'auto',
             'bucket' => env('R2_BUCKET'),
             'endpoint' => env('R2_ENDPOINT'),
-            'use_path_style_endpoint' => true,
+            // R2 prefers path-style for compatibility. Set R2_PATH_STYLE=false di .env
+            // kalau pakai virtual-hosted endpoint (bucket.<account>.r2.cloudflarestorage.com).
+            'use_path_style_endpoint' => env('R2_PATH_STYLE', true),
             'visibility' => 'private',
             'throw' => false,
             'report' => false,
