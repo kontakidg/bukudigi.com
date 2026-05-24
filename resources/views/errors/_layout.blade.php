@@ -8,7 +8,7 @@
     <meta name="robots" content="noindex, nofollow">
     <title>{{ $code }} · {{ $title }} — bukudigi.com</title>
 
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=2">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 

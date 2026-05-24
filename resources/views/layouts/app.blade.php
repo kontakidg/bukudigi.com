@@ -17,9 +17,9 @@
     ])
 
     {{-- Favicon --}}
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('favicon.png') }}?v=2">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=2">
     <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
 
     <link rel="preconnect" href="https://fonts.bunny.net">

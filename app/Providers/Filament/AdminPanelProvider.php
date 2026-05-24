@@ -32,7 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('bukudigi')
             ->brandLogo(asset('logo-white.png'))
             ->brandLogoHeight('1.75rem')
-            ->favicon(asset('favicon.svg'))
+            ->favicon(asset('favicon.png').'?v=2')
             ->colors([
                 'primary' => Color::Indigo,
             ])
