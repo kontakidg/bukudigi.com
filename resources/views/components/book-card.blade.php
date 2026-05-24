@@ -19,6 +19,11 @@
                 {{ $book->category->name }}
             </span>
         @endif
+        @if($book->epub_master_path)
+            <span class="absolute right-2 top-2 rounded-full bg-indigo-600/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow" title="Tersedia format PDF + EPUB">
+                📖 EPUB
+            </span>
+        @endif
     </div>
     <div class="flex flex-1 flex-col p-3">
         <h3 class="line-clamp-2 text-sm font-semibold text-slate-900 group-hover:text-brand-600">

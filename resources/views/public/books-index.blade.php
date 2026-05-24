@@ -2,7 +2,7 @@
 
 @php
     $pageTitle = 'Semua Buku — bukudigi.com';
-    $pageDescription = 'Jelajahi ' . $books->total() . ' ebook PDF dari penulis Indonesia di bukudigi.com.';
+    $pageDescription = 'Jelajahi ' . $books->total() . ' ebook PDF & EPUB dari penulis Indonesia di bukudigi.com. Baca online atau download — watermark personal di setiap pembelian.';
 @endphp
 
 @section('content')

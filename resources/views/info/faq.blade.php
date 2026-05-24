@@ -11,13 +11,14 @@
     <h2 class="text-2xl font-bold">Untuk Pembeli</h2>
     <div class="mt-4 space-y-3">
         @foreach([
-            ['Apa itu bukudigi.com?', 'Marketplace ebook PDF dari penulis Indonesia. Beli sekali, watermark personal, download permanen ke perangkat kamu (sampai limit 5x re-download dalam 30 hari).'],
+            ['Apa itu bukudigi.com?', 'Marketplace ebook PDF & EPUB dari penulis Indonesia. Beli sekali, watermark personal, baca online di reader atau download permanen ke perangkat kamu (sampai limit 10× re-download dalam 30 hari).'],
+            ['Format apa saja yang tersedia?', 'Setiap buku tersedia dalam format PDF. Banyak buku juga punya versi EPUB — bisa dibaca online di reader bukudigi.com (HP/laptop) atau di-download untuk app lain (Apple Books, Calibre, Kindle, dll). Buku yang punya EPUB ditandai badge "📖 EPUB" di katalog.'],
             ['Apa bedanya dengan Google Play Books / Gramedia Digital?', 'Pembayaran lokal (QRIS/VA, gak butuh kartu kredit), terbuka untuk penulis indie tanpa kontrak penerbit, watermark personal bukan DRM yang ribet, komisi adil untuk penulis lokal.'],
             ['Cara bayarnya gimana?', 'Klik Beli Sekarang → pilih metode bayar via Midtrans (QRIS, Virtual Account BCA/BNI/Mandiri/Permata, GoPay, OVO, DANA, ShopeePay, kartu kredit). Setelah bayar sukses, langsung redirect ke Perpustakaan Saya.'],
             ['Saya gak punya kartu kredit, bisa beli?', 'Bisa banget. Yang paling mudah pakai QRIS (semua mobile banking & e-wallet support) atau Virtual Account.'],
             ['File PDF-nya aman gak? Ada watermark apa?', 'PDF kamu punya watermark berisi nama, email, dan order code di footer setiap halaman + watermark diagonal samar "PREVIEW" tidak ada (cuma di preview gratis, bukan di file beli). Watermark ini supaya kalau ada yang membocorkan, terlacak ke akun aslinya.'],
             ['Bisa baca offline?', 'Bisa. Download sekali, file disimpan di device kamu (HP, laptop, tablet), bisa dibuka kapan saja tanpa internet.'],
-            ['Berapa kali bisa download file yang sama?', 'Maks 5 kali dalam 30 hari sejak pembelian. Setelah expired, hubungi support kalau perlu reset.'],
+            ['Berapa kali bisa download file yang sama?', 'Maks 10× dalam 30 hari sejak pembelian. Setelah expired, hubungi support kalau perlu reset.'],
             ['Bisa print? Bisa pinjamkan ke teman?', 'Print untuk konsumsi pribadi: BOLEH. Pinjamkan ke orang lain: tidak diperkenankan — watermark identitas kamu ada di file, kalau dibagikan masih bisa terlacak.'],
             ['Bisa minta refund kalau nggak suka isi bukunya?', 'Sayang, tidak. Refund hanya untuk alasan teknis (file rusak, halaman kosong, double charge). Pakai preview gratis 5 halaman sebelum beli untuk pastikan cocok.'],
             ['Kapan refund cair?', '3-14 hari kerja setelah disetujui. Dikembalikan via metode pembayaran asal, atau jadi saldo platform (atas pilihan kamu).'],

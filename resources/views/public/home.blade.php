@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
 @php
-    $pageTitle = 'bukudigi.com — Marketplace Ebook PDF dari Penulis Indonesia';
-    $pageDescription = 'Beli ' . number_format($stats['total_books']) . '+ ebook PDF lokal Indonesia. Bayar QRIS, instan download, watermark personal. Komisi adil untuk penulis. Mulai dari Rp 15.000.';
+    $pageTitle = 'bukudigi.com — Marketplace Ebook PDF & EPUB dari Penulis Indonesia';
+    $pageDescription = 'Beli ' . number_format($stats['total_books']) . '+ ebook PDF & EPUB lokal Indonesia. Baca online di reader bukudigi atau download. Bayar QRIS, watermark personal. Komisi adil untuk penulis. Mulai dari Rp 15.000.';
     $jsonLd = [
         '@context' => 'https://schema.org',
         '@type' => 'WebSite',
         'name' => 'bukudigi.com',
         'url' => route('home'),
-        'description' => 'Marketplace ebook PDF dari penulis Indonesia',
+        'description' => 'Marketplace ebook PDF & EPUB dari penulis Indonesia',
         'inLanguage' => 'id',
         'potentialAction' => [
             '@type' => 'SearchAction',
@@ -50,6 +50,14 @@
                 <button type="submit" class="btn-primary !py-3">Cari Ebook</button>
             </div>
         </form>
+
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-brand-100/90 drop-shadow md:text-sm">
+            <span class="inline-flex items-center gap-1.5">📄 <strong class="text-white">PDF</strong> watermarked</span>
+            <span class="text-brand-300">·</span>
+            <span class="inline-flex items-center gap-1.5">📖 <strong class="text-white">EPUB</strong> baca online & download</span>
+            <span class="text-brand-300">·</span>
+            <span class="inline-flex items-center gap-1.5">⚡ Instan setelah bayar</span>
+        </div>
     </div>
 </section>
 

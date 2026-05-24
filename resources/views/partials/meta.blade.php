@@ -1,6 +1,6 @@
 @php
-    $metaTitle = $title ?? 'bukudigi.com — Marketplace Ebook PDF Indonesia';
-    $metaDesc  = $description ?? 'Beli ebook PDF lokal dari penulis Indonesia. Bayar QRIS, instan download, watermark personal. Komisi adil untuk penulis.';
+    $metaTitle = $title ?? 'bukudigi.com — Marketplace Ebook PDF & EPUB Indonesia';
+    $metaDesc  = $description ?? 'Beli ebook PDF & EPUB lokal dari penulis Indonesia. Baca online atau download. Bayar QRIS, watermark personal. Komisi adil untuk penulis.';
     $metaImg   = $image ?? asset('og-default.png');
     $metaType  = $ogType ?? 'website';
     $canonical = $canonical ?? url()->current();

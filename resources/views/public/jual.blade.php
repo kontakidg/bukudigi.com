@@ -36,7 +36,7 @@
         <div class="card p-6">
             <span class="text-3xl">🔒</span>
             <h3 class="mt-3 font-bold">Anti Bajakan</h3>
-            <p class="mt-2 text-sm text-slate-600">Setiap PDF di-watermark identitas pembeli. Bocoran terlacak ke akun aslinya.</p>
+            <p class="mt-2 text-sm text-slate-600">Setiap PDF & EPUB di-watermark identitas pembeli. Bocoran terlacak ke akun aslinya.</p>
         </div>
         <div class="card p-6">
             <span class="text-3xl">📊</span>
@@ -63,7 +63,7 @@
             @foreach([
                 ['1', 'Daftar akun', 'Daftar sebagai user biasa dulu di bukudigi.com.'],
                 ['2', 'Upgrade ke penulis', 'Isi data NIK, rekening bank, upload KTP & selfie untuk verifikasi.'],
-                ['3', 'Upload buku', 'PDF + cover + deskripsi. AI + admin moderasi 1-2 hari kerja.'],
+                ['3', 'Upload buku', 'PDF + cover + deskripsi (EPUB opsional, biar pembaca bisa baca online di reader bukudigi). AI + admin moderasi 1-2 hari kerja.'],
                 ['4', 'Buku live, royalti jalan', 'Setelah approve, buku langsung muncul di katalog. Royalti masuk tanggal 5 bulan berikutnya.'],
             ] as $step)
                 <div class="flex gap-4 rounded-xl border border-slate-200 bg-white p-5">

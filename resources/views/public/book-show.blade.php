@@ -102,14 +102,28 @@
                     <p class="mt-1 font-semibold">{{ $book->page_count ?? '—' }}</p>
                 </div>
                 <div class="rounded-lg border border-slate-200 bg-white p-3">
-                    <p class="text-slate-500">Ukuran File</p>
-                    <p class="mt-1 font-semibold">{{ $book->file_size_bytes ? round($book->file_size_bytes / 1024 / 1024, 1).' MB' : '—' }}</p>
+                    <p class="text-slate-500">Format</p>
+                    <p class="mt-1 font-semibold">
+                        <span class="inline-flex items-center gap-1 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] text-rose-700">PDF</span>
+                        @if($book->epub_master_path)
+                            <span class="inline-flex items-center gap-1 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-700">EPUB</span>
+                        @endif
+                    </p>
                 </div>
                 <div class="rounded-lg border border-slate-200 bg-white p-3">
                     <p class="text-slate-500">Terjual</p>
                     <p class="mt-1 font-semibold">{{ $book->sales_count }}×</p>
                 </div>
             </div>
+
+            @if($book->epub_master_path)
+                <div class="mt-3 flex items-start gap-2 rounded-lg border border-indigo-200 bg-indigo-50/60 p-3 text-xs text-indigo-900">
+                    <span class="text-base">📖</span>
+                    <p>
+                        <strong>Tersedia juga dalam EPUB</strong> — selain PDF, kamu bisa baca buku ini online langsung di reader bukudigi.com atau download .epub untuk dibaca di aplikasi favorit (Apple Books, Calibre, Kindle, dll). Cocok buat HP/tablet — teks otomatis reflow sesuai layar.
+                    </p>
+                </div>
+            @endif
 
             <div class="mt-8">
                 <h2 class="text-lg font-bold">Tentang Buku Ini</h2>
