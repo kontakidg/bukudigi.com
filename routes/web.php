@@ -96,4 +96,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/read/{orderCode}/stream', [DownloadController::class, 'streamEpub'])->name('download.epub.stream');
 });
 
+// Midtrans webhook (POST, no CSRF, no auth) — Midtrans hit this URL untuk notifikasi
+Route::post('/api/midtrans/notify', [\App\Http\Controllers\MidtransWebhookController::class, 'handle'])
+    ->name('midtrans.notify');
+
 require __DIR__.'/auth.php';

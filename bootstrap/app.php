@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Midtrans webhook tidak punya CSRF token — exempt path-nya.
+        $middleware->validateCsrfTokens(except: [
+            'api/midtrans/notify',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
