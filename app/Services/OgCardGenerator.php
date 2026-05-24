@@ -32,10 +32,11 @@ class OgCardGenerator
         imagealphablending($canvas, true);
         imagesavealpha($canvas, true);
 
-        // Background gradient (indigo)
-        $this->fillGradient($canvas, [79, 70, 229], [49, 46, 129]);
+        // Background gradient soft pastel — violet-50 → indigo-100
+        // (lebih kalem, less saturated, premium feel)
+        $this->fillGradient($canvas, [245, 243, 255], [224, 231, 255]);
 
-        // Decorative dots top-right
+        // Decorative dots top-right (lebih halus)
         $this->drawDotsPattern($canvas);
 
         // Load + composite cover image
@@ -80,12 +81,16 @@ class OgCardGenerator
 
     private function drawDotsPattern($canvas): void
     {
-        $color = imagecolorallocatealpha($canvas, 255, 255, 255, 110); // 30% opacity
+        // Dots indigo soft di pojok (bukan putih, biar terlihat di bg pastel)
+        $color = imagecolorallocatealpha($canvas, 99, 102, 241, 100); // indigo-500, alpha low
         for ($x = self::W - 200; $x < self::W; $x += 14) {
             for ($y = 20; $y < 200; $y += 14) {
                 imagefilledellipse($canvas, $x, $y, 3, 3, $color);
             }
         }
+        // Decorative blob di bottom-left (soft accent)
+        $blob = imagecolorallocatealpha($canvas, 165, 180, 252, 100); // indigo-300 soft
+        imagefilledellipse($canvas, 50, self::H + 40, 200, 200, $blob);
     }
 
     private function resolveCoverPath(Book $book): ?string
@@ -126,9 +131,9 @@ class OgCardGenerator
         $srcW = imagesx($source);
         $srcH = imagesy($source);
 
-        // Cover shadow (offset 8px right-down)
-        $shadow = imagecolorallocatealpha($canvas, 0, 0, 0, 90);
-        imagefilledrectangle($canvas, $x + 8, $y + 8, $x + $w + 8, $y + $h + 8, $shadow);
+        // Cover shadow soft indigo (offset 10px right-down)
+        $shadow = imagecolorallocatealpha($canvas, 99, 102, 241, 100);
+        imagefilledrectangle($canvas, $x + 10, $y + 10, $x + $w + 10, $y + $h + 10, $shadow);
 
         // Resample to target box, preserve aspect via cover/crop
         $srcRatio = $srcW / $srcH;
@@ -167,44 +172,74 @@ class OgCardGenerator
         }
 
         $x = 500;
-        $white = imagecolorallocate($canvas, 255, 255, 255);
-        $brandLight = imagecolorallocate($canvas, 200, 198, 252); // brand-200
+        // Soft palette — text dark di background pastel
+        $titleColor = imagecolorallocate($canvas, 30, 27, 75);        // indigo-950
+        $brandColor = imagecolorallocate($canvas, 79, 70, 229);       // indigo-600
+        $mutedColor = imagecolorallocate($canvas, 100, 116, 139);     // slate-500
+        $priceColor = imagecolorallocate($canvas, 67, 56, 202);       // indigo-700
+        $accentBg   = imagecolorallocatealpha($canvas, 79, 70, 229, 115); // soft pill bg
 
-        // Brand badge "bukudigi.com"
-        imagettftext($canvas, 16, 0, $x, 90, $brandLight, $font, '📚 bukudigi.com');
+        // Brand badge pill — "📚 bukudigi.com"
+        $brandText = '📚 bukudigi.com';
+        $brandBox = imagettfbbox(15, 0, $font, $brandText);
+        $brandW = $brandBox[2] - $brandBox[0];
+        $this->drawRoundedRect($canvas, $x - 8, 60, $x + $brandW + 14, 96, 14, $accentBg);
+        imagettftext($canvas, 15, 0, $x, 84, $brandColor, $font, $brandText);
 
-        // Title (max 2 lines, wrap pakai font size 42)
-        $titleLines = $this->wrapText($book->title, $font, 42, 620);
-        $y = 180;
+        // Title (max 2 lines, wrap pakai font size 40)
+        $titleLines = $this->wrapText($book->title, $font, 40, 620);
+        $y = 175;
         foreach (array_slice($titleLines, 0, 2) as $line) {
-            imagettftext($canvas, 42, 0, $x, $y, $white, $font, $line);
-            $y += 56;
+            imagettftext($canvas, 40, 0, $x, $y, $titleColor, $font, $line);
+            $y += 54;
         }
 
-        // Author (font 22, italic suffix)
-        $y += 20;
+        // Author
+        $y += 22;
         $author = 'oleh '.$book->displayAuthor();
-        imagettftext($canvas, 22, 0, $x, $y, $brandLight, $font, mb_substr($author, 0, 60));
+        imagettftext($canvas, 21, 0, $x, $y, $mutedColor, $font, mb_substr($author, 0, 60));
 
-        // Price (big)
-        $y += 70;
+        // Separator line
+        $y += 30;
+        $lineColor = imagecolorallocatealpha($canvas, 79, 70, 229, 110);
+        imagerectangle($canvas, $x, $y, $x + 60, $y + 2, $lineColor);
+        imagefilledrectangle($canvas, $x, $y, $x + 60, $y + 2, $lineColor);
+
+        // Price (big, prominent)
+        $y += 50;
         $priceText = 'Rp '.number_format($book->price, 0, ',', '.');
-        imagettftext($canvas, 36, 0, $x, $y, $white, $font, $priceText);
+        imagettftext($canvas, 38, 0, $x, $y, $priceColor, $font, $priceText);
 
-        // Footer call-to-action
+        // Footer CTA — "⬇ Beli & download instan"
         $cta = '⬇ Beli & download instan di bukudigi.com';
-        $box = imagettfbbox(16, 0, $font, $cta);
+        $box = imagettfbbox(15, 0, $font, $cta);
         $ctaW = $box[2] - $box[0];
-        imagettftext($canvas, 16, 0, self::W - $ctaW - 80, self::H - 40, $brandLight, $font, $cta);
+        imagettftext($canvas, 15, 0, self::W - $ctaW - 80, self::H - 40, $mutedColor, $font, $cta);
     }
 
     private function drawTextBuiltin($canvas, Book $book): void
     {
-        $white = imagecolorallocate($canvas, 255, 255, 255);
-        imagestring($canvas, 5, 500, 100, '📚 bukudigi.com', $white);
-        imagestring($canvas, 5, 500, 200, mb_substr($book->title, 0, 40), $white);
-        imagestring($canvas, 4, 500, 260, 'oleh '.$book->displayAuthor(), $white);
-        imagestring($canvas, 5, 500, 360, 'Rp '.number_format($book->price, 0, ',', '.'), $white);
+        $dark = imagecolorallocate($canvas, 30, 27, 75);
+        $brand = imagecolorallocate($canvas, 79, 70, 229);
+        imagestring($canvas, 5, 500, 100, '📚 bukudigi.com', $brand);
+        imagestring($canvas, 5, 500, 200, mb_substr($book->title, 0, 40), $dark);
+        imagestring($canvas, 4, 500, 260, 'oleh '.$book->displayAuthor(), $dark);
+        imagestring($canvas, 5, 500, 360, 'Rp '.number_format($book->price, 0, ',', '.'), $brand);
+    }
+
+    /**
+     * Helper: draw rounded rectangle (manual karena GD ga punya bawaan).
+     */
+    private function drawRoundedRect($canvas, int $x1, int $y1, int $x2, int $y2, int $radius, int $color): void
+    {
+        // Body
+        imagefilledrectangle($canvas, $x1 + $radius, $y1, $x2 - $radius, $y2, $color);
+        imagefilledrectangle($canvas, $x1, $y1 + $radius, $x2, $y2 - $radius, $color);
+        // 4 corner arcs
+        imagefilledellipse($canvas, $x1 + $radius, $y1 + $radius, $radius * 2, $radius * 2, $color);
+        imagefilledellipse($canvas, $x2 - $radius, $y1 + $radius, $radius * 2, $radius * 2, $color);
+        imagefilledellipse($canvas, $x1 + $radius, $y2 - $radius, $radius * 2, $radius * 2, $color);
+        imagefilledellipse($canvas, $x2 - $radius, $y2 - $radius, $radius * 2, $radius * 2, $color);
     }
 
     private function wrapText(string $text, string $font, int $fontSize, int $maxWidth): array
