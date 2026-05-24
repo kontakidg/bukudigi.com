@@ -8,6 +8,8 @@ use App\Mail\OrderPaidMail;
 use App\Models\Book;
 use App\Models\Order;
 use App\Services\MidtransService;
+use App\Services\VoucherService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +19,7 @@ use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
-    public function start(Request $request, Book $book, MidtransService $midtrans): RedirectResponse|View
+    public function start(Request $request, Book $book, MidtransService $midtrans, VoucherService $voucherService): RedirectResponse|View
     {
         abort_unless($book->status === 'active', 404);
 
@@ -36,15 +38,45 @@ class CheckoutController extends Controller
         }
 
         $gross = (int) $book->price;
-        $commission = (int) round($gross * (env('PLATFORM_COMMISSION_PERCENT', 20) / 100));
-        $authorEarning = $gross - $commission;
+        $voucherDiscount = 0;
+        $voucherId = null;
+        $voucherCode = strtoupper(trim((string) $request->input('voucher_code', '')));
+        $voucherInfo = null;
 
-        $order = DB::transaction(function () use ($user, $book, $gross, $commission, $authorEarning) {
+        // Validate voucher kalau dikirim
+        if ($voucherCode !== '') {
+            $result = $voucherService->validate($voucherCode, $user, $book, $gross);
+            if ($result['valid']) {
+                $voucherDiscount = $result['discount'];
+                $voucherId = $result['voucher']->id;
+                $voucherInfo = [
+                    'code' => $result['voucher']->code,
+                    'name' => $result['voucher']->name,
+                    'discount' => $voucherDiscount,
+                ];
+            } else {
+                return back()
+                    ->withErrors(['voucher_code' => $result['reason']])
+                    ->withInput();
+            }
+        }
+
+        $netAmount = $gross - $voucherDiscount;
+
+        // Commission: cuma 20% dari net amount (yang dibayar customer ke platform)
+        // Author earning = net - commission. Platform yang nanggung loss kalau voucher dipakai.
+        $commission = (int) round($netAmount * (env('PLATFORM_COMMISSION_PERCENT', 20) / 100));
+        $authorEarning = $netAmount - $commission;
+
+        $order = DB::transaction(function () use ($user, $book, $gross, $voucherId, $voucherDiscount, $netAmount, $commission, $authorEarning) {
             return Order::create([
                 'user_id' => $user->id,
                 'book_id' => $book->id,
                 'author_id' => $book->author_id,
+                'voucher_id' => $voucherId,
+                'voucher_discount' => $voucherDiscount,
                 'gross_amount' => $gross,
+                'net_amount' => $netAmount,
                 'commission' => $commission,
                 'author_earning' => $authorEarning,
                 'gateway_fee' => 0,
@@ -55,8 +87,39 @@ class CheckoutController extends Controller
         $snap = $midtrans->createSnapToken($order);
 
         return view('checkout.confirm', [
-            'order' => $order->fresh()->load('book.author'),
+            'order' => $order->fresh()->load('book.author', 'voucher'),
             'snap' => $snap,
+            'voucherInfo' => $voucherInfo,
+        ]);
+    }
+
+    /**
+     * AJAX endpoint untuk preview voucher tanpa create order.
+     * Dipakai di tombol "Cek Voucher" sebelum klik Beli.
+     */
+    public function previewVoucher(Request $request, Book $book, VoucherService $voucherService): JsonResponse
+    {
+        abort_unless($book->status === 'active', 404);
+
+        $code = strtoupper(trim((string) $request->input('code', '')));
+        if ($code === '') {
+            return response()->json(['valid' => false, 'reason' => 'Masukin kode voucher dulu.']);
+        }
+
+        $result = $voucherService->validate($code, $request->user(), $book, (int) $book->price);
+
+        if (! $result['valid']) {
+            return response()->json(['valid' => false, 'reason' => $result['reason']]);
+        }
+
+        return response()->json([
+            'valid' => true,
+            'code' => $result['voucher']->code,
+            'name' => $result['voucher']->name,
+            'discount' => $result['discount'],
+            'discount_display' => 'Rp '.number_format($result['discount'], 0, ',', '.'),
+            'net' => $result['net'],
+            'net_display' => 'Rp '.number_format($result['net'], 0, ',', '.'),
         ]);
     }
 
@@ -64,7 +127,7 @@ class CheckoutController extends Controller
      * Stub callback — simulasi pembayaran sukses tanpa lewat Midtrans beneran.
      * Di production, ini akan diganti dengan /api/midtrans/webhook yang verify signature.
      */
-    public function stubPay(Request $request, string $orderCode): RedirectResponse
+    public function stubPay(Request $request, string $orderCode, VoucherService $voucherService): RedirectResponse
     {
         abort_unless(app(MidtransService::class)->isStub(), 404);
 
@@ -80,9 +143,12 @@ class CheckoutController extends Controller
                 'midtrans_order_id' => 'STUB-' . $order->order_code,
             ]);
 
-            // Increment book sales counter
+            // Record voucher usage (kalau ada)
+            $voucherService->recordUsage($order);
+
+            // Increment book sales counter (pakai net amount untuk revenue tracking)
             $order->book->increment('sales_count');
-            $order->book->increment('total_revenue', $order->gross_amount);
+            $order->book->increment('total_revenue', $order->net_amount ?: $order->gross_amount);
 
             // Dispatch watermark job
             WatermarkPdfJob::dispatch($order->id);

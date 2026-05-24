@@ -15,6 +15,9 @@ class Order extends Model
         'book_id',
         'author_id',
         'gross_amount',
+        'voucher_id',
+        'voucher_discount',
+        'net_amount',
         'commission',
         'author_earning',
         'gateway_fee',
@@ -41,6 +44,8 @@ class Order extends Model
             'download_expires_at' => 'datetime',
             'refunded_at' => 'datetime',
             'gross_amount' => 'integer',
+            'voucher_discount' => 'integer',
+            'net_amount' => 'integer',
             'commission' => 'integer',
             'author_earning' => 'integer',
             'gateway_fee' => 'integer',
@@ -75,6 +80,11 @@ class Order extends Model
     public function downloadLogs(): HasMany
     {
         return $this->hasMany(DownloadLog::class);
+    }
+
+    public function voucher(): BelongsTo
+    {
+        return $this->belongsTo(Voucher::class);
     }
 
     public function getRouteKeyName(): string

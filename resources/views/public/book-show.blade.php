@@ -78,15 +78,89 @@
                 @endif
             </div>
 
-            <div class="mt-6 flex flex-wrap gap-3">
-                @auth
-                    <a href="{{ route('checkout.start', $book) }}" class="btn-primary !py-3">🛒 Beli Sekarang</a>
-                @else
-                    <a href="{{ route('login') }}?redirect={{ urlencode(route('checkout.start', $book)) }}" class="btn-primary !py-3">
-                        🔒 Masuk untuk Beli
-                    </a>
-                @endauth
+            @auth
+            <div x-data="{
+                open: false,
+                code: '',
+                loading: false,
+                result: null,
+                async apply() {
+                    if (!this.code.trim()) return;
+                    this.loading = true;
+                    this.result = null;
+                    try {
+                        const resp = await fetch('{{ route('checkout.voucher.preview', $book) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ code: this.code.trim() }),
+                        });
+                        this.result = await resp.json();
+                    } catch (e) {
+                        this.result = { valid: false, reason: 'Gagal cek voucher. Cek koneksi.' };
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                reset() { this.code = ''; this.result = null; },
+                get buyUrl() {
+                    const base = '{{ route('checkout.start', $book) }}';
+                    if (this.result && this.result.valid) {
+                        return base + '?voucher_code=' + encodeURIComponent(this.code.trim());
+                    }
+                    return base;
+                }
+            }">
+                {{-- Voucher input (collapsible) --}}
+                <div class="mt-5 rounded-lg border border-slate-200 bg-white p-3">
+                    <button type="button" @click="open = !open"
+                            class="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-700 hover:text-brand-600">
+                        <span>🎟️ Punya kode voucher?</span>
+                        <span x-text="open ? '−' : '+'" class="text-lg leading-none"></span>
+                    </button>
+                    <div x-show="open" x-cloak x-transition class="mt-3 space-y-2">
+                        <div class="flex gap-2">
+                            <input type="text" x-model="code" @keyup.enter="apply()" :disabled="loading"
+                                   placeholder="Masukkan kode voucher"
+                                   class="input !py-2 flex-1 uppercase">
+                            <button type="button" @click="apply()" :disabled="loading || !code.trim()"
+                                    class="btn-primary !py-2 !text-sm" x-text="loading ? '...' : 'Cek'"></button>
+                        </div>
+                        <template x-if="result && result.valid">
+                            <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-800">
+                                <p class="font-semibold">✓ Voucher valid: <span x-text="result.code"></span></p>
+                                <p class="mt-0.5 text-green-700" x-text="result.name"></p>
+                                <p class="mt-2">Potongan: <strong x-text="result.discount_display"></strong></p>
+                                <p>Total bayar: <strong x-text="result.net_display"></strong></p>
+                                <button type="button" @click="reset()" class="mt-2 text-[10px] text-green-700 underline">Hapus voucher</button>
+                            </div>
+                        </template>
+                        <template x-if="result && !result.valid">
+                            <div class="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700" x-text="result.reason"></div>
+                        </template>
+                    </div>
+                </div>
 
+                {{-- Tombol Beli + Preview --}}
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <a :href="buyUrl" href="{{ route('checkout.start', $book) }}" class="btn-primary !py-3">🛒 Beli Sekarang</a>
+                    @if(!empty($book->preview_image_paths))
+                        <a href="#preview" class="btn-outline !py-3">👁️ Lihat Preview ({{ count($book->preview_image_paths) }} hal)</a>
+                    @elseif($book->preview_pdf_path)
+                        <a href="{{ asset('storage/'.$book->preview_pdf_path) }}" target="_blank" rel="noopener" class="btn-outline !py-3">👁️ Lihat Preview PDF</a>
+                    @else
+                        <button class="btn-outline !py-3" disabled title="Preview belum tersedia">👁️ Preview Belum Tersedia</button>
+                    @endif
+                </div>
+            </div>
+            @else
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="{{ route('login') }}?redirect={{ urlencode(route('checkout.start', $book)) }}" class="btn-primary !py-3">
+                    🔒 Masuk untuk Beli
+                </a>
                 @if(!empty($book->preview_image_paths))
                     <a href="#preview" class="btn-outline !py-3">👁️ Lihat Preview ({{ count($book->preview_image_paths) }} hal)</a>
                 @elseif($book->preview_pdf_path)
@@ -95,6 +169,7 @@
                     <button class="btn-outline !py-3" disabled title="Preview belum tersedia">👁️ Preview Belum Tersedia</button>
                 @endif
             </div>
+            @endauth
 
             <div class="mt-6 grid grid-cols-3 gap-3 text-center text-xs">
                 <div class="rounded-lg border border-slate-200 bg-white p-3">

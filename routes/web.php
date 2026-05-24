@@ -88,6 +88,7 @@ Route::middleware('auth')->group(function () {
 
     // Checkout & Download
     Route::get('/checkout/buku/{book:slug}', [CheckoutController::class, 'start'])->name('checkout.start');
+    Route::post('/checkout/voucher-preview/{book:slug}', [CheckoutController::class, 'previewVoucher'])->name('checkout.voucher.preview');
     Route::get('/checkout/stub/{orderCode}/pay', [CheckoutController::class, 'stubPay'])->name('checkout.stub.pay');
     Route::get('/download/{orderCode}', [DownloadController::class, 'show'])->name('download.show');
     Route::get('/download/{orderCode}/epub', [DownloadController::class, 'epub'])->name('download.epub');

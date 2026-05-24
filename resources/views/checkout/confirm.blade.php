@@ -16,9 +16,23 @@
             <div class="flex-1">
                 <h2 class="font-bold">{{ $order->book->title }}</h2>
                 <p class="mt-1 text-xs text-slate-500">oleh {{ $order->book->displayAuthor() }}</p>
-                <p class="mt-3 text-xl font-bold text-brand-600">Rp {{ number_format($order->gross_amount, 0, ',', '.') }}</p>
+                @if($order->voucher_discount > 0)
+                    <p class="mt-3 text-sm text-slate-500"><s>Rp {{ number_format($order->gross_amount, 0, ',', '.') }}</s></p>
+                    <p class="text-xl font-bold text-brand-600">Rp {{ number_format($order->net_amount, 0, ',', '.') }}</p>
+                @else
+                    <p class="mt-3 text-xl font-bold text-brand-600">Rp {{ number_format($order->gross_amount, 0, ',', '.') }}</p>
+                @endif
             </div>
         </div>
+
+        @if($order->voucher_id)
+            <div class="border-t border-slate-100 bg-green-50 px-4 py-3 text-xs text-green-800">
+                <div class="flex items-center justify-between">
+                    <span>🎟️ Voucher <strong>{{ $order->voucher->code }}</strong> — {{ $order->voucher->name }}</span>
+                    <span class="font-bold">−Rp {{ number_format($order->voucher_discount, 0, ',', '.') }}</span>
+                </div>
+            </div>
+        @endif
 
         <div class="border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600">
             Order: <span class="font-mono font-semibold">{{ $order->order_code }}</span>
