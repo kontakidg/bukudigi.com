@@ -67,8 +67,11 @@ return [
          */
         'private' => [
             'driver' => env('PRIVATE_DISK_DRIVER', 'local'),
-            // Local driver settings (dev)
-            'root' => storage_path('app/private'),
+            // 'root' HANYA berlaku untuk local driver. Kalau S3, 'root' jadi
+            // prefix dalam bucket → semua key ke-prefix absolute path. Jadi kosongkan.
+            'root' => env('PRIVATE_DISK_DRIVER', 'local') === 'local'
+                ? storage_path('app/private')
+                : '',
             'serve' => true,
             // S3/R2 driver settings (prod) — bakal di-ignore kalau driver=local
             'key' => env('R2_ACCESS_KEY_ID'),
