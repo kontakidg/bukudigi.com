@@ -31,12 +31,25 @@ class MidtransWebhookController extends Controller
             return response()->json(['message' => 'Midtrans mode = stub, webhook disabled'], 200);
         }
 
+        // Detect test payload dari Midtrans dashboard "Send Test Notification".
+        // Test payload ini punya signature dummy yang tidak match server key kita —
+        // tapi Midtrans expect 200 untuk lulus health check endpoint.
+        $rawOrderId = (string) $request->input('order_id', '');
+        if (str_starts_with($rawOrderId, 'payment_notif_test_')) {
+            Log::info('[Midtrans Webhook] Test notification received (skip processing)', [
+                'order_id' => $rawOrderId,
+            ]);
+            return response()->json([
+                'message' => 'Test notification acknowledged. Endpoint is reachable.',
+            ], 200);
+        }
+
         try {
             $notif = $midtrans->parseNotification();
         } catch (Throwable $e) {
             Log::warning('[Midtrans Webhook] Invalid signature/notification', [
                 'error' => $e->getMessage(),
-                'payload' => $request->all(),
+                'order_id' => $rawOrderId,
             ]);
             return response()->json(['message' => 'Invalid signature'], 403);
         }

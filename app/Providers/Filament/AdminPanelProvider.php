@@ -30,7 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('bukudigi')
-            ->brandLogo(asset('logo.png'))
+            ->brandLogo(asset('logo-white.png'))
             ->brandLogoHeight('1.75rem')
             ->favicon(asset('favicon.svg'))
             ->colors([
