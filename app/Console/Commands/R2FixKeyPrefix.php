@@ -2,104 +2,113 @@
 
 namespace App\Console\Commands;
 
+use Aws\S3\S3Client;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 /**
- * Fix orphan R2 objects yang disimpan dengan absolute path prefix
- * (bug versi awal config disk 'private' yang inherit 'root' dari local).
+ * Scan SEMUA object di R2 bucket, deteksi key yang punya prefix bermasalah
+ * (absolute path / double-bucket), lalu copy ke key relative + delete yang lama.
  *
- * Cara pakai:
- *   php artisan r2:fix-key-prefix --dry-run   # preview
- *   php artisan r2:fix-key-prefix             # beneran rename
+ * Pattern yang di-fix:
+ *   - bukudigi-private//www/wwwroot/.../storage/app/private/X  → X
+ *   - /www/wwwroot/.../storage/app/private/X                   → X
+ *   - www/wwwroot/.../storage/app/private/X                    → X
  */
 class R2FixKeyPrefix extends Command
 {
     protected $signature = 'r2:fix-key-prefix
-                            {--dry-run : Preview saja tanpa copy/delete}
-                            {--prefix=/www/wwwroot/bukudigi.com/storage/app/private/ : Prefix absolute path yang harus distrip}';
+                            {--dry-run : Preview tanpa copy/delete}';
 
-    protected $description = 'Recover file di R2 yang disimpan dengan absolute path prefix (bug konfig lama).';
+    protected $description = 'Recover R2 objects yang disimpan dengan prefix bermasalah (absolute path / double-bucket bug).';
 
     public function handle(): int
     {
-        $disk = Storage::disk('private');
-        $prefix = $this->option('prefix');
-        $prefix = ltrim($prefix, '/'); // R2 key tidak pakai leading slash
         $dryRun = (bool) $this->option('dry-run');
+        $bucket = config('filesystems.disks.private.bucket');
 
-        $this->info('=== R2 Key Prefix Recovery ===');
-        $this->line("Prefix: {$prefix}");
+        $this->info('=== R2 Key Recovery ===');
+        $this->line("Bucket: {$bucket}");
         $this->line('Mode: '.($dryRun ? 'DRY-RUN' : 'COPY + DELETE old'));
         $this->newLine();
 
-        // Daftar relative path yang mau di-recover dari book + order
-        $candidates = [];
+        $client = new S3Client([
+            'version' => 'latest',
+            'region' => 'auto',
+            'endpoint' => config('filesystems.disks.private.endpoint'),
+            'credentials' => [
+                'key' => config('filesystems.disks.private.key'),
+                'secret' => config('filesystems.disks.private.secret'),
+            ],
+            'use_path_style_endpoint' => true,
+        ]);
 
-        foreach (\App\Models\Book::whereNotNull('pdf_master_path')->get() as $b) {
-            $candidates[] = $b->pdf_master_path;
-        }
-        foreach (\App\Models\Book::whereNotNull('epub_master_path')->get() as $b) {
-            $candidates[] = $b->epub_master_path;
-        }
-        foreach (\App\Models\Order::whereNotNull('watermarked_pdf_path')->get() as $o) {
-            $candidates[] = $o->watermarked_pdf_path;
-        }
-        foreach (\App\Models\Order::whereNotNull('watermarked_epub_path')->get() as $o) {
-            $candidates[] = $o->watermarked_epub_path;
-        }
+        // Pattern marker untuk strip prefix
+        $marker = 'storage/app/private/';
 
-        $candidates = array_unique($candidates);
-        $this->line('Candidates from DB: '.count($candidates));
-        $this->newLine();
-
-        $recovered = 0;
+        $continuationToken = null;
+        $total = 0;
+        $fixed = 0;
         $skipped = 0;
-        $notFound = 0;
+        $failed = 0;
 
-        foreach ($candidates as $rel) {
-            $oldKey = $prefix . $rel;
-            $newKey = $rel;
+        do {
+            $params = ['Bucket' => $bucket, 'MaxKeys' => 1000];
+            if ($continuationToken) $params['ContinuationToken'] = $continuationToken;
+            $resp = $client->listObjectsV2($params);
 
-            // Cek di key absolute ada
-            $content = null;
-            try {
-                $content = $disk->get($oldKey);
-            } catch (\Throwable $e) {
-                // ignore
+            foreach (($resp['Contents'] ?? []) as $obj) {
+                $key = $obj['Key'];
+                $size = $obj['Size'];
+                $total++;
+
+                // Cari posisi 'storage/app/private/' di dalam key
+                $pos = strpos($key, $marker);
+                if ($pos === false) {
+                    // Key sudah bersih — skip
+                    $skipped++;
+                    continue;
+                }
+
+                // Extract suffix setelah 'storage/app/private/'
+                $newKey = substr($key, $pos + strlen($marker));
+                if (empty($newKey) || $newKey === $key) {
+                    $skipped++;
+                    continue;
+                }
+
+                $this->line(sprintf('[fix] %s → %s (%s KB)', $key, $newKey, round($size / 1024, 1)));
+
+                if ($dryRun) {
+                    $fixed++;
+                    continue;
+                }
+
+                try {
+                    // Copy ke key baru
+                    $client->copyObject([
+                        'Bucket' => $bucket,
+                        'Key' => $newKey,
+                        'CopySource' => $bucket . '/' . rawurlencode($key),
+                    ]);
+                    // Delete key lama
+                    $client->deleteObject(['Bucket' => $bucket, 'Key' => $key]);
+                    $fixed++;
+                } catch (\Throwable $e) {
+                    $this->error('   → FAIL: '.$e->getMessage());
+                    $failed++;
+                }
             }
 
-            if ($content === null) {
-                $this->line("[skip] {$rel} — not found at absolute key");
-                $notFound++;
-                continue;
-            }
-
-            $size = strlen($content);
-            $this->line("[found] {$rel} — {$size} bytes at {$oldKey}");
-
-            if ($dryRun) {
-                $recovered++;
-                continue;
-            }
-
-            try {
-                $disk->put($newKey, $content);
-                $disk->delete($oldKey);
-                $this->info("   → copied to {$newKey} + deleted old");
-                $recovered++;
-            } catch (\Throwable $e) {
-                $this->error('   → FAIL: '.$e->getMessage());
-                $skipped++;
-            }
-        }
+            $continuationToken = $resp['IsTruncated'] ?? false ? $resp['NextContinuationToken'] : null;
+        } while ($continuationToken);
 
         $this->newLine();
         $this->info('=== Summary ===');
-        $this->line("Recovered: {$recovered}");
-        $this->line("Not found at abs key: {$notFound}");
-        $this->line("Failed copy:  {$skipped}");
+        $this->line("Total scanned: {$total}");
+        $this->line("Fixed:         {$fixed}");
+        $this->line("Skipped (OK):  {$skipped}");
+        $this->line("Failed:        {$failed}");
 
-        return self::SUCCESS;
+        return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }
 }
