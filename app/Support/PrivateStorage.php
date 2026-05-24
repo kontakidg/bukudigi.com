@@ -103,4 +103,23 @@ class PrivateStorage
     {
         return (int) self::disk()->size($relPath);
     }
+
+    /**
+     * Cek apakah file ada di private storage.
+     * R2 + Flysystem `exists()` kadang fail karena HEAD request quirk —
+     * fallback pakai `fileSize()` try-catch yang lebih reliable.
+     */
+    public static function exists(string $relPath): bool
+    {
+        try {
+            return self::disk()->exists($relPath);
+        } catch (\Throwable $e) {
+            // Fallback: try getting size — kalau sukses, file ada
+            try {
+                return self::disk()->size($relPath) >= 0;
+            } catch (\Throwable $e2) {
+                return false;
+            }
+        }
+    }
 }

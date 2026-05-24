@@ -100,7 +100,7 @@ class EpubDiagnose extends Command
      */
     private function inspectByRel(string $relPath): void
     {
-        if (! PrivateStorage::disk()->exists($relPath)) {
+        if (! PrivateStorage::exists($relPath)) {
             $this->error("  File NOT FOUND in private storage: {$relPath}");
             return;
         }

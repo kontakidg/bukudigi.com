@@ -37,7 +37,7 @@ class WatermarkPdfJob implements ShouldQueue
         $masterRel = $order->book->pdf_master_path;
 
         // Download master ke temp local (kalau R2). PrivateStorage handle keduanya.
-        if (! PrivateStorage::disk()->exists($masterRel)) {
+        if (! PrivateStorage::exists($masterRel)) {
             Log::warning('[WatermarkPdfJob] Master PDF missing, fallback to plain copy', [
                 'order' => $order->order_code,
                 'path' => $masterRel,

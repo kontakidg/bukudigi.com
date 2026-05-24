@@ -36,7 +36,7 @@ class WatermarkEpubJob implements ShouldQueue
             return;
         }
 
-        if (! PrivateStorage::disk()->exists($masterRel)) {
+        if (! PrivateStorage::exists($masterRel)) {
             Log::warning('[WatermarkEpubJob] EPUB master missing', [
                 'order' => $order->order_code,
                 'path' => $masterRel,

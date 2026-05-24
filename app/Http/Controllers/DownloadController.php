@@ -27,7 +27,7 @@ class DownloadController extends Controller
             abort(409, 'PDF belum siap. Coba lagi beberapa detik lagi.');
         }
 
-        if (! PrivateStorage::disk()->exists($order->watermarked_pdf_path)) {
+        if (! PrivateStorage::exists($order->watermarked_pdf_path)) {
             abort(404, 'File watermarked tidak ditemukan.');
         }
 
@@ -51,7 +51,7 @@ class DownloadController extends Controller
     public function epub(Request $request, string $orderCode): StreamedResponse
     {
         $order = $this->resolveOrderForEpub($request, $orderCode);
-        if (! PrivateStorage::disk()->exists($order->watermarked_epub_path)) {
+        if (! PrivateStorage::exists($order->watermarked_epub_path)) {
             abort(404, 'File EPUB tidak ditemukan.');
         }
 
@@ -86,7 +86,7 @@ class DownloadController extends Controller
     public function streamEpub(Request $request, string $orderCode): StreamedResponse
     {
         $order = $this->resolveOrderForEpub($request, $orderCode);
-        if (! PrivateStorage::disk()->exists($order->watermarked_epub_path)) {
+        if (! PrivateStorage::exists($order->watermarked_epub_path)) {
             abort(404, 'File EPUB tidak ditemukan.');
         }
 

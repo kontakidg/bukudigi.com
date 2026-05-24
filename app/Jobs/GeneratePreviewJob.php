@@ -34,7 +34,7 @@ class GeneratePreviewJob implements ShouldQueue
             return;
         }
 
-        if (! PrivateStorage::disk()->exists($book->pdf_master_path)) {
+        if (! PrivateStorage::exists($book->pdf_master_path)) {
             Log::warning('[GeneratePreviewJob] Master not found', ['book' => $book->id, 'path' => $book->pdf_master_path]);
             return;
         }
