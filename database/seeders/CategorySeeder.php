@@ -19,6 +19,17 @@ class CategorySeeder extends Seeder
             ['name' => 'Religi', 'icon' => 'sun', 'sort_order' => 7],
             ['name' => 'Self-Help', 'icon' => 'light-bulb', 'sort_order' => 8],
             ['name' => 'Anak', 'icon' => 'face-smile', 'sort_order' => 9],
+            ['name' => 'hiburan', 'icon' => 'film', 'sort_order' => 10],
+            ['name' => 'Sejarah', 'icon' => 'building-library', 'sort_order' => 11],
+            ['name' => 'Teknologi & IT', 'icon' => 'computer-desktop', 'sort_order' => 12],
+            ['name' => 'Seni & Desain', 'icon' => 'paint-brush', 'sort_order' => 13],
+            ['name' => 'Olahraga & Fitness', 'icon' => 'bolt', 'sort_order' => 14],
+            ['name' => 'Travel & Wisata', 'icon' => 'paper-airplane', 'sort_order' => 15],
+            ['name' => 'Parenting', 'icon' => 'users', 'sort_order' => 16],
+            ['name' => 'Keuangan Pribadi', 'icon' => 'banknotes', 'sort_order' => 17],
+            ['name' => 'Marketing & Media Sosial', 'icon' => 'megaphone', 'sort_order' => 18],
+            ['name' => 'Penulisan & Jurnalistik', 'icon' => 'pencil', 'sort_order' => 19],
+            ['name' => 'Non-fiksi & Sains', 'icon' => 'beaker', 'sort_order' => 20],
         ];
 
         foreach ($categories as $data) {
