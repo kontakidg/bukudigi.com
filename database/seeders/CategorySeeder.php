@@ -19,7 +19,7 @@ class CategorySeeder extends Seeder
             ['name' => 'Religi', 'icon' => 'sun', 'sort_order' => 7],
             ['name' => 'Self-Help', 'icon' => 'light-bulb', 'sort_order' => 8],
             ['name' => 'Anak', 'icon' => 'face-smile', 'sort_order' => 9],
-            ['name' => 'hiburan', 'icon' => 'film', 'sort_order' => 10],
+            ['name' => 'Hiburan', 'icon' => 'film', 'sort_order' => 10],
             ['name' => 'Sejarah', 'icon' => 'building-library', 'sort_order' => 11],
             ['name' => 'Teknologi & IT', 'icon' => 'computer-desktop', 'sort_order' => 12],
             ['name' => 'Seni & Desain', 'icon' => 'paint-brush', 'sort_order' => 13],
