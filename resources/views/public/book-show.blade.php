@@ -5,10 +5,17 @@
         ? $book->cover_path
         : ($book->cover_path ? asset('storage/'.$book->cover_path) : asset('og-default.png'));
 
-    $pageTitle = $book->title . ' — ' . $book->displayAuthor();
+    // OG card khusus (1200x630 yang di-generate dengan brand) → fallback ke cover biasa
+    $ogImageUrl = $book->og_card_path
+        ? asset('storage/'.$book->og_card_path)
+        : $bookCoverUrl;
+
+    $pageTitle = $book->title . ' — ' . $book->displayAuthor() . ' | bukudigi.com';
     $pageDescription = \Illuminate\Support\Str::limit(strip_tags($book->description), 155);
-    $pageImage = $bookCoverUrl;
+    $pageImage = $ogImageUrl;
+    $pageImageAlt = 'Cover ebook ' . $book->title;
     $ogType = 'book';
+    $hasFormattedOgCard = (bool) $book->og_card_path; // 1200x630 → set dimensions explicit
 
     $jsonLd = [
         '@context' => 'https://schema.org',
@@ -17,12 +24,17 @@
         'description' => \Illuminate\Support\Str::limit(strip_tags($book->description), 500),
         'image' => $bookCoverUrl,
         'url' => route('books.show', $book->slug),
-        'bookFormat' => 'https://schema.org/EBook',
+        'bookFormat' => $book->epub_master_path ? 'https://schema.org/EBook' : 'https://schema.org/EBook',
         'inLanguage' => 'id',
         'numberOfPages' => $book->page_count,
         'author' => [
             '@type' => 'Person',
             'name' => $book->displayAuthor(),
+        ],
+        'publisher' => [
+            '@type' => 'Organization',
+            'name' => 'bukudigi.com',
+            'url' => route('home'),
         ],
         'offers' => [
             '@type' => 'Offer',
@@ -30,12 +42,40 @@
             'priceCurrency' => 'IDR',
             'availability' => 'https://schema.org/InStock',
             'url' => route('books.show', $book->slug),
+            'seller' => [
+                '@type' => 'Organization',
+                'name' => 'bukudigi.com',
+            ],
         ],
     ];
     if ($book->category) {
         $jsonLd['genre'] = $book->category->name;
     }
+
+    // Breadcrumb schema (separate JSON-LD)
+    $breadcrumbLd = [
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => array_values(array_filter([
+            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Beranda', 'item' => route('home')],
+            $book->category ? ['@type' => 'ListItem', 'position' => 2, 'name' => $book->category->name, 'item' => route('kategori.show', $book->category)] : null,
+            ['@type' => 'ListItem', 'position' => $book->category ? 3 : 2, 'name' => $book->title, 'item' => route('books.show', $book->slug)],
+        ])),
+    ];
 @endphp
+
+@push('head')
+    <script type="application/ld+json">{!! json_encode($breadcrumbLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+    {{-- og:image:alt + book-specific OG properties --}}
+    <meta property="og:image:alt" content="{{ $pageImageAlt }}">
+    @if($book->category)
+        <meta property="book:tag" content="{{ $book->category->name }}">
+    @endif
+    <meta property="book:author" content="{{ $book->displayAuthor() }}">
+    @if($book->approved_at)
+        <meta property="book:release_date" content="{{ $book->approved_at->toDateString() }}">
+    @endif
+@endpush
 
 @section('content')
 <section class="mx-auto max-w-6xl px-4 py-8">

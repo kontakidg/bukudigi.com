@@ -5,6 +5,9 @@
     $metaType  = $ogType ?? 'website';
     $canonical = $canonical ?? url()->current();
     $robotsContent = ($noindex ?? false) ? 'noindex, nofollow' : 'index, follow';
+    // Image dimensions — set 1200x630 untuk OG cards (default), false untuk image cover langsung yg portrait
+    $imgWidth = $imageWidth ?? 1200;
+    $imgHeight = $imageHeight ?? 630;
 @endphp
 
 <title>{{ $metaTitle }}</title>
@@ -17,8 +20,12 @@
 <meta property="og:title" content="{{ $metaTitle }}">
 <meta property="og:description" content="{{ $metaDesc }}">
 <meta property="og:image" content="{{ $metaImg }}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+<meta property="og:image:secure_url" content="{{ $metaImg }}">
+<meta property="og:image:type" content="image/png">
+@if($imgWidth && $imgHeight)
+    <meta property="og:image:width" content="{{ $imgWidth }}">
+    <meta property="og:image:height" content="{{ $imgHeight }}">
+@endif
 <meta property="og:url" content="{{ $canonical }}">
 <meta property="og:site_name" content="bukudigi.com">
 <meta property="og:locale" content="id_ID">

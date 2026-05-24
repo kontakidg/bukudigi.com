@@ -152,6 +152,9 @@ class BookResource extends Resource
                             GeneratePreviewJob::dispatch($r->id);
                         }
 
+                        // Generate OG card untuk share Facebook/Twitter
+                        \App\Jobs\GenerateOgCardJob::dispatch($r->id);
+
                         // WA notif ke author
                         $author = $r->author?->user;
                         if ($author?->phone) {

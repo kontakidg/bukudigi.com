@@ -110,6 +110,7 @@ class BookController extends Controller
         });
 
         GeneratePreviewJob::dispatch($book->id);
+        \App\Jobs\GenerateOgCardJob::dispatch($book->id);
 
         // Email konfirmasi submit
         try {

@@ -21,6 +21,7 @@ class Book extends Model
         'cover_path',
         'cover_thumb_path',
         'cover_og_path',
+        'og_card_path',
         'pdf_master_path',
         'epub_master_path',
         'preview_pdf_path',
