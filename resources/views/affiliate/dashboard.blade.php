@@ -287,9 +287,9 @@
                     <label class="mb-1 block text-xs font-medium text-slate-700">1. Pilih buku</label>
                     <select x-model.number="selectedId" @change="syncFromSelect()" class="input">
                         <option value="">— Homepage (tanpa buku spesifik) —</option>
-                        <template x-for="b in books" :key="b.id">
-                            <option :value="b.id" x-text="b.title + ' · ' + b.price"></option>
-                        </template>
+                        @foreach($linkableBooks as $b)
+                            <option value="{{ $b['id'] }}">{{ $b['title'] }} · {{ $b['price'] }}</option>
+                        @endforeach
                     </select>
                     <p class="mt-1 text-[10px] text-slate-400">List 60 buku top sales. Buku di luar list → pakai field "URL kustom" di bawah.</p>
                 </div>

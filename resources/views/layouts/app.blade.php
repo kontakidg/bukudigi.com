@@ -27,8 +27,6 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-
     @stack('head')
 </head>
 <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 antialiased">
