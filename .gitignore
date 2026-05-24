@@ -1,6 +1,6 @@
 /.phpunit.cache
 /node_modules
-/public/build
+# /public/build  ← di-track ke git supaya VPS ga perlu npm run build
 /public/hot
 /public/storage
 /storage/*.key
