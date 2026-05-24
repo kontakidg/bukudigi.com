@@ -6,6 +6,7 @@ use App\Models\Affiliate;
 use App\Models\AffiliateClick;
 use App\Models\AffiliateCode;
 use App\Models\AffiliateEarning;
+use App\Models\Book;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -129,8 +130,22 @@ class AffiliateController extends Controller
             'end' => $end->format('Y-m-d'),
         ];
 
+        // List buku untuk link generator (top 60 by sales, hanya active)
+        $linkableBooks = Book::where('status', 'active')
+            ->orderByDesc('sales_count')
+            ->orderByDesc('id')
+            ->limit(60)
+            ->get(['id', 'slug', 'title', 'price'])
+            ->map(fn ($b) => [
+                'slug' => $b->slug,
+                'title' => $b->title,
+                'price' => 'Rp '.number_format((int) $b->price, 0, ',', '.'),
+                'url' => route('books.show', ['book' => $b->slug]),
+            ])
+            ->values();
+
         return view('affiliate.dashboard', compact(
-            'affiliate', 'codes', 'stats', 'earnings', 'payouts', 'chart', 'chartRange'
+            'affiliate', 'codes', 'stats', 'earnings', 'payouts', 'chart', 'chartRange', 'linkableBooks'
         ));
     }
 

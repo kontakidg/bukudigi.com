@@ -165,6 +165,119 @@
         </div>
     @endif
 
+    {{-- ===== Generator link buku ===== --}}
+    @if($affiliate->isApproved() && $codes->isNotEmpty())
+        @php
+            $codesJson = $codes->map(fn ($c) => ['id' => $c->id, 'code' => $c->code, 'label' => $c->label, 'is_default' => $c->is_default])->values();
+            $defaultCodeId = $codes->firstWhere('is_default', true)?->id ?? $codes->first()->id;
+        @endphp
+        <div class="mt-6 card p-6"
+             x-data="affiliateLinkGen({{ $codesJson->toJson() }}, {{ $linkableBooks->toJson() }}, {{ $defaultCodeId }})">
+            <h2 class="text-lg font-bold">🔗 Generator Link Buku</h2>
+            <p class="mt-1 text-sm text-slate-500">Pilih buku + pilih kode → langsung dapat link siap share. Format: <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">https://bukudigi.com/buku/SLUG?ref=KODE</code></p>
+
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+                {{-- Pilih buku --}}
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">1. Cari & pilih buku</label>
+                    <input x-model="search" type="search" placeholder="Ketik judul buku…"
+                           class="input">
+                    <div class="mt-2 max-h-56 overflow-y-auto rounded-lg border border-slate-200">
+                        <template x-for="b in filteredBooks" :key="b.slug">
+                            <button type="button" @click="selectedSlug = b.slug; selectedTitle = b.title; selectedUrl = b.url"
+                                    class="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-emerald-50"
+                                    :class="selectedSlug === b.slug ? 'bg-emerald-100 font-semibold' : ''">
+                                <span x-text="b.title" class="text-slate-800"></span>
+                                <span class="text-xs text-slate-500" x-text="' · ' + b.price"></span>
+                            </button>
+                        </template>
+                        <template x-if="filteredBooks.length === 0">
+                            <p class="px-3 py-4 text-center text-xs text-slate-400">Tidak ada buku cocok.</p>
+                        </template>
+                    </div>
+                    <p class="mt-1 text-[10px] text-slate-400">Atau ketik URL/slug manual di bawah kalau buku ga ada di list (max 60 buku top sales).</p>
+                </div>
+
+                {{-- Pilih kode + result --}}
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">2. Pilih kode</label>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="c in codes" :key="c.id">
+                            <button type="button" @click="selectedCodeId = c.id"
+                                    class="rounded-lg border px-3 py-1.5 text-xs font-medium transition"
+                                    :class="selectedCodeId === c.id ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600 hover:border-emerald-300'">
+                                <span class="font-mono" x-text="c.code"></span>
+                                <span x-show="c.label" class="ml-1 text-[10px] opacity-70" x-text="'(' + c.label + ')'"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <label class="mt-4 mb-1 block text-xs font-medium text-slate-700">3. Atau URL kustom <span class="text-slate-400">(opsional)</span></label>
+                    <input x-model="customUrl" type="text" placeholder="https://bukudigi.com/buku/slug-buku"
+                           class="input font-mono text-xs">
+
+                    <div class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                        <p class="text-[10px] font-semibold uppercase text-emerald-700">Link siap share</p>
+                        <p x-show="selectedTitle && !customUrl" class="mt-0.5 text-xs text-slate-500" x-text="'Buku: ' + selectedTitle"></p>
+                        <div class="mt-2 flex gap-2">
+                            <input type="text" readonly :value="finalUrl"
+                                   class="input flex-1 !bg-white font-mono text-xs">
+                            <button type="button" @click="copy"
+                                    class="btn-primary !py-1.5 !text-xs whitespace-nowrap"
+                                    x-text="copied ? '✓ Copied' : 'Copy'"></button>
+                        </div>
+                        <div class="mt-2 flex gap-2">
+                            <a :href="finalUrl" target="_blank" rel="noopener"
+                               class="text-xs text-emerald-700 hover:underline">↗ Buka di tab baru</a>
+                            <button type="button" @click="shareWa"
+                                    class="text-xs text-emerald-700 hover:underline">📱 Share via WhatsApp</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @push('scripts')
+        <script>
+            function affiliateLinkGen(codes, books, defaultCodeId) {
+                return {
+                    codes,
+                    books,
+                    search: '',
+                    selectedSlug: books.length ? books[0].slug : '',
+                    selectedTitle: books.length ? books[0].title : '',
+                    selectedUrl: books.length ? books[0].url : 'https://bukudigi.com',
+                    selectedCodeId: defaultCodeId,
+                    customUrl: '',
+                    copied: false,
+                    get filteredBooks() {
+                        if (!this.search) return this.books;
+                        const s = this.search.toLowerCase();
+                        return this.books.filter(b => b.title.toLowerCase().includes(s));
+                    },
+                    get currentCode() {
+                        return this.codes.find(c => c.id === this.selectedCodeId) || this.codes[0];
+                    },
+                    get finalUrl() {
+                        const base = (this.customUrl || this.selectedUrl || 'https://bukudigi.com').trim();
+                        const sep = base.includes('?') ? '&' : '?';
+                        return base + sep + 'ref=' + (this.currentCode?.code || '');
+                    },
+                    copy() {
+                        navigator.clipboard.writeText(this.finalUrl);
+                        this.copied = true;
+                        setTimeout(() => this.copied = false, 1500);
+                    },
+                    shareWa() {
+                        const text = encodeURIComponent('Cek buku ini di bukudigi.com 👉 ' + this.finalUrl);
+                        window.open('https://wa.me/?text=' + text, '_blank');
+                    },
+                }
+            }
+        </script>
+        @endpush
+    @endif
+
     {{-- ===== Chart Performance ===== --}}
     @if($affiliate->isApproved())
         @php
