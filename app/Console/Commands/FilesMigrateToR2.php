@@ -76,17 +76,38 @@ class FilesMigrateToR2 extends Command
             }
 
             try {
-                // Cek exists kadang bermasalah di R2 (HEAD request permission) — skip check,
-                // langsung overwrite. Aman karena writeStream replace existing object.
-                $stream = fopen($file->getRealPath(), 'rb');
-                $disk->writeStream($rel, $stream);
-                if (is_resource($stream)) {
-                    fclose($stream);
+                // Cek apakah file sudah ada di R2 dengan size sama → skip upload (hemat bandwidth)
+                $remoteSize = 0;
+                try {
+                    $remoteSize = (int) $disk->size($rel);
+                } catch (\Throwable $e) {
+                    // not in R2 — akan di-upload
                 }
-                $uploaded++;
-                $this->line('    → uploaded');
+
+                if ($remoteSize === (int) $size) {
+                    $this->line('    → already in R2 (same size), skip upload');
+                    $skipped++;
+                } else {
+                    $stream = fopen($file->getRealPath(), 'rb');
+                    $disk->writeStream($rel, $stream);
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
+                    $uploaded++;
+                    $this->line('    → uploaded');
+                }
 
                 if ($cleanup) {
+                    // Verify sekali lagi sebelum delete local: file beneran di R2 dengan size match
+                    $verifySize = 0;
+                    try {
+                        $verifySize = (int) $disk->size($rel);
+                    } catch (\Throwable $e) {}
+
+                    if ($verifySize !== (int) $size) {
+                        $this->error("    → SKIP cleanup: R2 size ({$verifySize}) != local size ({$size})");
+                        continue;
+                    }
                     @unlink($file->getRealPath());
                     $this->line('    → local deleted');
                 }
