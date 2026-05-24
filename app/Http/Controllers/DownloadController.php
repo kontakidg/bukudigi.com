@@ -4,14 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\DownloadLog;
 use App\Models\Order;
+use App\Support\PrivateStorage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DownloadController extends Controller
 {
-    public function show(Request $request, string $orderCode): BinaryFileResponse
+    public function show(Request $request, string $orderCode): StreamedResponse
     {
         $order = Order::with('book')
             ->where('order_code', $orderCode)
@@ -26,8 +27,7 @@ class DownloadController extends Controller
             abort(409, 'PDF belum siap. Coba lagi beberapa detik lagi.');
         }
 
-        $abs = Storage::disk('local')->path($order->watermarked_pdf_path);
-        if (! is_file($abs)) {
+        if (! PrivateStorage::disk()->exists($order->watermarked_pdf_path)) {
             abort(404, 'File watermarked tidak ditemukan.');
         }
 
@@ -42,18 +42,16 @@ class DownloadController extends Controller
 
         $filename = preg_replace('/[^a-z0-9-]+/i', '-', $order->book->slug ?? 'ebook') . '.pdf';
 
-        return response()->file($abs, [
+        return PrivateStorage::disk()->download($order->watermarked_pdf_path, $filename, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }
 
     /** Download EPUB watermarked. */
-    public function epub(Request $request, string $orderCode): BinaryFileResponse
+    public function epub(Request $request, string $orderCode): StreamedResponse
     {
         $order = $this->resolveOrderForEpub($request, $orderCode);
-        $abs = Storage::disk('local')->path($order->watermarked_epub_path);
-        if (! is_file($abs)) {
+        if (! PrivateStorage::disk()->exists($order->watermarked_epub_path)) {
             abort(404, 'File EPUB tidak ditemukan.');
         }
 
@@ -68,9 +66,8 @@ class DownloadController extends Controller
 
         $filename = preg_replace('/[^a-z0-9-]+/i', '-', $order->book->slug ?? 'ebook') . '.epub';
 
-        return response()->file($abs, [
+        return PrivateStorage::disk()->download($order->watermarked_epub_path, $filename, [
             'Content-Type' => 'application/epub+zip',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }
 
@@ -86,15 +83,20 @@ class DownloadController extends Controller
     }
 
     /** Stream EPUB inline (untuk epub.js fetch). */
-    public function streamEpub(Request $request, string $orderCode): BinaryFileResponse
+    public function streamEpub(Request $request, string $orderCode): StreamedResponse
     {
         $order = $this->resolveOrderForEpub($request, $orderCode);
-        $abs = Storage::disk('local')->path($order->watermarked_epub_path);
-        if (! is_file($abs)) {
+        if (! PrivateStorage::disk()->exists($order->watermarked_epub_path)) {
             abort(404, 'File EPUB tidak ditemukan.');
         }
 
-        return response()->file($abs, [
+        return Response::stream(function () use ($order) {
+            $stream = PrivateStorage::disk()->readStream($order->watermarked_epub_path);
+            if (is_resource($stream)) {
+                fpassthru($stream);
+                fclose($stream);
+            }
+        }, 200, [
             'Content-Type' => 'application/epub+zip',
             'Content-Disposition' => 'inline',
             'Cache-Control' => 'private, no-store',

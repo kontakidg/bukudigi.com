@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Book;
 use App\Services\PdfPreviewService;
 use App\Services\PdfToImageService;
+use App\Support\PrivateStorage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,17 +34,22 @@ class GeneratePreviewJob implements ShouldQueue
             return;
         }
 
-        $masterAbs = Storage::disk('local')->path($book->pdf_master_path);
-        if (! is_file($masterAbs)) {
-            Log::warning('[GeneratePreviewJob] Master not found', ['book' => $book->id, 'path' => $masterAbs]);
+        if (! PrivateStorage::disk()->exists($book->pdf_master_path)) {
+            Log::warning('[GeneratePreviewJob] Master not found', ['book' => $book->id, 'path' => $book->pdf_master_path]);
             return;
         }
 
+        $masterLocal = PrivateStorage::localPath($book->pdf_master_path);
+        $masterAbs = $masterLocal['path'];
+
         $updates = [];
 
-        // === 1. Preview PDF (5 halaman + watermark PREVIEW) ===
+        // === 1. Preview PDF (5 halaman + watermark PREVIEW) — disimpan di disk public ===
         $previewRel = "book-previews/{$book->slug}/preview.pdf";
         $previewAbs = Storage::disk('public')->path($previewRel);
+
+        // Pastikan dir target ada (disk 'public' = local)
+        @mkdir(dirname($previewAbs), 0775, true);
 
         try {
             $previewService->generate($masterAbs, $previewAbs, $book->title, 5);
@@ -75,6 +81,8 @@ class GeneratePreviewJob implements ShouldQueue
         } elseif (! $imageService->isAvailable()) {
             Log::info('[GeneratePreviewJob] Ghostscript not available, skip PNG render');
         }
+
+        PrivateStorage::cleanup($masterLocal);
 
         if (! empty($updates)) {
             $book->update($updates);

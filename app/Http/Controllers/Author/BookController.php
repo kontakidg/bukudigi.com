@@ -73,7 +73,7 @@ class BookController extends Controller
         $coverPath = $this->storeCover($request->file('cover'), $author->id, $slug);
         $pdfPath = $this->storePdf($request->file('pdf'), $slug);
         $this->validateUploadedPdf($pdfPath);
-        $pdfSize = Storage::disk('local')->size($pdfPath);
+        $pdfSize = \App\Support\PrivateStorage::size($pdfPath);
 
         $epubPath = null;
         if ($request->hasFile('epub')) {
@@ -171,7 +171,7 @@ class BookController extends Controller
         if ($request->hasFile('pdf')) {
             $updates['pdf_master_path'] = $this->storePdf($request->file('pdf'), $book->slug);
             $this->validateUploadedPdf($updates['pdf_master_path']);
-            $updates['file_size_bytes'] = Storage::disk('local')->size($updates['pdf_master_path']);
+            $updates['file_size_bytes'] = \App\Support\PrivateStorage::size($updates['pdf_master_path']);
         }
 
         if ($request->hasFile('epub')) {
@@ -324,12 +324,12 @@ class BookController extends Controller
 
     private function storePdf(UploadedFile $file, string $slug): string
     {
-        return $file->storeAs("books/{$slug}", 'master.pdf', 'local');
+        return $file->storeAs("books/{$slug}", 'master.pdf', 'private');
     }
 
     private function storeEpub(UploadedFile $file, string $slug): string
     {
-        return $file->storeAs("books/{$slug}", 'master.epub', 'local');
+        return $file->storeAs("books/{$slug}", 'master.epub', 'private');
     }
 
     /**
@@ -338,19 +338,21 @@ class BookController extends Controller
      */
     private function validateUploadedEpub(string $relPath): void
     {
-        $abs = Storage::disk('local')->path($relPath);
+        $local = \App\Support\PrivateStorage::localPath($relPath);
         $zip = new \ZipArchive();
-        if ($zip->open($abs) !== true) {
-            @unlink($abs);
+        if ($zip->open($local['path']) !== true) {
+            \App\Support\PrivateStorage::cleanup($local);
+            \App\Support\PrivateStorage::disk()->delete($relPath);
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'epub' => 'File EPUB rusak atau bukan archive zip valid.',
             ]);
         }
         $hasContainer = $zip->locateName('META-INF/container.xml') !== false;
         $zip->close();
+        \App\Support\PrivateStorage::cleanup($local);
 
         if (! $hasContainer) {
-            @unlink($abs);
+            \App\Support\PrivateStorage::disk()->delete($relPath);
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'epub' => 'File EPUB tidak valid (META-INF/container.xml tidak ditemukan).',
             ]);
@@ -363,15 +365,17 @@ class BookController extends Controller
      */
     private function validateUploadedPdf(string $relPath): void
     {
-        $abs = Storage::disk('local')->path($relPath);
+        $local = \App\Support\PrivateStorage::localPath($relPath);
         try {
             $pdf = new Fpdi();
-            $count = $pdf->setSourceFile($abs);
+            $count = $pdf->setSourceFile($local['path']);
             if ($count < 1) {
                 throw new \RuntimeException('PDF tidak punya halaman.');
             }
+            \App\Support\PrivateStorage::cleanup($local);
         } catch (Throwable $e) {
-            Storage::disk('local')->delete($relPath);
+            \App\Support\PrivateStorage::cleanup($local);
+            \App\Support\PrivateStorage::disk()->delete($relPath);
             throw ValidationException::withMessages([
                 'pdf' => 'File PDF tidak valid atau ter-encrypt. Pastikan PDF normal (bisa dibuka di Acrobat/Chrome) dan tanpa password. Error: '.$e->getMessage(),
             ]);

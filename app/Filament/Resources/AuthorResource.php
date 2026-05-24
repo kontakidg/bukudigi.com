@@ -52,8 +52,8 @@ class AuthorResource extends Resource
                     Forms\Components\TextInput::make('nik')->label('NIK')->maxLength(32),
                     Forms\Components\TextInput::make('npwp')->label('NPWP')->maxLength(32)
                         ->helperText('Kosongkan jika tidak ada — PPh 23 jadi 4%'),
-                    Forms\Components\FileUpload::make('ktp_image_path')->label('Foto KTP')->image()->disk('local')->visibility('private'),
-                    Forms\Components\FileUpload::make('selfie_image_path')->label('Selfie + KTP')->image()->disk('local')->visibility('private'),
+                    Forms\Components\FileUpload::make('ktp_image_path')->label('Foto KTP')->image()->disk('private')->visibility('private'),
+                    Forms\Components\FileUpload::make('selfie_image_path')->label('Selfie + KTP')->image()->disk('private')->visibility('private'),
                     Forms\Components\Select::make('status')->required()->options([
                         'pending' => 'Pending', 'verified' => 'Verified', 'suspended' => 'Suspended',
                     ]),

@@ -96,10 +96,10 @@ class AuthorController extends Controller
         $ktpPath = null;
         $selfiePath = null;
         if ($request->hasFile('ktp_image')) {
-            $ktpPath = $request->file('ktp_image')->store('author-docs/'.$user->id, 'local');
+            $ktpPath = $request->file('ktp_image')->store('author-docs/'.$user->id, 'private');
         }
         if ($request->hasFile('selfie_image')) {
-            $selfiePath = $request->file('selfie_image')->store('author-docs/'.$user->id, 'local');
+            $selfiePath = $request->file('selfie_image')->store('author-docs/'.$user->id, 'private');
         }
 
         $author = Author::create([

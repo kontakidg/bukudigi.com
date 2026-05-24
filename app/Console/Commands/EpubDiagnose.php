@@ -5,8 +5,8 @@ namespace App\Console\Commands;
 use App\Jobs\WatermarkEpubJob;
 use App\Models\Order;
 use App\Services\EpubWatermarkService;
+use App\Support\PrivateStorage;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
 class EpubDiagnose extends Command
@@ -41,14 +41,12 @@ class EpubDiagnose extends Command
             return self::SUCCESS;
         }
 
-        $masterAbs = Storage::disk('local')->path($masterRel);
         $this->info('--- MASTER EPUB ---');
-        $this->inspectEpub($masterAbs);
+        $this->inspectByRel($masterRel);
 
         if ($wmRel) {
-            $wmAbs = Storage::disk('local')->path($wmRel);
             $this->info('--- WATERMARKED EPUB ---');
-            $this->inspectEpub($wmAbs);
+            $this->inspectByRel($wmRel);
         }
 
         if ($this->option('recover')) {
@@ -58,15 +56,21 @@ class EpubDiagnose extends Command
             }
             $this->info('');
             $this->info('Recovering: re-apply watermark service ke watermarked file (idempotent — strip old marker + inject new clean watermark)...');
-            $wmAbs = Storage::disk('local')->path($wmRel);
             try {
-                app(EpubWatermarkService::class)->apply($wmAbs, $wmAbs, [
+                // Download watermarked ke temp, apply service in-place, upload back
+                $local = PrivateStorage::localPath($wmRel);
+                app(EpubWatermarkService::class)->apply($local['path'], $local['path'], [
                     'name' => $order->user->name ?? 'Anonim',
                     'email' => $order->user->email ?? '-',
                     'order_code' => $order->order_code,
                 ]);
+                // Upload kembali kalau remote
+                if (! empty($local['is_temp'])) {
+                    PrivateStorage::putFromLocal($local['path'], $wmRel);
+                }
+                PrivateStorage::cleanup($local);
                 $this->info('Done. Re-inspecting...');
-                $this->inspectEpub($wmAbs);
+                $this->inspectByRel($wmRel);
             } catch (\Throwable $e) {
                 $this->error('Recovery failed: '.$e->getMessage());
                 return self::FAILURE;
@@ -82,13 +86,28 @@ class EpubDiagnose extends Command
             $order->refresh();
             $this->line("Result: watermarked_epub_path = ".($order->watermarked_epub_path ?? 'null'));
             if ($order->watermarked_epub_path) {
-                $newAbs = Storage::disk('local')->path($order->watermarked_epub_path);
                 $this->info('--- WATERMARKED EPUB (baru) ---');
-                $this->inspectEpub($newAbs);
+                $this->inspectByRel($order->watermarked_epub_path);
             }
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Inspect EPUB by relative path di private disk.
+     * Download ke temp local kalau remote, lalu inspect.
+     */
+    private function inspectByRel(string $relPath): void
+    {
+        if (! PrivateStorage::disk()->exists($relPath)) {
+            $this->error("  File NOT FOUND in private storage: {$relPath}");
+            return;
+        }
+
+        $local = PrivateStorage::localPath($relPath);
+        $this->inspectEpub($local['path']);
+        PrivateStorage::cleanup($local);
     }
 
     private function inspectEpub(string $abs): void
@@ -99,7 +118,6 @@ class EpubDiagnose extends Command
         }
 
         $size = filesize($abs);
-        $this->line("  Path:  {$abs}");
         $this->line("  Size:  ".number_format($size).' bytes ('.round($size / 1024, 1).' KB)');
 
         $zip = new ZipArchive();
@@ -111,15 +129,12 @@ class EpubDiagnose extends Command
 
         $this->line("  Zip entries: {$zip->numFiles}");
 
-        // mimetype check (EPUB spec: first file, uncompressed, exact content)
         $mimetype = $zip->getFromName('mimetype');
         $this->line('  mimetype:    '.($mimetype === false ? 'MISSING ❌' : (trim($mimetype) === 'application/epub+zip' ? 'OK ✓' : 'WRONG ('.$mimetype.')')));
 
-        // container.xml check
         $container = $zip->getFromName('META-INF/container.xml');
         $this->line('  container:   '.($container === false ? 'MISSING ❌' : 'OK ✓ ('.strlen($container).' bytes)'));
 
-        // content.opf check
         $opfPath = null;
         if ($container && preg_match('#full-path="([^"]+\.opf)"#u', $container, $m)) {
             $opfPath = $m[1];
@@ -130,7 +145,6 @@ class EpubDiagnose extends Command
                 $this->error("  content.opf: MISSING at {$opfPath} ❌");
             } else {
                 $this->line("  content.opf: OK at {$opfPath} (".strlen($opf).' bytes)');
-                // Coba parse XML
                 $prev = libxml_use_internal_errors(true);
                 $dom = new \DOMDocument();
                 $loaded = $dom->loadXML($opf);
@@ -147,7 +161,6 @@ class EpubDiagnose extends Command
                     $hasBuyer = str_contains($opf, 'bukudigi-buyer');
                     $this->line('  watermark marker: '.($hasBuyer ? 'present ✓' : 'absent'));
 
-                    // Cek tiap item di manifest beneran ada di zip
                     $items = $dom->getElementsByTagName('item');
                     $opfDir = trim(dirname($opfPath), '.');
                     $missing = [];

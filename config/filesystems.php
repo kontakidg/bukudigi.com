@@ -60,6 +60,28 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Private disk untuk semua file sensitif (PDF master, EPUB master,
+         * watermarked, KTP selfie). Default 'local' supaya dev env tidak break.
+         * Set PRIVATE_DISK=r2 di .env production untuk pakai Cloudflare R2.
+         */
+        'private' => [
+            'driver' => env('PRIVATE_DISK_DRIVER', 'local'),
+            // Local driver settings (dev)
+            'root' => storage_path('app/private'),
+            'serve' => true,
+            // S3/R2 driver settings (prod) — bakal di-ignore kalau driver=local
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => 'auto',
+            'bucket' => env('R2_BUCKET'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

@@ -4,13 +4,13 @@ namespace App\Jobs;
 
 use App\Models\Order;
 use App\Services\EpubWatermarkService;
+use App\Support\PrivateStorage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class WatermarkEpubJob implements ShouldQueue
@@ -33,12 +33,10 @@ class WatermarkEpubJob implements ShouldQueue
 
         $masterRel = $order->book->epub_master_path;
         if (! $masterRel) {
-            // Book tidak punya EPUB — skip silently
             return;
         }
 
-        $masterAbs = Storage::disk('local')->path($masterRel);
-        if (! is_file($masterAbs)) {
+        if (! PrivateStorage::disk()->exists($masterRel)) {
             Log::warning('[WatermarkEpubJob] EPUB master missing', [
                 'order' => $order->order_code,
                 'path' => $masterRel,
@@ -46,30 +44,37 @@ class WatermarkEpubJob implements ShouldQueue
             return;
         }
 
+        $masterLocal = PrivateStorage::localPath($masterRel);
+        $tempDest = tempnam(sys_get_temp_dir(), 'wmepub-');
         $destRel = "watermarked-epub/{$order->order_code}.epub";
-        $destAbs = Storage::disk('local')->path($destRel);
 
         try {
-            $service->apply($masterAbs, $destAbs, [
+            $service->apply($masterLocal['path'], $tempDest, [
                 'name' => $order->user->name ?? 'Anonim',
                 'email' => $order->user->email ?? '-',
                 'order_code' => $order->order_code,
             ]);
+            PrivateStorage::putFromLocal($tempDest, $destRel);
         } catch (Throwable $e) {
             Log::error('[WatermarkEpubJob] Failed', [
                 'order' => $order->order_code,
                 'error' => $e->getMessage(),
             ]);
-            // Don't fail order — PDF mungkin sudah ready. Cukup log.
+            PrivateStorage::cleanup($masterLocal);
+            @unlink($tempDest);
             return;
         }
+
+        $size = is_file($tempDest) ? filesize($tempDest) : 0;
+        PrivateStorage::cleanup($masterLocal);
+        @unlink($tempDest);
 
         $order->update(['watermarked_epub_path' => $destRel]);
 
         Log::info('[WatermarkEpubJob] Done', [
             'order' => $order->order_code,
             'path' => $destRel,
-            'size' => filesize($destAbs),
+            'size' => $size,
         ]);
     }
 }

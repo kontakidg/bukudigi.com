@@ -4,13 +4,13 @@ namespace App\Jobs;
 
 use App\Models\Order;
 use App\Services\PdfWatermarkService;
+use App\Support\PrivateStorage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class WatermarkPdfJob implements ShouldQueue
@@ -35,19 +35,18 @@ class WatermarkPdfJob implements ShouldQueue
         $order->update(['status' => 'watermarking']);
 
         $masterRel = $order->book->pdf_master_path;
-        // Path lokal di disk 'local' (storage/app/private)
-        $masterAbs = Storage::disk('local')->path($masterRel);
 
-        if (! is_file($masterAbs)) {
+        // Download master ke temp local (kalau R2). PrivateStorage handle keduanya.
+        if (! PrivateStorage::disk()->exists($masterRel)) {
             Log::warning('[WatermarkPdfJob] Master PDF missing, fallback to plain copy', [
                 'order' => $order->order_code,
-                'path' => $masterAbs,
+                'path' => $masterRel,
             ]);
-            // Fallback: bikin file kecil placeholder agar flow tidak putus saat dev
             $this->fallbackPlaceholder($order, $masterRel);
             return;
         }
 
+        $masterLocal = PrivateStorage::localPath($masterRel);
         $watermarkText = sprintf(
             'Dibeli oleh: %s · %s · Order %s',
             $order->user->name ?? 'Anonim',
@@ -55,11 +54,13 @@ class WatermarkPdfJob implements ShouldQueue
             $order->order_code
         );
 
+        // Tulis hasil ke temp file dulu, lalu upload ke private storage
+        $tempDest = tempnam(sys_get_temp_dir(), 'wmpdf-');
         $destRel = "watermarked/{$order->order_code}.pdf";
-        $destAbs = Storage::disk('local')->path($destRel);
 
         try {
-            $service->apply($masterAbs, $destAbs, $watermarkText);
+            $service->apply($masterLocal['path'], $tempDest, $watermarkText);
+            PrivateStorage::putFromLocal($tempDest, $destRel);
         } catch (Throwable $e) {
             Log::error('[WatermarkPdfJob] Watermark failed', [
                 'order' => $order->order_code,
@@ -71,8 +72,14 @@ class WatermarkPdfJob implements ShouldQueue
                 'refund_reason' => 'Watermark gagal: PDF master tidak valid. Refund otomatis.',
                 'refunded_at' => now(),
             ]);
-            return; // Jangan re-throw — biar order tetap di status failed, admin bisa refund manual
+            PrivateStorage::cleanup($masterLocal);
+            @unlink($tempDest);
+            return;
         }
+
+        $size = is_file($tempDest) ? filesize($tempDest) : 0;
+        PrivateStorage::cleanup($masterLocal);
+        @unlink($tempDest);
 
         $order->update([
             'status' => 'ready',
@@ -84,14 +91,14 @@ class WatermarkPdfJob implements ShouldQueue
         Log::info('[WatermarkPdfJob] Done', [
             'order' => $order->order_code,
             'path' => $destRel,
-            'size' => filesize($destAbs),
+            'size' => $size,
         ]);
     }
 
     private function fallbackPlaceholder(Order $order, string $masterRel): void
     {
         $destRel = "watermarked/{$order->order_code}.pdf";
-        Storage::disk('local')->put(
+        PrivateStorage::disk()->put(
             $destRel,
             "%PDF-1.4\n% bukudigi placeholder (master tidak ditemukan: {$masterRel})\n% Order: {$order->order_code}\n%%EOF\n"
         );
