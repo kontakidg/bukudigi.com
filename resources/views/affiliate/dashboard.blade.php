@@ -71,6 +71,111 @@
         </div>
     </div>
 
+    {{-- ===== Chart Performance (paling atas, di bawah stats) ===== --}}
+    @if($affiliate->isApproved())
+        @php
+            $rangeLabels = ['14' => '14 hari', '30' => '1 bulan', '180' => '6 bulan', '365' => '1 tahun', 'custom' => 'Custom'];
+        @endphp
+        <div class="mt-6 card p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-bold">📈 Performance Chart</h2>
+                    <p class="mt-1 text-xs text-slate-500">
+                        {{ \Illuminate\Support\Carbon::parse($chartRange['start'])->format('j M Y') }} – {{ \Illuminate\Support\Carbon::parse($chartRange['end'])->format('j M Y') }}
+                        <span class="ml-1 text-slate-400">({{ ['daily'=>'per hari','weekly'=>'per minggu','monthly'=>'per bulan'][$chart['granularity']] ?? '' }})</span>
+                    </p>
+                </div>
+                <form method="GET" class="flex flex-wrap items-center gap-2">
+                    @foreach(['14','30','180','365'] as $r)
+                        <button name="range" value="{{ $r }}" type="submit"
+                            class="rounded-lg border px-3 py-1.5 text-xs font-medium {{ $chartRange['preset'] === $r ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600 hover:border-emerald-300' }}">
+                            {{ $rangeLabels[$r] }}
+                        </button>
+                    @endforeach
+                </form>
+            </div>
+
+            @if(array_sum($chart['clicks']) === 0 && array_sum($chart['conversions']) === 0)
+                <div class="mt-6 rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+                    Belum ada data klik/konversi di periode ini. Mulai share link affiliate kamu! 🚀
+                </div>
+            @else
+                <div class="mt-4 relative h-80">
+                    <canvas id="chartAffiliate"></canvas>
+                </div>
+            @endif
+        </div>
+
+        @push('scripts')
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+            <script>
+                (function () {
+                    const el = document.getElementById('chartAffiliate');
+                    if (!el) return;
+                    const labels = @json($chart['labels']);
+                    const clicks = @json($chart['clicks']);
+                    const conversions = @json($chart['conversions']);
+                    const earnings = @json($chart['earnings']);
+
+                    new Chart(el, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [
+                                {
+                                    label: 'Klik', data: clicks,
+                                    borderColor: '#0ea5e9', backgroundColor: '#0ea5e922',
+                                    yAxisID: 'yClicks', tension: 0.3, borderWidth: 2.5,
+                                    pointRadius: 2, pointHoverRadius: 5, fill: false,
+                                },
+                                {
+                                    label: 'Konversi', data: conversions,
+                                    borderColor: '#10b981', backgroundColor: '#10b98122',
+                                    yAxisID: 'yConv', tension: 0.3, borderWidth: 2.5,
+                                    borderDash: [5, 4], pointRadius: 2, pointHoverRadius: 5, fill: false,
+                                    pointStyle: 'rectRot',
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { position: 'bottom', labels: { boxWidth: 14, padding: 8, font: { size: 11 } } },
+                                tooltip: {
+                                    mode: 'index', intersect: false,
+                                    callbacks: {
+                                        afterBody: function (items) {
+                                            const i = items[0].dataIndex;
+                                            const e = earnings[i] || 0;
+                                            if (e > 0) {
+                                                return 'Earning: Rp ' + e.toLocaleString('id-ID');
+                                            }
+                                            return '';
+                                        }
+                                    }
+                                },
+                            },
+                            scales: {
+                                x: { ticks: { font: { size: 10 }, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } },
+                                yClicks: {
+                                    type: 'linear', position: 'left', beginAtZero: true,
+                                    title: { display: true, text: 'Klik', font: { size: 11, weight: 'bold' }, color: '#0369a1' },
+                                    ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' },
+                                },
+                                yConv: {
+                                    type: 'linear', position: 'right', beginAtZero: true,
+                                    title: { display: true, text: 'Konversi', font: { size: 11, weight: 'bold' }, color: '#047857' },
+                                    ticks: { precision: 0, font: { size: 10 } }, grid: { drawOnChartArea: false },
+                                },
+                            },
+                        },
+                    });
+                })();
+            </script>
+        @endpush
+    @endif
+
     {{-- ===== Codes management ===== --}}
     @if($affiliate->isApproved())
         <div class="mt-6 card p-6">
@@ -179,23 +284,14 @@
             <div class="mt-4 grid gap-4 md:grid-cols-2">
                 {{-- Pilih buku --}}
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700">1. Cari & pilih buku</label>
-                    <input x-model="search" type="search" placeholder="Ketik judul buku…"
-                           class="input">
-                    <div class="mt-2 max-h-56 overflow-y-auto rounded-lg border border-slate-200">
-                        <template x-for="b in filteredBooks" :key="b.id">
-                            <button type="button" @click="selectBook(b)"
-                                    class="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-emerald-50"
-                                    :class="selectedId === b.id ? 'bg-emerald-100 font-semibold' : ''">
-                                <span x-text="b.title" class="text-slate-800"></span>
-                                <span class="text-xs text-slate-500" x-text="' · ' + b.price"></span>
-                            </button>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">1. Pilih buku</label>
+                    <select x-model.number="selectedId" @change="syncFromSelect()" class="input">
+                        <option value="">— Homepage (tanpa buku spesifik) —</option>
+                        <template x-for="b in books" :key="b.id">
+                            <option :value="b.id" x-text="b.title + ' · ' + b.price"></option>
                         </template>
-                        <template x-if="filteredBooks.length === 0">
-                            <p class="px-3 py-4 text-center text-xs text-slate-400">Tidak ada buku cocok.</p>
-                        </template>
-                    </div>
-                    <p class="mt-1 text-[10px] text-slate-400">Atau ketik URL/slug manual di bawah kalau buku ga ada di list (max 60 buku top sales).</p>
+                    </select>
+                    <p class="mt-1 text-[10px] text-slate-400">List 60 buku top sales. Buku di luar list → pakai field "URL kustom" di bawah.</p>
                 </div>
 
                 {{-- Pilih kode + result --}}
@@ -258,25 +354,25 @@
                     codes,
                     books,
                     shortBase,
-                    search: '',
-                    selectedId: books.length ? books[0].id : null,
-                    selectedSlug: books.length ? books[0].slug : '',
-                    selectedTitle: books.length ? books[0].title : '',
-                    selectedUrl: books.length ? books[0].url : 'https://bukudigi.com',
+                    selectedId: null,
+                    selectedSlug: '',
+                    selectedTitle: '',
+                    selectedUrl: '',
                     selectedCodeId: defaultCodeId,
                     mode: 'short',
                     customUrl: '',
                     copied: false,
-                    selectBook(b) {
-                        this.selectedId = b.id;
-                        this.selectedSlug = b.slug;
-                        this.selectedTitle = b.title;
-                        this.selectedUrl = b.url;
-                    },
-                    get filteredBooks() {
-                        if (!this.search) return this.books;
-                        const s = this.search.toLowerCase();
-                        return this.books.filter(b => b.title.toLowerCase().includes(s));
+                    syncFromSelect() {
+                        const b = this.books.find(x => x.id === this.selectedId);
+                        if (b) {
+                            this.selectedSlug = b.slug;
+                            this.selectedTitle = b.title;
+                            this.selectedUrl = b.url;
+                        } else {
+                            this.selectedSlug = '';
+                            this.selectedTitle = '';
+                            this.selectedUrl = '';
+                        }
                     },
                     get currentCode() {
                         return this.codes.find(c => c.id === this.selectedCodeId) || this.codes[0];
@@ -312,111 +408,6 @@
                 }
             }
         </script>
-        @endpush
-    @endif
-
-    {{-- ===== Chart Performance ===== --}}
-    @if($affiliate->isApproved())
-        @php
-            $rangeLabels = ['14' => '14 hari', '30' => '1 bulan', '180' => '6 bulan', '365' => '1 tahun', 'custom' => 'Custom'];
-        @endphp
-        <div class="mt-6 card p-6">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-lg font-bold">📈 Performance Chart</h2>
-                    <p class="mt-1 text-xs text-slate-500">
-                        {{ \Illuminate\Support\Carbon::parse($chartRange['start'])->format('j M Y') }} – {{ \Illuminate\Support\Carbon::parse($chartRange['end'])->format('j M Y') }}
-                        <span class="ml-1 text-slate-400">({{ ['daily'=>'per hari','weekly'=>'per minggu','monthly'=>'per bulan'][$chart['granularity']] ?? '' }})</span>
-                    </p>
-                </div>
-                <form method="GET" class="flex flex-wrap items-center gap-2">
-                    @foreach(['14','30','180','365'] as $r)
-                        <button name="range" value="{{ $r }}" type="submit"
-                            class="rounded-lg border px-3 py-1.5 text-xs font-medium {{ $chartRange['preset'] === $r ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600 hover:border-emerald-300' }}">
-                            {{ $rangeLabels[$r] }}
-                        </button>
-                    @endforeach
-                </form>
-            </div>
-
-            @if(array_sum($chart['clicks']) === 0 && array_sum($chart['conversions']) === 0)
-                <div class="mt-6 rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-                    Belum ada data klik/konversi di periode ini. Mulai share link affiliate kamu! 🚀
-                </div>
-            @else
-                <div class="mt-4 relative h-80">
-                    <canvas id="chartAffiliate"></canvas>
-                </div>
-            @endif
-        </div>
-
-        @push('scripts')
-            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-            <script>
-                (function () {
-                    const el = document.getElementById('chartAffiliate');
-                    if (!el) return;
-                    const labels = @json($chart['labels']);
-                    const clicks = @json($chart['clicks']);
-                    const conversions = @json($chart['conversions']);
-                    const earnings = @json($chart['earnings']);
-
-                    new Chart(el, {
-                        type: 'line',
-                        data: {
-                            labels,
-                            datasets: [
-                                {
-                                    label: 'Klik', data: clicks,
-                                    borderColor: '#0ea5e9', backgroundColor: '#0ea5e922',
-                                    yAxisID: 'yClicks', tension: 0.3, borderWidth: 2.5,
-                                    pointRadius: 2, pointHoverRadius: 5, fill: false,
-                                },
-                                {
-                                    label: 'Konversi', data: conversions,
-                                    borderColor: '#10b981', backgroundColor: '#10b98122',
-                                    yAxisID: 'yConv', tension: 0.3, borderWidth: 2.5,
-                                    borderDash: [5, 4], pointRadius: 2, pointHoverRadius: 5, fill: false,
-                                    pointStyle: 'rectRot',
-                                },
-                            ],
-                        },
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            interaction: { mode: 'index', intersect: false },
-                            plugins: {
-                                legend: { position: 'bottom', labels: { boxWidth: 14, padding: 8, font: { size: 11 } } },
-                                tooltip: {
-                                    mode: 'index', intersect: false,
-                                    callbacks: {
-                                        afterBody: function (items) {
-                                            const i = items[0].dataIndex;
-                                            const e = earnings[i] || 0;
-                                            if (e > 0) {
-                                                return 'Earning: Rp ' + e.toLocaleString('id-ID');
-                                            }
-                                            return '';
-                                        }
-                                    }
-                                },
-                            },
-                            scales: {
-                                x: { ticks: { font: { size: 10 }, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } },
-                                yClicks: {
-                                    type: 'linear', position: 'left', beginAtZero: true,
-                                    title: { display: true, text: 'Klik', font: { size: 11, weight: 'bold' }, color: '#0369a1' },
-                                    ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' },
-                                },
-                                yConv: {
-                                    type: 'linear', position: 'right', beginAtZero: true,
-                                    title: { display: true, text: 'Konversi', font: { size: 11, weight: 'bold' }, color: '#047857' },
-                                    ticks: { precision: 0, font: { size: 10 } }, grid: { drawOnChartArea: false },
-                                },
-                            },
-                        },
-                    });
-                })();
-            </script>
         @endpush
     @endif
 
