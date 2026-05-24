@@ -152,7 +152,8 @@ bukudigi.test             → local dev (XAMPP vhost)
 
 | Topik | Keputusan | Catatan |
 |---|---|---|
-| Komisi platform | **20% flat** | Author terima 80% gross |
+| Komisi platform | **20% flat** | Tanpa affiliate: author 80%. Dengan affiliate: platform tetap 20%, affiliate 10% (dipotong dari net), author 70%. |
+| Komisi affiliate | **10% dari net** | Dibayar dari porsi gabungan author+platform → split final 70/10/20 jika ada affiliate. Cookie 30 hari, cooling 7 hari, threshold Rp 100.000 ikut jadwal payout author tgl 5. Approval admin wajib. |
 | Harga minimum | **Rp 15.000** | |
 | Harga maksimum | **Rp 500.000** | Buku premium butuh approval admin |
 | Mata uang | **IDR only** | |
@@ -242,7 +243,20 @@ download_logs (id, order_id, user_id, ip, user_agent, downloaded_at)
 | **F2 — M2** | Author flow | Author onboarding, upload, moderasi AI, admin approve, WA notif |
 | **F3 — M3** | Payout & ops | Payout manual flow, laporan, refund, cron backup, monitoring |
 | **F4 — M4** | Growth | SEO, sitemap, artikel review buku (mirip artikel tarikgas), kategori landing page |
-| **F5+** | Skala | Rating/review, bundle, kupon, affiliate, Iris auto-disbursement, EPUB, search Meilisearch |
+| **F5+** | Skala | Rating/review, bundle, Iris auto-disbursement, search Meilisearch |
+
+> **Catatan:** Fitur **Affiliate** & **Voucher** & **EPUB** sudah dipindah ke MVP/F1 atas keputusan iteratif (2026-05-24). Lihat section 6 dan flow di section 8.
+
+### 8.5 Affiliate (alur)
+1. User biasa atau author daftar via `/affiliate/register` (komitmen + channel promosi + motivasi)
+2. Admin review di Filament `/admin/affiliates` → approve / reject / suspend (notif WA via Fonnte)
+3. Approved → dapat kode unik (auto-generate) + link `?ref=KODE`
+4. Pengunjung klik → middleware `AffiliateTracker` set cookie 30 hari + log klik (dedup 1x per ip+affiliate+hari)
+5. Pembeli checkout → `CheckoutController` resolve cookie → attach `affiliate_id` ke order, hitung split 70/10/20 (no self-refer)
+6. Order paid (stub/webhook) → `AffiliateService::recordEarning` buat record pending dengan `available_at = paid_at + 7 hari`
+7. Order failed/refund → `cancelEarning` rollback saldo
+8. Cron `affiliate:mature-earnings` harian: pindah pending → available kalau cooling lewat
+9. Admin generate `AffiliatePayout` (Filament) per affiliate yang saldo >= 100rb tgl 5 → transfer manual → action "Tandai Diproses" → earnings status `paid`, saldo dikurangi, WA notif ke affiliate
 
 ---
 

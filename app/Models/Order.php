@@ -17,6 +17,9 @@ class Order extends Model
         'gross_amount',
         'voucher_id',
         'voucher_discount',
+        'affiliate_id',
+        'affiliate_code',
+        'affiliate_commission',
         'net_amount',
         'commission',
         'author_earning',
@@ -47,6 +50,7 @@ class Order extends Model
             'voucher_discount' => 'integer',
             'net_amount' => 'integer',
             'commission' => 'integer',
+            'affiliate_commission' => 'integer',
             'author_earning' => 'integer',
             'gateway_fee' => 'integer',
             'download_count' => 'integer',
@@ -85,6 +89,16 @@ class Order extends Model
     public function voucher(): BelongsTo
     {
         return $this->belongsTo(Voucher::class);
+    }
+
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
+    }
+
+    public function affiliateEarning()
+    {
+        return $this->hasOne(AffiliateEarning::class);
     }
 
     public function getRouteKeyName(): string

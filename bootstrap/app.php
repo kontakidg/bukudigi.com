@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Soft maintenance mode (toggleable via admin Site Settings)
         $middleware->web(append: [
             \App\Http\Middleware\MaintenanceMode::class,
+            \App\Http\Middleware\AffiliateTracker::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

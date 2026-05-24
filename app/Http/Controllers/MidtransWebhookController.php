@@ -6,6 +6,7 @@ use App\Jobs\WatermarkEpubJob;
 use App\Jobs\WatermarkPdfJob;
 use App\Mail\OrderPaidMail;
 use App\Models\Order;
+use App\Services\AffiliateService;
 use App\Services\MidtransService;
 use App\Services\VoucherService;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +25,7 @@ use Throwable;
  */
 class MidtransWebhookController extends Controller
 {
-    public function handle(Request $request, MidtransService $midtrans, VoucherService $voucherService): JsonResponse
+    public function handle(Request $request, MidtransService $midtrans, VoucherService $voucherService, AffiliateService $affiliateService): JsonResponse
     {
         if ($midtrans->isStub()) {
             return response()->json(['message' => 'Midtrans mode = stub, webhook disabled'], 200);
@@ -77,7 +78,7 @@ class MidtransWebhookController extends Controller
             return response()->json(['message' => 'Order already processed'], 200);
         }
 
-        DB::transaction(function () use ($order, $notif, $newStatus, $voucherService, $midtrans) {
+        DB::transaction(function () use ($order, $notif, $newStatus, $voucherService, $midtrans, $affiliateService) {
             $update = [
                 'status' => $newStatus,
                 'midtrans_order_id' => $notif['transaction_id'] ?: $order->order_code,
@@ -94,8 +95,13 @@ class MidtransWebhookController extends Controller
             $order->update($update);
 
             if ($newStatus === 'paid' && $order->wasChanged('status')) {
+                $fresh = $order->fresh();
+
                 // Record voucher usage
-                $voucherService->recordUsage($order->fresh());
+                $voucherService->recordUsage($fresh);
+
+                // Record affiliate earning (no-op kalau order ga pakai affiliate)
+                $affiliateService->recordEarning($fresh);
 
                 // Increment sales counter pakai net amount
                 $order->book->increment('sales_count');
@@ -118,8 +124,11 @@ class MidtransWebhookController extends Controller
 
             if ($newStatus === 'failed') {
                 $update['refund_reason'] = 'Pembayaran dibatalkan/expired: '.$notif['transaction_status'];
+                $freshFailed = $order->fresh();
                 // Voucher usage di-rollback (kalau memang udah ke-record sebelumnya)
-                $voucherService->rollbackUsage($order->fresh());
+                $voucherService->rollbackUsage($freshFailed);
+                // Cancel affiliate earning kalau ada
+                $affiliateService->cancelEarning($freshFailed);
             }
         });
 

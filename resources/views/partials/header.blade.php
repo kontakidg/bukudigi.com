@@ -19,6 +19,7 @@
             <a href="{{ route('books.index') }}" class="hover:text-brand-600">Semua Buku</a>
             <a href="{{ route('kategori.index') }}" class="hover:text-brand-600">Kategori</a>
             <a href="{{ route('jual') }}" class="hover:text-brand-600">Jadi Penulis</a>
+            <a href="{{ route('affiliate.landing') }}" class="hover:text-brand-600">Affiliate</a>
         </nav>
 
         <div class="hidden items-center gap-2 md:flex">
@@ -58,6 +59,11 @@
                                 <a href="{{ route('author.bank.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">💳 Rekening Bank</a>
                             @endif
                             <a href="{{ route('library') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">📚 Perpustakaan</a>
+                            @if(auth()->user()->affiliate)
+                                <a href="{{ route('affiliate.dashboard') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">🔗 Dashboard Affiliate</a>
+                            @else
+                                <a href="{{ route('affiliate.landing') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">🔗 Program Affiliate</a>
+                            @endif
                             <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">⚙ Profil &amp; Password</a>
                         </div>
 
@@ -94,6 +100,7 @@
             <a href="{{ route('books.index') }}" class="rounded p-2 hover:bg-slate-100">📖 Semua Buku</a>
             <a href="{{ route('kategori.index') }}" class="rounded p-2 hover:bg-slate-100">🗂️ Kategori</a>
             <a href="{{ route('jual') }}" class="rounded p-2 hover:bg-slate-100">✍️ Jadi Penulis</a>
+            <a href="{{ route('affiliate.landing') }}" class="rounded p-2 hover:bg-slate-100">🔗 Affiliate</a>
             <a href="{{ route('info.bantuan') }}" class="rounded p-2 hover:bg-slate-100">❓ Bantuan</a>
         </nav>
 

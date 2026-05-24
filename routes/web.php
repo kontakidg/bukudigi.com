@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AffiliateController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\WhatsAppOtpController;
 use App\Http\Controllers\AuthorController;
@@ -30,6 +31,9 @@ Route::get('/kategori/{category:slug}', [CategoryController::class, 'show'])->na
 
 // === Author landing (public) ===
 Route::get('/jual', [AuthorController::class, 'landing'])->name('jual');
+
+// === Affiliate landing (public) ===
+Route::get('/affiliate', [AffiliateController::class, 'landing'])->name('affiliate.landing');
 
 // === Info pages ===
 Route::view('/info/tentang', 'info.tentang')->name('info.tentang');
@@ -74,6 +78,11 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{penName:slug}', [AuthorPenNameController::class, 'update'])->name('update');
         Route::delete('/{penName:slug}', [AuthorPenNameController::class, 'destroy'])->name('destroy');
     });
+
+    // Affiliate onboarding + dashboard
+    Route::get('/affiliate/register', [AffiliateController::class, 'showRegister'])->name('affiliate.register.show');
+    Route::post('/affiliate/register', [AffiliateController::class, 'register'])->name('affiliate.register');
+    Route::get('/affiliate/dashboard', [AffiliateController::class, 'dashboard'])->name('affiliate.dashboard');
 
     // Author book CRUD
     Route::prefix('author/books')->name('author.books.')->group(function () {

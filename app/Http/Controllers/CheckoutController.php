@@ -7,6 +7,7 @@ use App\Jobs\WatermarkPdfJob;
 use App\Mail\OrderPaidMail;
 use App\Models\Book;
 use App\Models\Order;
+use App\Services\AffiliateService;
 use App\Services\MidtransService;
 use App\Services\VoucherService;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
-    public function start(Request $request, Book $book, MidtransService $midtrans, VoucherService $voucherService): RedirectResponse|View
+    public function start(Request $request, Book $book, MidtransService $midtrans, VoucherService $voucherService, AffiliateService $affiliateService): RedirectResponse|View
     {
         abort_unless($book->status === 'active', 404);
 
@@ -63,22 +64,28 @@ class CheckoutController extends Controller
 
         $netAmount = $gross - $voucherDiscount;
 
-        // Commission: cuma 20% dari net amount (yang dibayar customer ke platform)
-        // Author earning = net - commission. Platform yang nanggung loss kalau voucher dipakai.
-        $commission = (int) round($netAmount * (env('PLATFORM_COMMISSION_PERCENT', 20) / 100));
-        $authorEarning = $netAmount - $commission;
+        // Affiliate attribution dari cookie (kalau ada & valid & bukan diri sendiri)
+        $affiliate = $affiliateService->resolveFromRequest($request, $user->id);
 
-        $order = DB::transaction(function () use ($user, $book, $gross, $voucherId, $voucherDiscount, $netAmount, $commission, $authorEarning) {
+        // Hitung split komisi:
+        // - Tanpa affiliate: platform 20%, author 80%
+        // - Dengan affiliate: platform 20%, affiliate 10% (dari net), author 70%
+        $split = $affiliateService->computeSplit($netAmount, $affiliate);
+
+        $order = DB::transaction(function () use ($user, $book, $gross, $voucherId, $voucherDiscount, $netAmount, $split, $affiliate) {
             return Order::create([
                 'user_id' => $user->id,
                 'book_id' => $book->id,
                 'author_id' => $book->author_id,
                 'voucher_id' => $voucherId,
                 'voucher_discount' => $voucherDiscount,
+                'affiliate_id' => $affiliate?->id,
+                'affiliate_code' => $affiliate?->code,
+                'affiliate_commission' => $split['affiliate_commission'],
                 'gross_amount' => $gross,
                 'net_amount' => $netAmount,
-                'commission' => $commission,
-                'author_earning' => $authorEarning,
+                'commission' => $split['commission'],
+                'author_earning' => $split['author_earning'],
                 'gateway_fee' => 0,
                 'status' => 'pending',
             ]);
@@ -127,7 +134,7 @@ class CheckoutController extends Controller
      * Stub callback — simulasi pembayaran sukses tanpa lewat Midtrans beneran.
      * Di production, ini akan diganti dengan /api/midtrans/webhook yang verify signature.
      */
-    public function stubPay(Request $request, string $orderCode, VoucherService $voucherService): RedirectResponse
+    public function stubPay(Request $request, string $orderCode, VoucherService $voucherService, AffiliateService $affiliateService): RedirectResponse
     {
         abort_unless(app(MidtransService::class)->isStub(), 404);
 
@@ -145,6 +152,9 @@ class CheckoutController extends Controller
 
             // Record voucher usage (kalau ada)
             $voucherService->recordUsage($order);
+
+            // Record affiliate earning (kalau order pakai affiliate)
+            $affiliateService->recordEarning($order->fresh());
 
             // Increment book sales counter (pakai net amount untuk revenue tracking)
             $order->book->increment('sales_count');
