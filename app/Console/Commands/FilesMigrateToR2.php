@@ -76,13 +76,8 @@ class FilesMigrateToR2 extends Command
             }
 
             try {
-                // Cek sudah ada di R2 dengan size sama → skip
-                if ($disk->exists($rel) && (int) $disk->size($rel) === (int) $size) {
-                    $this->line("    → already exists with same size, skip");
-                    $skipped++;
-                    continue;
-                }
-
+                // Cek exists kadang bermasalah di R2 (HEAD request permission) — skip check,
+                // langsung overwrite. Aman karena writeStream replace existing object.
                 $stream = fopen($file->getRealPath(), 'rb');
                 $disk->writeStream($rel, $stream);
                 if (is_resource($stream)) {
