@@ -58,7 +58,7 @@
                 <label for="price" class="mb-1 block text-sm font-medium text-slate-700">Harga (Rp)</label>
                 <input id="price" name="price" type="number" min="15000" max="500000" step="1000" required
                        value="{{ old('price', $book->price ?? '') }}" class="input">
-                <p class="mt-1 text-xs text-slate-500">Min Rp 15.000 · Max Rp 500.000. Komisi platform 20%.</p>
+                <p class="mt-1 text-xs text-slate-500">Min Rp 15.000 · Max Rp 500.000. Royalti penulis 70% (affiliate 10%, platform 20%).</p>
             </div>
             <div class="md:col-span-2">
                 <label for="description" class="mb-1 block text-sm font-medium text-slate-700">Deskripsi</label>

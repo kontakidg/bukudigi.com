@@ -85,7 +85,7 @@
         <h3>6.1 Hak Penulis</h3>
         <ul>
             <li>Menentukan harga Karya dalam rentang Rp 15.000 – Rp 500.000.</li>
-            <li>Menerima 80% dari harga gross setiap penjualan (komisi platform 20%, lihat <a href="{{ route('info.komisi') }}" class="text-brand-600">halaman komisi</a>).</li>
+            <li>Menerima 70% dari harga gross setiap penjualan (affiliate 10%, platform 20%, lihat <a href="{{ route('info.komisi') }}" class="text-brand-600">halaman komisi</a>).</li>
             <li>Menerima royalti via transfer bank setiap tanggal 5 bulan berikutnya (dengan threshold &amp; cooling).</li>
             <li>Mengedit, archive, atau menarik Karya kapan saja (Pembeli existing tetap dapat mengakses download).</li>
             <li>Melihat statistik penjualan real-time di dashboard Penulis.</li>
@@ -184,7 +184,7 @@
         <h2 id="10-pembayaran">10. Pembayaran &amp; Royalti</h2>
         <ul>
             <li>Pembayaran diproses oleh penyedia pihak ketiga (Midtrans). Pembeli tunduk juga pada Syarat Layanan Midtrans saat bertransaksi.</li>
-            <li>Komisi platform: <strong>20% flat</strong> dari harga gross. Penulis menerima 80%.</li>
+            <li>Pembagian komisi: <strong>Penulis 70%, Affiliate 10%, Platform 20%</strong> dari harga gross.</li>
             <li>Biaya transfer bank saat payout: <strong>50:50</strong> antara Penulis &amp; Platform (estimasi Rp 6.500 → ditanggung Rp 3.250 masing-masing).</li>
             <li><strong>PPh 23</strong> sesuai Pasal 23 UU PPh: 2% (dengan NPWP) atau 4% (tanpa NPWP) dari penghasilan bruto royalti, dipotong otomatis oleh Platform sebagai wajib pungut.</li>
             <li><strong>PPN</strong> sesuai PMK 60/2022 untuk perdagangan digital: dipungut oleh Platform dari harga jual ke Pembeli akhir, disetor ke negara.</li>

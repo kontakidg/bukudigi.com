@@ -21,7 +21,7 @@ Lihat di Toko
 
 - Share link di atas ke audiens kamu (Instagram, Twitter, WhatsApp, blog)
 - Cek dashboard rutin untuk track statistik penjualan
-- Royalti akan masuk rekening setiap tanggal 5 (komisi platform 20% flat)
+- Royalti akan masuk rekening setiap tanggal 5 (penulis 70%, affiliate 10%, platform 20%)
 
 Pastikan data rekening bank sudah lengkap supaya payout royalti lancar:
 

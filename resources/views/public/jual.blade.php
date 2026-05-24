@@ -8,7 +8,7 @@
     <div class="relative mx-auto max-w-4xl px-4 text-center">
         <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">✍️ Untuk Penulis Indonesia</span>
         <h1 class="mt-4 text-3xl font-bold leading-tight drop-shadow-md md:text-5xl">Jadi penulis di bukudigi.<br>Royalti masuk rekening tanggal 5.</h1>
-        <p class="mt-4 text-lg text-brand-100">Komisi platform cuma <strong class="text-white">20%</strong>. Sisanya 80% untuk kamu. Tanpa kontrak penerbit, tanpa minimum sales.</p>
+        <p class="mt-4 text-lg text-brand-100">Royalti penulis <strong class="text-white">70%</strong> (affiliate 10%, platform 20%). Tanpa kontrak penerbit, tanpa minimum sales.</p>
         <div class="mt-8">
             @auth
                 <a href="{{ route('author.register.show') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-base font-semibold text-brand-700 shadow hover:bg-brand-50">Mulai Daftar Penulis →</a>
@@ -25,8 +25,8 @@
     <div class="mt-8 grid gap-6 md:grid-cols-3">
         <div class="card p-6">
             <span class="text-3xl">💰</span>
-            <h3 class="mt-3 font-bold">Royalti 80%</h3>
-            <p class="mt-2 text-sm text-slate-600">Dari setiap pembelian, kamu terima 80% gross. Tanpa potongan tersembunyi.</p>
+            <h3 class="mt-3 font-bold">Royalti 70%</h3>
+            <p class="mt-2 text-sm text-slate-600">Dari setiap pembelian, kamu terima 70% gross. Affiliate 10%, platform 20%. Tanpa potongan tersembunyi.</p>
         </div>
         <div class="card p-6">
             <span class="text-3xl">📅</span>

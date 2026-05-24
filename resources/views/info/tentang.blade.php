@@ -38,7 +38,7 @@
         <ul>
             <li><strong>Pembayaran lokal</strong> — QRIS, Virtual Account BCA/BNI/Mandiri, GoPay, OVO, DANA. Tidak perlu kartu kredit.</li>
             <li><strong>Watermark personal</strong> — setiap PDF yang dibeli ada watermark nama &amp; email pembeli di setiap halaman. Anti-bocoran sosial, tapi pembeli tetap bisa baca offline, print, simpan permanen.</li>
-            <li><strong>Komisi adil</strong> — penulis menerima 80% dari harga gross. Kami hanya 20%. Royalti masuk rekening setiap tanggal 5.</li>
+            <li><strong>Komisi adil</strong> — penulis menerima 70% dari harga gross, affiliate 10%, platform 20%. Royalti masuk rekening setiap tanggal 5.</li>
             <li><strong>Moderasi manusia</strong> — setiap buku ditinjau admin sebelum live, untuk pastikan tidak ada bajakan, konten ilegal, atau plagiat.</li>
             <li><strong>Transparan</strong> — biaya, komisi, jadwal payout, semua tertulis di <a href="{{ route('info.komisi') }}" class="text-brand-600">halaman komisi</a>.</li>
         </ul>

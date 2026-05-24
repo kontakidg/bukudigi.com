@@ -133,7 +133,7 @@
         <div class="grid items-center gap-6 md:grid-cols-3">
             <div class="md:col-span-2">
                 <h2 class="text-2xl font-bold md:text-3xl">Punya ebook? Jual di bukudigi.</h2>
-                <p class="mt-2 text-brand-100">Komisi platform cuma <strong class="text-white">20%</strong>, sisanya untuk kamu. Royalti masuk rekening tanggal 5 tiap bulan. Tanpa kontrak penerbit.</p>
+                <p class="mt-2 text-brand-100">Royalti penulis <strong class="text-white">70%</strong> (affiliate 10%, platform 20%). Masuk rekening tanggal 5 tiap bulan. Tanpa kontrak penerbit.</p>
             </div>
             <div class="md:text-right">
                 <a href="{{ route('jual') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow hover:bg-brand-50">

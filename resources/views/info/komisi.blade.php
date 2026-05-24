@@ -10,11 +10,16 @@
     <div class="prose prose-slate max-w-none">
 
         <h2>Pembagian sederhana</h2>
-        <div class="not-prose my-6 grid gap-4 sm:grid-cols-2">
+        <div class="not-prose my-6 grid gap-4 sm:grid-cols-3">
             <div class="rounded-xl border border-brand-200 bg-brand-50 p-6 text-center">
                 <p class="text-xs font-semibold uppercase text-brand-700">Penulis</p>
-                <p class="mt-1 text-5xl font-bold text-brand-700">80%</p>
+                <p class="mt-1 text-5xl font-bold text-brand-700">70%</p>
                 <p class="mt-2 text-sm text-brand-900">Dari setiap pembelian</p>
+            </div>
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
+                <p class="text-xs font-semibold uppercase text-amber-700">Affiliate</p>
+                <p class="mt-1 text-5xl font-bold text-amber-700">10%</p>
+                <p class="mt-2 text-sm text-amber-900">Komisi referrer (kalau ada)</p>
             </div>
             <div class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
                 <p class="text-xs font-semibold uppercase text-slate-600">Platform</p>
@@ -22,6 +27,9 @@
                 <p class="mt-2 text-sm text-slate-700">Untuk operasional, marketing, support</p>
             </div>
         </div>
+        <p class="text-sm text-slate-600">
+            <em>Catatan:</em> kalau pembeli datang tanpa link affiliate, porsi 10% affiliate menjadi bonus untuk penulis (jadi penulis dapat 80%).
+        </p>
 
         <h2>Contoh perhitungan</h2>
         <p>Buku kamu dijual seharga <strong>Rp 50.000</strong>, dibeli oleh seorang pembeli pakai QRIS. Begini alur uangnya:</p>
@@ -45,15 +53,20 @@
                         <td class="px-4 py-2 text-slate-600">Komisi platform 20% (dari gross Rp 50.000)</td>
                         <td class="px-4 py-2 text-right text-slate-600">Rp 10.000</td>
                     </tr>
+                    <tr>
+                        <td class="px-4 py-2 text-amber-700">Komisi affiliate 10% (dari gross Rp 50.000)</td>
+                        <td class="px-4 py-2 text-right text-amber-700">Rp 5.000</td>
+                    </tr>
                     <tr class="bg-brand-50">
-                        <td class="px-4 py-2 font-semibold text-brand-700">Bagian penulis (80% gross)</td>
-                        <td class="px-4 py-2 text-right font-bold text-brand-700">Rp 40.000</td>
+                        <td class="px-4 py-2 font-semibold text-brand-700">Bagian penulis (70% gross)</td>
+                        <td class="px-4 py-2 text-right font-bold text-brand-700">Rp 35.000</td>
                     </tr>
                 </tbody>
             </table>
         </div>
         <p class="text-sm text-slate-600">
             <strong>Catatan:</strong> Midtrans fee ditanggung platform dari porsi komisi 20% — bukan dipotong dari porsi kamu.
+            Kalau pembelian <strong>tanpa affiliate</strong>, porsi 10% affiliate masuk ke penulis (jadi Rp 40.000 = 80% gross).
         </p>
 
         <h2>Yang dipotong dari saldo kamu saat payout</h2>
@@ -76,18 +89,18 @@
         </ol>
 
         <h2>Contoh perhitungan payout 1 bulan</h2>
-        <p>Misalkan dalam bulan Mei buku kamu terjual 10x @ Rp 50.000:</p>
+        <p>Misalkan dalam bulan Mei buku kamu terjual 10x @ Rp 50.000 (semuanya via link affiliate):</p>
 
         <div class="not-prose my-4 overflow-hidden rounded-lg border border-slate-200">
             <table class="w-full text-sm">
                 <tbody class="divide-y divide-slate-200">
                     <tr>
-                        <td class="px-4 py-2">Total earning gross (10 × Rp 40.000)</td>
-                        <td class="px-4 py-2 text-right">Rp 400.000</td>
+                        <td class="px-4 py-2">Total earning gross (10 × Rp 35.000)</td>
+                        <td class="px-4 py-2 text-right">Rp 350.000</td>
                     </tr>
                     <tr>
                         <td class="px-4 py-2 text-slate-600">– PPh 23 (2% jika NPWP)</td>
-                        <td class="px-4 py-2 text-right text-slate-600">– Rp 8.000</td>
+                        <td class="px-4 py-2 text-right text-slate-600">– Rp 7.000</td>
                     </tr>
                     <tr>
                         <td class="px-4 py-2 text-slate-600">– Biaya transfer 50:50</td>
@@ -95,12 +108,12 @@
                     </tr>
                     <tr class="bg-brand-50">
                         <td class="px-4 py-2 font-semibold text-brand-700">Net transfer ke rekening (5 Juni)</td>
-                        <td class="px-4 py-2 text-right font-bold text-brand-700">Rp 388.750</td>
+                        <td class="px-4 py-2 text-right font-bold text-brand-700">Rp 339.750</td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <p class="text-sm text-slate-600">Tanpa NPWP, PPh 23 = Rp 16.000, net = Rp 380.750.</p>
+        <p class="text-sm text-slate-600">Tanpa NPWP, PPh 23 = Rp 14.000, net = Rp 332.750. Kalau semua 10 transaksi tanpa affiliate, gross earning = Rp 400.000 (80% × 10 × 50rb).</p>
 
         <h2>Aturan payout</h2>
         <ul>
@@ -141,7 +154,7 @@
 
         <h2>Apa yang berubah setelah skala besar</h2>
         <p>
-            Kami berkomitmen mempertahankan <strong>komisi 20% flat selama minimum 24 bulan</strong> sejak launch.
+            Kami berkomitmen mempertahankan <strong>komisi platform 20% flat selama minimum 24 bulan</strong> sejak launch (porsi affiliate 10% terpisah dan hanya berlaku kalau pembelian via referral link).
             Setelah itu kalau ada perubahan, akan dinotifikasi minimal 60 hari sebelumnya — buku yang sudah
             terjual sebelum perubahan tetap pakai rate lama. Skema tier (komisi turun untuk penulis volume tinggi)
             sedang dipertimbangkan untuk masa depan.

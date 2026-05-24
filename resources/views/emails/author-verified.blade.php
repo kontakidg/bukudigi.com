@@ -11,7 +11,7 @@ Verifikasi pendaftaran penulis kamu **disetujui**. Sekarang kamu bisa upload buk
 2. Upload buku pertama: PDF + cover + deskripsi
 3. Tunggu moderasi admin (1-2 hari kerja per buku)
 4. Buku live → siap dibeli pembeli
-5. Royalti masuk rekening setiap tanggal 5 (komisi platform 20% flat)
+5. Royalti masuk rekening setiap tanggal 5 (penulis 70%, affiliate 10%, platform 20%)
 
 <x-mail::button :url="url(route('author.books.create'))">
 + Upload Buku Pertama

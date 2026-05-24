@@ -31,7 +31,7 @@
         <div class="relative">
             <h2 class="text-3xl font-bold leading-tight">Ebook PDF dari penulis Indonesia,<br>untuk pembaca Indonesia.</h2>
             <p class="mt-4 max-w-md text-brand-100">
-                Bayar pakai QRIS, instan download, watermark personal di setiap halaman. Dukung penulis lokal — komisi adil 80% untuk mereka.
+                Bayar pakai QRIS, instan download, watermark personal di setiap halaman. Dukung penulis lokal — komisi adil 70% untuk mereka.
             </p>
             <div class="mt-8 flex items-center gap-6 text-sm text-brand-100">
                 <div>📚 Harga mulai <span class="font-bold text-white">Rp 15.000</span></div>

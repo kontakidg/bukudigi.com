@@ -42,7 +42,7 @@
     <div class="mt-4 space-y-3">
         @foreach([
             ['Saya bukan penulis terkenal. Bisa daftar?', 'Bisa! bukudigi.com terbuka untuk semua penulis individu yang punya karya orisinal. Tidak ada syarat portofolio atau followers minimum.'],
-            ['Biaya pendaftaran berapa?', 'Gratis. Tidak ada biaya bulanan, tidak ada minimum sales. Kami hanya potong komisi 20% saat ada pembelian.'],
+            ['Biaya pendaftaran berapa?', 'Gratis. Tidak ada biaya bulanan, tidak ada minimum sales. Penulis dapat 70% per pembelian (affiliate 10%, platform 20%).'],
             ['Kenapa harus kasih NIK & KTP?', 'Untuk verifikasi identitas (mencegah fraud, pembajakan, akun palsu) dan kewajiban pajak (PPh 23). Data disimpan terenkripsi, hanya admin verifikator yang akses.'],
             ['Saya gak punya NPWP. Tetap bisa?', 'Bisa. Tanpa NPWP, PPh 23 dipotong 4% (vs 2% dengan NPWP). Sangat dianjurkan punya NPWP — gratis daftar di kantor pajak terdekat atau online di pajak.go.id.'],
             ['Berapa lama verifikasi admin?', '1-2 hari kerja sejak submit. Kamu akan dapat WhatsApp notifikasi (kalau sudah verifikasi WA) saat sudah disetujui atau ditolak (dengan alasan).'],
