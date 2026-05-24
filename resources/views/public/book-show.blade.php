@@ -115,38 +115,54 @@
                 }
             }">
                 {{-- Voucher input (collapsible) --}}
-                <div class="mt-5 rounded-lg border border-slate-200 bg-white p-3">
+                <div class="mt-5 rounded-lg border border-slate-200 bg-white p-3"
+                     :class="result && result.valid ? '!border-green-300 !bg-green-50/50' : ''">
                     <button type="button" @click="open = !open"
                             class="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-700 hover:text-brand-600">
-                        <span>🎟️ Punya kode voucher?</span>
+                        <span>
+                            <span x-show="!(result && result.valid)">🎟️ Punya kode voucher?</span>
+                            <span x-show="result && result.valid" class="text-green-700">✓ Voucher aktif: <span x-text="result.code"></span></span>
+                        </span>
                         <span x-text="open ? '−' : '+'" class="text-lg leading-none"></span>
                     </button>
                     <div x-show="open" x-cloak x-transition class="mt-3 space-y-2">
-                        <div class="flex gap-2">
+                        {{-- Form input — disable kalau voucher sudah valid --}}
+                        <div class="flex gap-2" x-show="!(result && result.valid)">
                             <input type="text" x-model="code" @keyup.enter="apply()" :disabled="loading"
                                    placeholder="Masukkan kode voucher"
                                    class="input !py-2 flex-1 uppercase">
                             <button type="button" @click="apply()" :disabled="loading || !code.trim()"
-                                    class="btn-primary !py-2 !text-sm" x-text="loading ? '...' : 'Cek'"></button>
+                                    class="btn-primary !py-2 !text-sm whitespace-nowrap"
+                                    x-text="loading ? '...' : 'Pakai Voucher'"></button>
                         </div>
+                        {{-- Success state --}}
                         <template x-if="result && result.valid">
-                            <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-800">
-                                <p class="font-semibold">✓ Voucher valid: <span x-text="result.code"></span></p>
-                                <p class="mt-0.5 text-green-700" x-text="result.name"></p>
-                                <p class="mt-2">Potongan: <strong x-text="result.discount_display"></strong></p>
-                                <p>Total bayar: <strong x-text="result.net_display"></strong></p>
-                                <button type="button" @click="reset()" class="mt-2 text-[10px] text-green-700 underline">Hapus voucher</button>
+                            <div class="rounded-lg border border-green-300 bg-green-50 p-3 text-xs text-green-800">
+                                <p class="font-semibold text-sm">🎉 Voucher diterapkan!</p>
+                                <p class="mt-1 text-green-700" x-text="result.name"></p>
+                                <div class="mt-3 space-y-0.5 border-t border-green-200 pt-2">
+                                    <p>Potongan: <strong x-text="result.discount_display"></strong></p>
+                                    <p>Total bayar: <strong class="text-base" x-text="result.net_display"></strong></p>
+                                </div>
+                                <button type="button" @click="reset()"
+                                        class="mt-3 text-[11px] font-semibold text-red-600 hover:underline">
+                                    Hapus voucher
+                                </button>
                             </div>
                         </template>
+                        {{-- Error state --}}
                         <template x-if="result && !result.valid">
                             <div class="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700" x-text="result.reason"></div>
                         </template>
                     </div>
                 </div>
 
-                {{-- Tombol Beli + Preview --}}
+                {{-- Tombol Beli + Preview — dynamic label kalau voucher applied --}}
                 <div class="mt-4 flex flex-wrap gap-3">
-                    <a :href="buyUrl" href="{{ route('checkout.start', $book) }}" class="btn-primary !py-3">🛒 Beli Sekarang</a>
+                    <a :href="buyUrl" href="{{ route('checkout.start', $book) }}" class="btn-primary !py-3">
+                        <span x-show="!(result && result.valid)">🛒 Beli Sekarang</span>
+                        <span x-show="result && result.valid">🛒 Beli dengan Voucher</span>
+                    </a>
                     @if(!empty($book->preview_image_paths))
                         <a href="#preview" class="btn-outline !py-3">👁️ Lihat Preview ({{ count($book->preview_image_paths) }} hal)</a>
                     @elseif($book->preview_pdf_path)
