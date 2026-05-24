@@ -11,6 +11,7 @@ class AffiliateClick extends Model
 
     protected $fillable = [
         'affiliate_id',
+        'affiliate_code_id',
         'book_id',
         'ip',
         'ua_hash',
@@ -28,6 +29,11 @@ class AffiliateClick extends Model
     public function affiliate(): BelongsTo
     {
         return $this->belongsTo(Affiliate::class);
+    }
+
+    public function affiliateCode(): BelongsTo
+    {
+        return $this->belongsTo(AffiliateCode::class);
     }
 
     public function book(): BelongsTo

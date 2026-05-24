@@ -5,13 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class Affiliate extends Model
 {
     protected $fillable = [
         'user_id',
-        'code',
         'status',
         'promo_channels',
         'motivation',
@@ -59,6 +57,33 @@ class Affiliate extends Model
         return $this->hasMany(AffiliateClick::class);
     }
 
+    public function codes(): HasMany
+    {
+        return $this->hasMany(AffiliateCode::class);
+    }
+
+    public function defaultCode()
+    {
+        return $this->hasOne(AffiliateCode::class)->where('is_default', true);
+    }
+
+    /**
+     * Pastikan affiliate punya minimal 1 code (default). Buat kalau belum ada.
+     */
+    public function ensureDefaultCode(): AffiliateCode
+    {
+        $existing = $this->defaultCode()->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        return $this->codes()->create([
+            'code' => AffiliateCode::generateUniqueCode($this->user->name ?? 'AFF'),
+            'label' => 'Default',
+            'is_default' => true,
+        ]);
+    }
+
     public function earnings(): HasMany
     {
         return $this->hasMany(AffiliateEarning::class);
@@ -77,33 +102,5 @@ class Affiliate extends Model
     public function isApproved(): bool
     {
         return $this->status === 'approved';
-    }
-
-    public function shareUrl(?string $bookSlug = null): string
-    {
-        $base = $bookSlug
-            ? route('books.show', ['book' => $bookSlug])
-            : route('home');
-        $sep = str_contains($base, '?') ? '&' : '?';
-        return $base.$sep.'ref='.$this->code;
-    }
-
-    public static function generateUniqueCode(string $seed = ''): string
-    {
-        $base = Str::upper(Str::substr(preg_replace('/[^A-Za-z0-9]/', '', $seed), 0, 6));
-        if (strlen($base) < 3) {
-            $base = 'AFF';
-        }
-        $tries = 0;
-        do {
-            $code = $base.Str::upper(Str::random(4));
-            $tries++;
-            if ($tries > 20) {
-                $code = 'AFF'.Str::upper(Str::random(8));
-                break;
-            }
-        } while (self::where('code', $code)->exists());
-
-        return $code;
     }
 }

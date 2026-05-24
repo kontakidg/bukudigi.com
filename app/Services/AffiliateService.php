@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Middleware\AffiliateTracker;
 use App\Models\Affiliate;
+use App\Models\AffiliateCode;
 use App\Models\AffiliateEarning;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -21,29 +22,28 @@ class AffiliateService
     public const DEFAULT_RATE = 10.0;
 
     /**
-     * Ambil affiliate aktif dari cookie request.
+     * Ambil affiliate + code aktif dari cookie request.
      * Buyer & affiliate tidak boleh sama (no self-refer).
+     *
+     * @return array{affiliate: Affiliate, code: AffiliateCode}|null
      */
-    public function resolveFromRequest(Request $request, int $buyerUserId): ?Affiliate
+    public function resolveFromRequest(Request $request, int $buyerUserId): ?array
     {
         $code = $request->cookie(AffiliateTracker::COOKIE_NAME);
         if (! $code) {
             return null;
         }
 
-        $aff = Affiliate::where('code', strtoupper($code))
-            ->where('status', 'approved')
-            ->first();
-
-        if (! $aff) {
+        $affCode = AffiliateCode::with('affiliate')->where('code', strtoupper($code))->first();
+        if (! $affCode || ! $affCode->affiliate || $affCode->affiliate->status !== 'approved') {
             return null;
         }
 
-        if ((int) $aff->user_id === $buyerUserId) {
+        if ((int) $affCode->affiliate->user_id === $buyerUserId) {
             return null;
         }
 
-        return $aff;
+        return ['affiliate' => $affCode->affiliate, 'code' => $affCode];
     }
 
     /**
@@ -117,10 +117,15 @@ class AffiliateService
             return null;
         }
 
+        $affCode = $order->affiliate_code_id
+            ? AffiliateCode::find($order->affiliate_code_id)
+            : null;
+
         $availableAt = ($order->paid_at ?: now())->copy()->addDays(self::COOLING_DAYS);
 
         $earning = AffiliateEarning::create([
             'affiliate_id' => $affiliate->id,
+            'affiliate_code_id' => $affCode?->id,
             'order_id' => $order->id,
             'amount' => $order->affiliate_commission,
             'rate_snapshot' => $affiliate->commission_rate,
@@ -128,10 +133,15 @@ class AffiliateService
             'available_at' => $availableAt,
         ]);
 
-        // Update saldo pending & counter konversi
+        // Update saldo pending & counter konversi (per-affiliate + per-code)
         $affiliate->increment('balance_pending', $order->affiliate_commission);
         $affiliate->increment('total_earned', $order->affiliate_commission);
         $affiliate->increment('conversions_count');
+
+        if ($affCode) {
+            $affCode->increment('conversions_count');
+            $affCode->increment('total_earned', $order->affiliate_commission);
+        }
 
         return $earning;
     }
@@ -158,6 +168,12 @@ class AffiliateService
         if ($affiliate) {
             $affiliate->decrement('total_earned', $earning->amount);
             $affiliate->decrement('conversions_count');
+        }
+
+        $affCode = $earning->affiliate_code_id ? AffiliateCode::find($earning->affiliate_code_id) : null;
+        if ($affCode) {
+            $affCode->decrement('conversions_count');
+            $affCode->decrement('total_earned', $earning->amount);
         }
 
         $earning->update(['status' => 'cancelled']);

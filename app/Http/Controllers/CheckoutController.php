@@ -65,14 +65,16 @@ class CheckoutController extends Controller
         $netAmount = $gross - $voucherDiscount;
 
         // Affiliate attribution dari cookie (kalau ada & valid & bukan diri sendiri)
-        $affiliate = $affiliateService->resolveFromRequest($request, $user->id);
+        $resolved = $affiliateService->resolveFromRequest($request, $user->id);
+        $affiliate = $resolved['affiliate'] ?? null;
+        $affiliateCode = $resolved['code'] ?? null;
 
         // Hitung split komisi:
         // - Tanpa affiliate: platform 20%, author 80%
         // - Dengan affiliate: platform 20%, affiliate 10% (dari net), author 70%
         $split = $affiliateService->computeSplit($netAmount, $affiliate);
 
-        $order = DB::transaction(function () use ($user, $book, $gross, $voucherId, $voucherDiscount, $netAmount, $split, $affiliate) {
+        $order = DB::transaction(function () use ($user, $book, $gross, $voucherId, $voucherDiscount, $netAmount, $split, $affiliate, $affiliateCode) {
             return Order::create([
                 'user_id' => $user->id,
                 'book_id' => $book->id,
@@ -80,7 +82,8 @@ class CheckoutController extends Controller
                 'voucher_id' => $voucherId,
                 'voucher_discount' => $voucherDiscount,
                 'affiliate_id' => $affiliate?->id,
-                'affiliate_code' => $affiliate?->code,
+                'affiliate_code' => $affiliateCode?->code,
+                'affiliate_code_id' => $affiliateCode?->id,
                 'affiliate_commission' => $split['affiliate_commission'],
                 'gross_amount' => $gross,
                 'net_amount' => $netAmount,

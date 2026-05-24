@@ -19,6 +19,7 @@ class Order extends Model
         'voucher_discount',
         'affiliate_id',
         'affiliate_code',
+        'affiliate_code_id',
         'affiliate_commission',
         'net_amount',
         'commission',
@@ -94,6 +95,11 @@ class Order extends Model
     public function affiliate(): BelongsTo
     {
         return $this->belongsTo(Affiliate::class);
+    }
+
+    public function affiliateCode(): BelongsTo
+    {
+        return $this->belongsTo(AffiliateCode::class);
     }
 
     public function affiliateEarning()

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AffiliateResource\Pages;
+use App\Filament\Resources\AffiliateResource\RelationManagers;
 use App\Models\Affiliate;
 use App\Services\FonnteWhatsApp;
 use Filament\Forms;
@@ -40,8 +41,10 @@ class AffiliateResource extends Resource
                 ->schema([
                     Forms\Components\Select::make('user_id')->label('User')
                         ->relationship('user', 'name')->searchable()->preload()->required()->disabledOn('edit'),
-                    Forms\Components\TextInput::make('code')->label('Kode Affiliate')->required()->maxLength(32)
-                        ->helperText('Auto-generate, tapi bisa di-edit. Wajib unique.'),
+                    Forms\Components\Placeholder::make('codes_info')->label('Kode')
+                        ->content(fn ($record) => $record
+                            ? $record->codes->pluck('code')->join(', ') ?: '—'
+                            : 'Akan auto-generate setelah save.'),
                     Forms\Components\Select::make('status')->required()->options([
                         'pending' => 'Pending',
                         'approved' => 'Approved',
@@ -77,7 +80,8 @@ class AffiliateResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')->label('Kode')->searchable()->weight('semibold')->fontFamily('mono'),
+                Tables\Columns\TextColumn::make('defaultCode.code')->label('Kode Default')->searchable()->weight('semibold')->fontFamily('mono'),
+                Tables\Columns\TextColumn::make('codes_count')->counts('codes')->label('#Kode')->sortable(),
                 Tables\Columns\TextColumn::make('user.name')->label('Nama')->searchable(),
                 Tables\Columns\TextColumn::make('user.email')->label('Email')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('status')->badge()->color(fn (string $state) => match ($state) {
@@ -112,11 +116,14 @@ class AffiliateResource extends Resource
                             'rejection_reason' => null,
                         ]);
 
+                        $r->ensureDefaultCode();
+                        $code = $r->defaultCode()->first()?->code ?? '—';
+
                         if ($r->user?->phone) {
                             try {
                                 app(FonnteWhatsApp::class)->send(
                                     $r->user->phone,
-                                    "Halo {$r->user->name}! 🎉\n\nPendaftaran affiliate kamu di bukudigi.com sudah DISETUJUI.\n\nKode affiliate: *{$r->code}*\n\nDashboard: ".route('affiliate.dashboard')
+                                    "Halo {$r->user->name}! 🎉\n\nPendaftaran affiliate kamu di bukudigi.com sudah DISETUJUI.\n\nKode default: *{$code}*\n\nDashboard: ".route('affiliate.dashboard')
                                 );
                             } catch (\Throwable $e) {}
                         }
@@ -165,6 +172,13 @@ class AffiliateResource extends Resource
                     }),
                 Tables\Actions\EditAction::make(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\CodesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

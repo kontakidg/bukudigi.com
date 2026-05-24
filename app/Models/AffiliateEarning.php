@@ -9,6 +9,7 @@ class AffiliateEarning extends Model
 {
     protected $fillable = [
         'affiliate_id',
+        'affiliate_code_id',
         'order_id',
         'amount',
         'rate_snapshot',
@@ -31,6 +32,11 @@ class AffiliateEarning extends Model
     public function affiliate(): BelongsTo
     {
         return $this->belongsTo(Affiliate::class);
+    }
+
+    public function affiliateCode(): BelongsTo
+    {
+        return $this->belongsTo(AffiliateCode::class);
     }
 
     public function order(): BelongsTo

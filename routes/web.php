@@ -83,6 +83,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/affiliate/register', [AffiliateController::class, 'showRegister'])->name('affiliate.register.show');
     Route::post('/affiliate/register', [AffiliateController::class, 'register'])->name('affiliate.register');
     Route::get('/affiliate/dashboard', [AffiliateController::class, 'dashboard'])->name('affiliate.dashboard');
+    Route::post('/affiliate/codes', [AffiliateController::class, 'storeCode'])->name('affiliate.codes.store');
+    Route::delete('/affiliate/codes/{code}', [AffiliateController::class, 'destroyCode'])->name('affiliate.codes.destroy');
+    Route::post('/affiliate/codes/{code}/default', [AffiliateController::class, 'setDefaultCode'])->name('affiliate.codes.default');
 
     // Author book CRUD
     Route::prefix('author/books')->name('author.books.')->group(function () {
