@@ -54,15 +54,15 @@
                 <p>• Bersedia di-review ulang kapan saja oleh admin.</p>
             </div>
             <label class="mt-4 flex items-start gap-2 text-sm text-slate-700">
-                <input type="checkbox" name="commitment_agreed" required class="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                <input type="checkbox" name="commitment_agreed" required class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
                 <span>Saya berkomitmen mematuhi semua poin di atas.</span>
             </label>
         </div>
 
         <div class="card p-6">
             <label class="flex items-start gap-2 text-sm text-slate-700">
-                <input type="checkbox" name="agree_tos" required class="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                <span>Saya menyetujui <a href="{{ route('info.syarat') }}" class="text-emerald-600 hover:underline">Syarat &amp; Ketentuan</a> bukudigi.com termasuk ketentuan khusus program affiliate.</span>
+                <input type="checkbox" name="agree_tos" required class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                <span>Saya menyetujui <a href="{{ route('info.syarat') }}" class="text-brand-600 hover:underline">Syarat &amp; Ketentuan</a> bukudigi.com termasuk ketentuan khusus program affiliate.</span>
             </label>
         </div>
 

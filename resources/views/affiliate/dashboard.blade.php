@@ -5,7 +5,7 @@
 @php
     $statusBadge = [
         'pending'   => ['bg-amber-100 text-amber-700', '⏳ Menunggu Review Admin'],
-        'approved'  => ['bg-emerald-100 text-emerald-700', '✅ Aktif'],
+        'approved'  => ['bg-brand-100 text-brand-700', '✅ Aktif'],
         'rejected'  => ['bg-red-100 text-red-700', '❌ Ditolak'],
         'suspended' => ['bg-red-100 text-red-700', '🚫 Suspended'],
     ];
@@ -17,7 +17,7 @@
 @section('content')
 <div class="mx-auto max-w-6xl px-4 py-8">
     @if(session('status'))
-        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{{ session('status') }}</div>
+        <div class="mb-4 rounded-lg border border-brand-200 bg-brand-50 p-3 text-sm text-brand-800">{{ session('status') }}</div>
     @endif
     @if($errors->any())
         <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -54,7 +54,7 @@
     <div class="grid gap-4 md:grid-cols-4">
         <div class="card p-4">
             <p class="text-xs text-slate-500">Saldo Tersedia</p>
-            <p class="mt-1 text-xl font-bold text-emerald-700">Rp {{ number_format($affiliate->balance_available, 0, ',', '.') }}</p>
+            <p class="mt-1 text-xl font-bold text-brand-700">Rp {{ number_format($affiliate->balance_available, 0, ',', '.') }}</p>
         </div>
         <div class="card p-4">
             <p class="text-xs text-slate-500">Saldo Pending (cooling 7 hari)</p>
@@ -88,7 +88,7 @@
                 <form method="GET" class="flex flex-wrap items-center gap-2">
                     @foreach(['14','30','180','365'] as $r)
                         <button name="range" value="{{ $r }}" type="submit"
-                            class="rounded-lg border px-3 py-1.5 text-xs font-medium {{ $chartRange['preset'] === $r ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600 hover:border-emerald-300' }}">
+                            class="rounded-lg border px-3 py-1.5 text-xs font-medium {{ $chartRange['preset'] === $r ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-600 hover:border-brand-300' }}">
                             {{ $rangeLabels[$r] }}
                         </button>
                     @endforeach
@@ -193,7 +193,7 @@
             </div>
 
             @if($canAddCode)
-                <form id="addCodeForm" method="POST" action="{{ route('affiliate.codes.store') }}" class="mt-4 hidden rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
+                <form id="addCodeForm" method="POST" action="{{ route('affiliate.codes.store') }}" class="mt-4 hidden rounded-lg border border-brand-200 bg-brand-50/50 p-4">
                     @csrf
                     <div class="grid gap-3 md:grid-cols-3">
                         <div>
@@ -231,7 +231,7 @@
                             @php $shareUrl = $c->shareUrl(); @endphp
                             <tr>
                                 <td class="py-2 pr-3">
-                                    <code class="rounded bg-slate-100 px-1.5 py-0.5 font-bold text-emerald-700">{{ $c->code }}</code>
+                                    <code class="rounded bg-slate-100 px-1.5 py-0.5 font-bold text-brand-700">{{ $c->code }}</code>
                                     @if($c->is_default)
                                         <span class="ml-1 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">DEFAULT</span>
                                     @endif
@@ -243,7 +243,7 @@
                                 <td class="py-2 pr-3">
                                     <button type="button"
                                         onclick="navigator.clipboard.writeText('{{ $shareUrl }}'); this.textContent='✓ Copied'; setTimeout(()=>this.textContent='Copy link',1500)"
-                                        class="text-xs text-emerald-700 hover:underline">Copy link</button>
+                                        class="text-xs text-brand-700 hover:underline">Copy link</button>
                                 </td>
                                 <td class="py-2 pr-3">
                                     <div class="flex items-center gap-2">
@@ -301,7 +301,7 @@
                         <template x-for="c in codes" :key="c.id">
                             <button type="button" @click="selectedCodeId = c.id"
                                     class="rounded-lg border px-3 py-1.5 text-xs font-medium transition"
-                                    :class="selectedCodeId === c.id ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600 hover:border-emerald-300'">
+                                    :class="selectedCodeId === c.id ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-600 hover:border-brand-300'">
                                 <span class="font-mono" x-text="c.code"></span>
                                 <span x-show="c.label" class="ml-1 text-[10px] opacity-70" x-text="'(' + c.label + ')'"></span>
                             </button>
@@ -312,12 +312,12 @@
                     <div class="flex gap-2">
                         <button type="button" @click="mode = 'short'; customUrl = ''"
                                 class="rounded-lg border px-3 py-1.5 text-xs font-medium"
-                                :class="mode === 'short' ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600'">
+                                :class="mode === 'short' ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-600'">
                             🔗 Short (lebih ringkas)
                         </button>
                         <button type="button" @click="mode = 'long'; customUrl = ''"
                                 class="rounded-lg border px-3 py-1.5 text-xs font-medium"
-                                :class="mode === 'long' ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600'">
+                                :class="mode === 'long' ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-600'">
                             📄 Long (deskriptif/SEO)
                         </button>
                     </div>
@@ -326,8 +326,8 @@
                     <input x-model="customUrl" type="text" placeholder="https://bukudigi.com/buku/slug-buku"
                            class="input font-mono text-xs">
 
-                    <div class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                        <p class="text-[10px] font-semibold uppercase text-emerald-700">Link siap share</p>
+                    <div class="mt-4 rounded-lg border border-brand-200 bg-brand-50 p-3">
+                        <p class="text-[10px] font-semibold uppercase text-brand-700">Link siap share</p>
                         <p x-show="selectedTitle && !customUrl" class="mt-0.5 text-xs text-slate-500" x-text="'Buku: ' + selectedTitle"></p>
                         <div class="mt-2 flex gap-2">
                             <input type="text" readonly :value="finalUrl"
@@ -338,9 +338,9 @@
                         </div>
                         <div class="mt-2 flex gap-2">
                             <a :href="finalUrl" target="_blank" rel="noopener"
-                               class="text-xs text-emerald-700 hover:underline">↗ Buka di tab baru</a>
+                               class="text-xs text-brand-700 hover:underline">↗ Buka di tab baru</a>
                             <button type="button" @click="shareWa"
-                                    class="text-xs text-emerald-700 hover:underline">📱 Share via WhatsApp</button>
+                                    class="text-xs text-brand-700 hover:underline">📱 Share via WhatsApp</button>
                         </div>
                     </div>
                 </div>
@@ -439,12 +439,12 @@
                                 <td class="py-2 pr-3 text-xs">
                                     <code class="rounded bg-slate-100 px-1.5 py-0.5">{{ $e->affiliateCode->code ?? '—' }}</code>
                                 </td>
-                                <td class="py-2 pr-3 font-semibold text-emerald-700">Rp {{ number_format($e->amount, 0, ',', '.') }}</td>
+                                <td class="py-2 pr-3 font-semibold text-brand-700">Rp {{ number_format($e->amount, 0, ',', '.') }}</td>
                                 <td class="py-2 pr-3">
                                     @php
                                         $sBadge = [
                                             'pending'   => 'bg-amber-100 text-amber-700',
-                                            'available' => 'bg-emerald-100 text-emerald-700',
+                                            'available' => 'bg-brand-100 text-brand-700',
                                             'paid'      => 'bg-blue-100 text-blue-700',
                                             'cancelled' => 'bg-red-100 text-red-700',
                                         ][$e->status] ?? 'bg-slate-100 text-slate-700';
@@ -482,9 +482,9 @@
                                 <td class="py-2 pr-3 font-medium">{{ $p->period }}</td>
                                 <td class="py-2 pr-3">Rp {{ number_format($p->gross_earning, 0, ',', '.') }}</td>
                                 <td class="py-2 pr-3 text-slate-500">Rp {{ number_format($p->transfer_fee, 0, ',', '.') }}</td>
-                                <td class="py-2 pr-3 font-semibold text-emerald-700">Rp {{ number_format($p->net_transfer, 0, ',', '.') }}</td>
+                                <td class="py-2 pr-3 font-semibold text-brand-700">Rp {{ number_format($p->net_transfer, 0, ',', '.') }}</td>
                                 <td class="py-2 pr-3">
-                                    <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $p->status === 'processed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">{{ $p->status }}</span>
+                                    <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $p->status === 'processed' ? 'bg-brand-100 text-brand-700' : 'bg-amber-100 text-amber-700' }}">{{ $p->status }}</span>
                                 </td>
                                 <td class="py-2 pr-3 text-xs text-slate-500">{{ $p->processed_at?->format('d M Y') ?: '—' }}</td>
                             </tr>

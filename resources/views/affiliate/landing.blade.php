@@ -3,24 +3,24 @@
 @section('title', 'Program Affiliate — bukudigi.com')
 
 @section('content')
-<section class="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 py-16 text-white md:py-24">
+<section class="relative overflow-hidden bg-gradient-to-br from-brand-700 via-brand-600 to-brand-700 py-16 text-white md:py-24">
     <div class="absolute inset-0 opacity-20" aria-hidden="true">
         <svg class="absolute -right-20 -top-20 h-96 w-96" fill="none" viewBox="0 0 200 200"><defs><pattern id="pa" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="white"/></pattern></defs><rect width="200" height="200" fill="url(#pa)"/></svg>
     </div>
     <div class="relative mx-auto max-w-4xl px-4 text-center">
         <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">🔗 Program Affiliate bukudigi</span>
         <h1 class="mt-4 text-3xl font-bold leading-tight drop-shadow-md md:text-5xl">Dapat <strong>10% komisi</strong><br>tiap orang beli buku lewat link kamu.</h1>
-        <p class="mt-4 text-lg text-emerald-50">Cocok buat content creator, reviewer buku, dosen, komunitas baca. Cookie 30 hari, payout bulanan tgl 5.</p>
+        <p class="mt-4 text-lg text-brand-50">Cocok buat content creator, reviewer buku, dosen, komunitas baca. Cookie 30 hari, payout bulanan tgl 5.</p>
         <div class="mt-8">
             @auth
                 @if(auth()->user()->affiliate)
-                    <a href="{{ route('affiliate.dashboard') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-base font-semibold text-emerald-700 shadow hover:bg-emerald-50">Buka Dashboard Affiliate →</a>
+                    <a href="{{ route('affiliate.dashboard') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-base font-semibold text-brand-700 shadow hover:bg-brand-50">Buka Dashboard Affiliate →</a>
                 @else
-                    <a href="{{ route('affiliate.register.show') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-base font-semibold text-emerald-700 shadow hover:bg-emerald-50">Daftar Jadi Affiliate →</a>
+                    <a href="{{ route('affiliate.register.show') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-base font-semibold text-brand-700 shadow hover:bg-brand-50">Daftar Jadi Affiliate →</a>
                 @endif
             @else
-                <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-base font-semibold text-emerald-700 shadow hover:bg-emerald-50">Daftar Akun Dulu →</a>
-                <p class="mt-3 text-sm text-emerald-100">Sudah punya akun? <a href="{{ route('login') }}" class="font-semibold text-white underline">Masuk</a></p>
+                <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-base font-semibold text-brand-700 shadow hover:bg-brand-50">Daftar Akun Dulu →</a>
+                <p class="mt-3 text-sm text-brand-100">Sudah punya akun? <a href="{{ route('login') }}" class="font-semibold text-white underline">Masuk</a></p>
             @endauth
         </div>
     </div>
@@ -78,19 +78,19 @@
     </div>
 </section>
 
-<section class="bg-gradient-to-r from-emerald-600 to-teal-600 py-12 text-white">
+<section class="bg-gradient-to-r from-brand-600 to-brand-600 py-12 text-white">
     <div class="mx-auto max-w-3xl px-4 text-center">
         <h2 class="text-2xl font-bold md:text-3xl">Siap mulai cuan dari rekomendasi buku?</h2>
-        <p class="mt-3 text-emerald-100">Daftar sekarang. Review admin 1–2 hari kerja.</p>
+        <p class="mt-3 text-brand-100">Daftar sekarang. Review admin 1–2 hari kerja.</p>
         <div class="mt-6">
             @auth
                 @if(auth()->user()->affiliate)
-                    <a href="{{ route('affiliate.dashboard') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-emerald-700 hover:bg-emerald-50">Buka Dashboard →</a>
+                    <a href="{{ route('affiliate.dashboard') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-brand-700 hover:bg-brand-50">Buka Dashboard →</a>
                 @else
-                    <a href="{{ route('affiliate.register.show') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-emerald-700 hover:bg-emerald-50">Daftar Affiliate →</a>
+                    <a href="{{ route('affiliate.register.show') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-brand-700 hover:bg-brand-50">Daftar Affiliate →</a>
                 @endif
             @else
-                <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-emerald-700 hover:bg-emerald-50">Daftar Akun Dulu →</a>
+                <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-brand-700 hover:bg-brand-50">Daftar Akun Dulu →</a>
             @endauth
         </div>
     </div>
