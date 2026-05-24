@@ -47,6 +47,12 @@ return [
         'url' => env('FONNTE_URL', 'https://api.fonnte.com/send'),
     ],
 
+    'facebook' => [
+        // App ID untuk OG meta tag fb:app_id (recommended untuk Facebook Insights tracking).
+        // Kosongkan kalau belum punya Facebook App.
+        'app_id' => env('FACEBOOK_APP_ID'),
+    ],
+
     'midtrans' => [
         // 'stub' = simulasi tanpa Midtrans (dev). 'live' = beneran call API.
         'mode' => env('MIDTRANS_MODE', 'stub'),

@@ -29,6 +29,9 @@
 <meta property="og:url" content="{{ $canonical }}">
 <meta property="og:site_name" content="bukudigi.com">
 <meta property="og:locale" content="id_ID">
+@if(config('services.facebook.app_id'))
+    <meta property="fb:app_id" content="{{ config('services.facebook.app_id') }}">
+@endif
 
 {{-- Twitter Card --}}
 <meta name="twitter:card" content="summary_large_image">
