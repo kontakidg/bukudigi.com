@@ -293,14 +293,14 @@
                 $emailBody = urlencode($shareText."\n\n".$shareUrl);
                 $encodedUrl = urlencode($shareUrl);
             @endphp
-            <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4"
+            <div class="mt-6 rounded-xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4 shadow-sm"
                  x-data="{ copied: false, copyLink() {
                     navigator.clipboard.writeText('{{ $shareUrl }}').then(() => {
                         this.copied = true;
                         setTimeout(() => this.copied = false, 2000);
                     });
                  }}">
-                <h2 class="text-sm font-semibold text-slate-700">📤 Bagikan buku ini</h2>
+                <h2 class="text-sm font-semibold text-brand-700">📤 Bagikan buku ini</h2>
                 <div class="mt-3 flex flex-wrap gap-2">
                     {{-- WhatsApp --}}
                     <a href="https://wa.me/?text={{ $waText }}" target="_blank" rel="noopener"
