@@ -51,6 +51,24 @@ class BookController extends Controller
             ->take(5)
             ->get();
 
-        return view('public.book-show', compact('book', 'related'));
+        // Reviews (visible) + cek eligibility user untuk review
+        $reviews = $book->visibleReviews()->with('user')->get();
+
+        $userReview = null;
+        $canReview = false;
+        if ($user = $request->user()) {
+            $userReview = $book->reviews()->where('user_id', $user->id)->first();
+            // Eligible kalau sudah beli (ada order paid/ready) — walau belum review
+            $canReview = \App\Models\Order::where('user_id', $user->id)
+                ->where('book_id', $book->id)
+                ->whereIn('status', ['paid', 'watermarking', 'ready'])
+                ->exists();
+            // User adalah author buku ini? (untuk tampilkan form reply)
+            $isBookAuthor = $user->author && $book->author_id === $user->author->id;
+        } else {
+            $isBookAuthor = false;
+        }
+
+        return view('public.book-show', compact('book', 'related', 'reviews', 'userReview', 'canReview', 'isBookAuthor'));
     }
 }

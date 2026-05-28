@@ -104,6 +104,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{book:slug}', [AuthorBookController::class, 'archive'])->name('archive');
     });
 
+    // Review buku
+    Route::post('/buku/{book:slug}/review', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
+    Route::delete('/review/{review}', [\App\Http\Controllers\ReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::post('/review/{review}/reply', [\App\Http\Controllers\ReviewController::class, 'reply'])->name('reviews.reply');
+
     // Checkout & Download
     Route::get('/checkout/buku/{book:slug}', [CheckoutController::class, 'start'])->name('checkout.start');
     Route::post('/checkout/voucher-preview/{book:slug}', [CheckoutController::class, 'previewVoucher'])->name('checkout.voucher.preview');

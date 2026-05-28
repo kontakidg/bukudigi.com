@@ -51,6 +51,16 @@
     if ($book->category) {
         $jsonLd['genre'] = $book->category->name;
     }
+    // AggregateRating — boost SEO rich snippet (bintang di hasil Google)
+    if ($book->rating_count > 0) {
+        $jsonLd['aggregateRating'] = [
+            '@type' => 'AggregateRating',
+            'ratingValue' => (string) $book->rating_avg,
+            'reviewCount' => (string) $book->rating_count,
+            'bestRating' => '5',
+            'worstRating' => '1',
+        ];
+    }
 
     // Breadcrumb schema (separate JSON-LD)
     $breadcrumbLd = [
@@ -107,6 +117,20 @@
         <div class="md:col-span-2">
             <h1 class="text-3xl font-bold text-slate-900">{{ $book->title }}</h1>
             <p class="mt-1 text-sm text-slate-600">oleh <span class="font-semibold text-slate-800">{{ $book->displayAuthor() }}</span></p>
+
+            @if($book->rating_count > 0)
+                <a href="#reviews" class="mt-2 inline-flex items-center gap-1.5 text-sm hover:underline">
+                    <span class="flex gap-0.5">
+                        @for($i = 1; $i <= 5; $i++)
+                            <svg class="h-4 w-4 {{ $i <= round($book->rating_avg) ? 'text-amber-400' : 'text-slate-200' }}" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.367 2.446a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.366-2.446a1 1 0 00-1.175 0l-3.367 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.98 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
+                            </svg>
+                        @endfor
+                    </span>
+                    <span class="font-semibold text-slate-700">{{ number_format($book->rating_avg, 1) }}</span>
+                    <span class="text-slate-400">· {{ $book->rating_count }} ulasan</span>
+                </a>
+            @endif
 
             <div class="mt-4 flex items-center gap-3">
                 <span class="text-3xl font-bold text-brand-600">{{ $book->formattedPrice() }}</span>
@@ -457,6 +481,129 @@
             </div>
         </section>
     @endif
+
+    {{-- ===== Rating & Review ===== --}}
+    <section id="reviews" class="mt-12 scroll-mt-20">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <div class="flex flex-wrap items-center gap-6">
+                <div class="text-center">
+                    <div class="text-5xl font-bold text-slate-900">{{ number_format($book->rating_avg, 1) }}</div>
+                    <div class="mt-1 flex justify-center gap-0.5">
+                        @for($i = 1; $i <= 5; $i++)
+                            <svg class="h-4 w-4 {{ $i <= round($book->rating_avg) ? 'text-amber-400' : 'text-slate-200' }}" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.367 2.446a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.366-2.446a1 1 0 00-1.175 0l-3.367 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.98 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
+                            </svg>
+                        @endfor
+                    </div>
+                    <div class="mt-1 text-xs text-slate-500">{{ $book->rating_count }} ulasan</div>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-xl font-bold">Rating & Ulasan</h2>
+                    <p class="mt-1 text-sm text-slate-500">Ulasan dari pembaca yang sudah membeli buku ini.</p>
+                </div>
+            </div>
+
+            {{-- Form review (kalau eligible) --}}
+            @auth
+                @if($canReview)
+                    <form method="POST" action="{{ route('reviews.store', $book) }}" class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4"
+                          x-data="{ rating: {{ $userReview->rating ?? 0 }}, hover: 0 }">
+                        @csrf
+                        <p class="text-sm font-semibold text-slate-700">{{ $userReview ? 'Edit ulasan kamu' : 'Tulis ulasan kamu' }}</p>
+                        <div class="mt-2 flex items-center gap-1">
+                            @for($i = 1; $i <= 5; $i++)
+                                <button type="button" @click="rating = {{ $i }}" @mouseenter="hover = {{ $i }}" @mouseleave="hover = 0"
+                                        class="transition">
+                                    <svg class="h-8 w-8" :class="(hover || rating) >= {{ $i }} ? 'text-amber-400' : 'text-slate-300'" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.367 2.446a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.366-2.446a1 1 0 00-1.175 0l-3.367 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.98 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
+                                    </svg>
+                                </button>
+                            @endfor
+                        </div>
+                        <input type="hidden" name="rating" :value="rating">
+                        <textarea name="comment" rows="3" maxlength="2000" placeholder="Ceritakan pengalaman baca kamu (opsional)"
+                                  class="input mt-3 w-full">{{ $userReview->comment ?? '' }}</textarea>
+                        @error('rating') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        @error('review') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        <div class="mt-3 flex items-center gap-2">
+                            <button type="submit" class="btn-primary !py-2 !text-sm" :disabled="rating === 0">
+                                {{ $userReview ? 'Update Ulasan' : 'Kirim Ulasan' }}
+                            </button>
+                            @if($userReview)
+                                <button type="button" onclick="if(confirm('Hapus ulasan kamu?')) document.getElementById('delete-review-form').submit()"
+                                        class="text-xs font-semibold text-red-600 hover:underline">Hapus ulasan</button>
+                            @endif
+                        </div>
+                    </form>
+                    @if($userReview)
+                        <form id="delete-review-form" method="POST" action="{{ route('reviews.destroy', $userReview) }}" class="hidden">
+                            @csrf @method('DELETE')
+                        </form>
+                    @endif
+                @else
+                    <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                        Cuma pembaca yang sudah membeli buku ini yang bisa kasih ulasan. <a href="{{ route('checkout.start', $book) }}" class="font-semibold text-brand-600 hover:underline">Beli buku →</a>
+                    </div>
+                @endif
+            @else
+                <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                    <a href="{{ route('login') }}" class="font-semibold text-brand-600 hover:underline">Masuk</a> untuk kasih ulasan (khusus pembeli buku ini).
+                </div>
+            @endauth
+
+            {{-- List reviews --}}
+            <div class="mt-6 space-y-4">
+                @forelse($reviews as $review)
+                    <div class="border-t border-slate-100 pt-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                                    {{ strtoupper(substr($review->user->name ?? 'U', 0, 1)) }}
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-800">{{ $review->user->name ?? 'Pengguna' }}</p>
+                                    <div class="mt-0.5 flex items-center gap-2">
+                                        <div class="flex gap-0.5">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <svg class="h-3.5 w-3.5 {{ $i <= $review->rating ? 'text-amber-400' : 'text-slate-200' }}" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.367 2.446a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.366-2.446a1 1 0 00-1.175 0l-3.367 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.98 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
+                                                </svg>
+                                            @endfor
+                                        </div>
+                                        <span class="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700">✓ Pembelian Terverifikasi</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="text-xs text-slate-400">{{ $review->created_at->diffForHumans() }}</span>
+                        </div>
+                        @if($review->comment)
+                            <p class="mt-2 text-sm leading-relaxed text-slate-700">{{ $review->comment }}</p>
+                        @endif
+
+                        {{-- Author reply --}}
+                        @if($review->author_reply)
+                            <div class="mt-3 ml-12 rounded-lg border-l-2 border-brand-300 bg-brand-50/50 p-3">
+                                <p class="text-xs font-semibold text-brand-700">💬 Balasan penulis</p>
+                                <p class="mt-1 text-sm text-slate-700">{{ $review->author_reply }}</p>
+                            </div>
+                        @elseif($isBookAuthor)
+                            {{-- Form reply untuk author --}}
+                            <form method="POST" action="{{ route('reviews.reply', $review) }}" class="mt-3 ml-12" x-data="{ open: false }">
+                                @csrf
+                                <button type="button" @click="open = !open" x-show="!open" class="text-xs font-semibold text-brand-600 hover:underline">💬 Balas ulasan</button>
+                                <div x-show="open" x-cloak class="flex gap-2">
+                                    <input type="text" name="author_reply" maxlength="1000" placeholder="Balas sebagai penulis..." class="input !py-1.5 flex-1 !text-sm">
+                                    <button type="submit" class="btn-primary !py-1.5 !text-xs">Kirim</button>
+                                </div>
+                            </form>
+                        @endif
+                    </div>
+                @empty
+                    <p class="border-t border-slate-100 pt-6 text-center text-sm text-slate-400">Belum ada ulasan. Jadilah yang pertama!</p>
+                @endforelse
+            </div>
+        </div>
+    </section>
 
     @if($related->isNotEmpty())
         <section class="mt-12">

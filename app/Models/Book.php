@@ -40,6 +40,8 @@ class Book extends Model
         'rejection_reason',
         'sales_count',
         'total_revenue',
+        'rating_avg',
+        'rating_count',
     ];
 
     protected function casts(): array
@@ -57,6 +59,8 @@ class Book extends Model
             'file_size_bytes' => 'integer',
             'sales_count' => 'integer',
             'total_revenue' => 'integer',
+            'rating_avg' => 'decimal:2',
+            'rating_count' => 'integer',
         ];
     }
 
@@ -107,6 +111,17 @@ class Book extends Model
     public function views(): HasMany
     {
         return $this->hasMany(BookView::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /** Review yang tampil ke publik (tidak di-hide admin). */
+    public function visibleReviews(): HasMany
+    {
+        return $this->hasMany(Review::class)->where('is_hidden', false)->latest();
     }
 
     public function approvedBy(): BelongsTo

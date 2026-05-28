@@ -30,6 +30,15 @@
             {{ $book->title }}
         </h3>
         <p class="mt-1 text-xs text-slate-500">{{ $book->displayAuthor() }}</p>
+        @if($book->rating_count > 0)
+            <div class="mt-1 flex items-center gap-1">
+                <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.367 2.446a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.366-2.446a1 1 0 00-1.175 0l-3.367 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.98 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
+                </svg>
+                <span class="text-xs font-semibold text-slate-700">{{ number_format($book->rating_avg, 1) }}</span>
+                <span class="text-[10px] text-slate-400">({{ $book->rating_count }})</span>
+            </div>
+        @endif
         <div class="mt-auto pt-3">
             <span class="text-base font-bold text-brand-600">{{ $book->formattedPrice() }}</span>
         </div>
