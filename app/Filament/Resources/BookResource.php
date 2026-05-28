@@ -134,91 +134,129 @@ class BookResource extends Resource
                 SelectFilter::make('category_id')->label('Kategori')->relationship('category', 'name'),
             ])
             ->actions([
+                // Approve cepat (tombol langsung kelihatan kalau status pending/draft)
                 Tables\Actions\Action::make('approve')->label('Approve')
                     ->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
+                    ->button()->size('sm')
                     ->visible(fn (Book $r): bool => in_array($r->status, ['pending_review', 'draft']))
-                    ->action(function (Book $r): void {
-                        $r->update(['status' => 'active', 'approved_at' => now(), 'approved_by' => auth()->id()]);
+                    ->action(fn (Book $r) => static::approveBook($r, notify: true)),
 
-                        ModerationLog::create([
-                            'book_id' => $r->id,
-                            'provider' => 'admin',
-                            'decision' => 'approve',
-                            'admin_id' => auth()->id(),
-                        ]);
+                // Sisanya masuk dropdown 3-dot biar ga makan lebar tabel
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('reject')->label('Reject')
+                        ->icon('heroicon-o-x-circle')->color('danger')
+                        ->visible(fn (Book $r): bool => $r->status !== 'rejected')
+                        ->form([
+                            Forms\Components\Textarea::make('reason')->label('Alasan')->required()->rows(3),
+                        ])
+                        ->action(function (Book $r, array $data): void {
+                            $r->update(['status' => 'rejected', 'rejection_reason' => $data['reason']]);
 
-                        // Regenerate preview kalau belum ada
-                        if (! $r->preview_pdf_path) {
-                            GeneratePreviewJob::dispatch($r->id);
-                        }
+                            ModerationLog::create([
+                                'book_id' => $r->id,
+                                'provider' => 'admin',
+                                'decision' => 'reject',
+                                'admin_id' => auth()->id(),
+                                'reason' => $data['reason'],
+                            ]);
 
-                        // Generate OG card untuk share Facebook/Twitter
-                        \App\Jobs\GenerateOgCardJob::dispatch($r->id);
-
-                        // WA notif ke author
-                        $author = $r->author?->user;
-                        if ($author?->phone) {
-                            $url = route('books.show', $r->slug);
-                            app(FonnteWhatsApp::class)->send(
-                                $author->phone,
-                                "Halo {$author->name}! 🎉\n\nBuku kamu \"{$r->title}\" sudah LIVE di bukudigi.com!\n\nLihat: {$url}\n\nRoyalti akan otomatis masuk ke saldo kamu tiap ada pembelian."
-                            );
-                        }
-
-                        // Email notif ke author
-                        if ($author?->email) {
-                            try {
-                                Mail::to($author->email)->queue(new BookApprovedMail($r));
-                            } catch (\Throwable $e) {
-                                Log::warning('BookApprovedMail queue failed: '.$e->getMessage());
+                            $author = $r->author?->user;
+                            if ($author?->phone) {
+                                app(FonnteWhatsApp::class)->send(
+                                    $author->phone,
+                                    "Halo {$author->name},\n\nBuku \"{$r->title}\" belum bisa kami publikasikan.\n\nAlasan: {$data['reason']}\n\nKamu bisa edit & submit ulang dari dashboard penulis."
+                                );
                             }
-                        }
 
-                        Notification::make()->title('Buku disetujui & author dinotifikasi')->success()->send();
-                    }),
-                Tables\Actions\Action::make('reject')->label('Reject')
-                    ->icon('heroicon-o-x-circle')->color('danger')
-                    ->visible(fn (Book $r): bool => $r->status !== 'rejected')
-                    ->form([
-                        Forms\Components\Textarea::make('reason')->label('Alasan')->required()->rows(3),
-                    ])
-                    ->action(function (Book $r, array $data): void {
-                        $r->update(['status' => 'rejected', 'rejection_reason' => $data['reason']]);
-
-                        ModerationLog::create([
-                            'book_id' => $r->id,
-                            'provider' => 'admin',
-                            'decision' => 'reject',
-                            'admin_id' => auth()->id(),
-                            'reason' => $data['reason'],
-                        ]);
-
-                        $author = $r->author?->user;
-                        if ($author?->phone) {
-                            app(FonnteWhatsApp::class)->send(
-                                $author->phone,
-                                "Halo {$author->name},\n\nBuku \"{$r->title}\" belum bisa kami publikasikan.\n\nAlasan: {$data['reason']}\n\nKamu bisa edit & submit ulang dari dashboard penulis."
-                            );
-                        }
-
-                        // Email notif rejection
-                        if ($author?->email) {
-                            try {
-                                Mail::to($author->email)->queue(new BookRejectedMail($r, $data['reason']));
-                            } catch (\Throwable $e) {
-                                Log::warning('BookRejectedMail queue failed: '.$e->getMessage());
+                            if ($author?->email) {
+                                try {
+                                    Mail::to($author->email)->queue(new BookRejectedMail($r, $data['reason']));
+                                } catch (\Throwable $e) {
+                                    Log::warning('BookRejectedMail queue failed: '.$e->getMessage());
+                                }
                             }
-                        }
 
-                        Notification::make()->title('Buku ditolak & author dinotifikasi')->warning()->send();
-                    }),
-                Tables\Actions\EditAction::make(),
+                            Notification::make()->title('Buku ditolak & author dinotifikasi')->warning()->send();
+                        }),
+                    Tables\Actions\EditAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    // Bulk approve — ceklis beberapa buku, approve sekaligus
+                    Tables\Actions\BulkAction::make('bulk_approve')
+                        ->label('Approve Terpilih')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading('Approve buku terpilih?')
+                        ->modalDescription('Buku dengan status Draft / Menunggu Review akan langsung di-publish (LIVE). Author dinotifikasi via WA & email.')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records): void {
+                            $approved = 0;
+                            $skipped = 0;
+                            foreach ($records as $book) {
+                                if (! in_array($book->status, ['pending_review', 'draft'], true)) {
+                                    $skipped++;
+                                    continue;
+                                }
+                                static::approveBook($book, notify: false);
+                                $approved++;
+                            }
+                            Notification::make()
+                                ->title("{$approved} buku di-approve".($skipped ? ", {$skipped} dilewati (sudah live/rejected)" : ''))
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Logic approve buku — dipakai single action + bulk action.
+     */
+    public static function approveBook(Book $r, bool $notify = true): void
+    {
+        $r->update(['status' => 'active', 'approved_at' => now(), 'approved_by' => auth()->id()]);
+
+        ModerationLog::create([
+            'book_id' => $r->id,
+            'provider' => 'admin',
+            'decision' => 'approve',
+            'admin_id' => auth()->id(),
+        ]);
+
+        // Regenerate preview kalau belum ada
+        if (! $r->preview_pdf_path) {
+            GeneratePreviewJob::dispatch($r->id);
+        }
+
+        // Generate OG card untuk share Facebook/Twitter
+        \App\Jobs\GenerateOgCardJob::dispatch($r->id);
+
+        // WA notif ke author
+        $author = $r->author?->user;
+        if ($author?->phone) {
+            $url = route('books.show', $r->slug);
+            app(FonnteWhatsApp::class)->send(
+                $author->phone,
+                "Halo {$author->name}! 🎉\n\nBuku kamu \"{$r->title}\" sudah LIVE di bukudigi.com!\n\nLihat: {$url}\n\nRoyalti akan otomatis masuk ke saldo kamu tiap ada pembelian."
+            );
+        }
+
+        // Email notif ke author
+        if ($author?->email) {
+            try {
+                Mail::to($author->email)->queue(new BookApprovedMail($r));
+            } catch (\Throwable $e) {
+                Log::warning('BookApprovedMail queue failed: '.$e->getMessage());
+            }
+        }
+
+        if ($notify) {
+            Notification::make()->title('Buku disetujui & author dinotifikasi')->success()->send();
+        }
     }
 
     public static function getPages(): array
