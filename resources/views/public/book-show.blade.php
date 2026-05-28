@@ -250,9 +250,15 @@
             </div>
             @else
             <div class="mt-6 flex flex-wrap gap-3">
-                <a href="{{ route('login') }}?redirect={{ urlencode(route('checkout.start', $book)) }}" class="btn-primary !py-3">
-                    🔒 Masuk untuk Beli
-                </a>
+                @if($isPromoMode)
+                    <a href="{{ route('register') }}?redirect={{ urlencode(route('checkout.start', $book, false)) }}" class="btn-primary !py-3">
+                        🎁 Daftar Gratis untuk Klaim
+                    </a>
+                @else
+                    <a href="{{ route('login') }}?redirect={{ urlencode(route('checkout.start', $book, false)) }}" class="btn-primary !py-3">
+                        🔒 Masuk untuk Beli
+                    </a>
+                @endif
                 @if(!empty($book->preview_image_paths))
                     <a href="#preview" class="btn-outline !py-3">👁️ Lihat Preview ({{ count($book->preview_image_paths) }} hal)</a>
                 @elseif($book->preview_pdf_path)
@@ -492,7 +498,11 @@
                         <a href="{{ route('checkout.start', $book) }}" class="btn-primary mt-3">🛒 Beli {{ $book->formattedPrice() }}</a>
                     @endif
                 @else
-                    <a href="{{ route('login') }}?redirect={{ urlencode(route('checkout.start', $book)) }}" class="btn-primary mt-3">🔒 Masuk untuk {{ $isPromoMode ? 'Klaim' : 'Beli' }}</a>
+                    @if($isPromoMode)
+                        <a href="{{ route('register') }}?redirect={{ urlencode(route('checkout.start', $book, false)) }}" class="btn-primary mt-3">🎁 Daftar Gratis untuk Klaim</a>
+                    @else
+                        <a href="{{ route('login') }}?redirect={{ urlencode(route('checkout.start', $book, false)) }}" class="btn-primary mt-3">🔒 Masuk untuk Beli</a>
+                    @endif
                 @endauth
             </div>
         </section>

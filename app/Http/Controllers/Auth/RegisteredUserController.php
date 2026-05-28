@@ -48,6 +48,12 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        // Honor ?redirect= (cuma path lokal, anti open-redirect)
+        $redirect = $request->input('redirect');
+        if ($redirect && str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')) {
+            return redirect()->to($redirect);
+        }
+
         return redirect()->intended(route('library'));
     }
 }

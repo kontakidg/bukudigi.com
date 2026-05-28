@@ -31,6 +31,12 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $default = $user->isAdmin() ? '/admin' : route('library');
 
+        // Honor ?redirect= (cuma path lokal, anti open-redirect) — skip untuk admin
+        $redirect = $request->input('redirect');
+        if (! $user->isAdmin() && $redirect && str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')) {
+            return redirect()->to($redirect);
+        }
+
         return redirect()->intended($default);
     }
 

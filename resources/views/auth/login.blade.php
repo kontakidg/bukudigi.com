@@ -10,6 +10,9 @@
 
     <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
         @csrf
+        @if(request('redirect'))
+            <input type="hidden" name="redirect" value="{{ request('redirect') }}">
+        @endif
 
         <div>
             <label for="email" class="mb-1 block text-sm font-medium text-slate-700">Email</label>
@@ -53,6 +56,6 @@
     </a>
 
     <p class="mt-6 text-center text-sm text-slate-500">
-        Belum punya akun? <a href="{{ route('register') }}" class="font-semibold text-brand-600 hover:underline">Daftar gratis</a>
+        Belum punya akun? <a href="{{ route('register') }}{{ request('redirect') ? '?redirect='.urlencode(request('redirect')) : '' }}" class="font-semibold text-brand-600 hover:underline">Daftar gratis</a>
     </p>
 </x-guest-layout>

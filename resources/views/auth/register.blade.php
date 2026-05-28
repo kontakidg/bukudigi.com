@@ -4,6 +4,9 @@
 
     <form method="POST" action="{{ route('register') }}" class="mt-6 space-y-4">
         @csrf
+        @if(request('redirect'))
+            <input type="hidden" name="redirect" value="{{ request('redirect') }}">
+        @endif
 
         <div>
             <label for="name" class="mb-1 block text-sm font-medium text-slate-700">Nama Lengkap</label>
@@ -66,6 +69,6 @@
     </a>
 
     <p class="mt-6 text-center text-sm text-slate-500">
-        Sudah punya akun? <a href="{{ route('login') }}" class="font-semibold text-brand-600 hover:underline">Masuk</a>
+        Sudah punya akun? <a href="{{ route('login') }}{{ request('redirect') ? '?redirect='.urlencode(request('redirect')) : '' }}" class="font-semibold text-brand-600 hover:underline">Masuk</a>
     </p>
 </x-guest-layout>
