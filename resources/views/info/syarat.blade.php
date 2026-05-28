@@ -10,13 +10,6 @@
 <section class="mx-auto max-w-3xl px-4 py-12">
     <div class="prose prose-slate max-w-none prose-headings:scroll-mt-20 prose-h2:text-xl prose-h2:font-bold prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-h2:mt-10">
 
-        <div class="not-prose mb-8 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <strong>Ringkasan singkat:</strong> bukudigi.com adalah marketplace ebook PDF. Kami perantara
-            teknologi, bukan penerbit. Penulis bertanggung jawab penuh atas konten karyanya. Pembeli setuju
-            tidak menyebarkan PDF ber-watermark ke pihak lain. Sengketa diselesaikan secara musyawarah,
-            akhirnya di Pengadilan Negeri Jakarta Selatan.
-        </div>
-
         <h2 id="1-definisi">1. Definisi</h2>
         <ul>
             <li><strong>Platform / Layanan</strong> — situs web, aplikasi, API, dan seluruh sistem teknologi yang dioperasikan di bawah nama bukudigi.com.</li>
@@ -301,11 +294,6 @@
             <li>Korespondensi tertulis: alamat resmi akan dipublikasikan setelah PSE Kominfo aktif.</li>
         </ul>
 
-        <p class="mt-10 border-t border-slate-200 pt-6 text-xs text-slate-500">
-            Dokumen ini adalah <strong>versi awal yang diadaptasi dari template umum untuk marketplace digital
-            Indonesia</strong>. Untuk launch komersial skala besar, sangat dianjurkan agar dokumen ini direview oleh
-            advokat yang berpraktik di Indonesia, khususnya di bidang Teknologi &amp; Hak Kekayaan Intelektual.
-        </p>
     </div>
 </section>
 @endsection

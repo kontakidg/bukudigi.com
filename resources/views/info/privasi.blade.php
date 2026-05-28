@@ -10,12 +10,6 @@
 <section class="mx-auto max-w-3xl px-4 py-12">
     <div class="prose prose-slate max-w-none prose-h2:text-xl prose-h2:font-bold prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-h2:mt-10 prose-h3:text-base prose-h3:font-semibold prose-h3:mt-6">
 
-        <div class="not-prose mb-8 rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-brand-900">
-            <strong>Ringkasan singkat:</strong> Kami mengumpulkan data secukupnya untuk menjalankan layanan
-            (nama, email, telepon, data pembayaran, data verifikasi penulis). Kami tidak menjual data kamu
-            ke pihak ketiga. Kamu punya hak akses, koreksi, hapus, dan portabilitas atas data kamu.
-        </div>
-
         <h2 id="1-pengantar">1. Pengantar</h2>
         <p>
             bukudigi.com ("kami") menghargai privasi kamu. Kebijakan ini menjelaskan jenis data pribadi yang
@@ -207,11 +201,6 @@
             sesuai UU PDP) atau Kementerian Komunikasi &amp; Informatika Republik Indonesia.
         </p>
 
-        <p class="mt-10 border-t border-slate-200 pt-6 text-xs text-slate-500">
-            Dokumen ini disusun mengacu pada UU No. 27/2022 tentang Pelindungan Data Pribadi. Implementasi penuh
-            menunggu peraturan pelaksana (PP) dan terbentuknya Lembaga PDP. Untuk launch komersial, dianjurkan
-            direview oleh advokat Indonesia.
-        </p>
     </div>
 </section>
 @endsection
