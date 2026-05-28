@@ -40,7 +40,12 @@
             </div>
         @endif
         <div class="mt-auto pt-3">
-            <span class="text-base font-bold text-brand-600">{{ $book->formattedPrice() }}</span>
+            @if($isPromoMode ?? false)
+                <span class="text-base font-bold text-green-600">GRATIS</span>
+                <span class="ml-1 text-xs text-slate-400 line-through">{{ $book->formattedPrice() }}</span>
+            @else
+                <span class="text-base font-bold text-brand-600">{{ $book->formattedPrice() }}</span>
+            @endif
         </div>
     </div>
 </a>

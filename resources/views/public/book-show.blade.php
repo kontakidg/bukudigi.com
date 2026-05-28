@@ -132,8 +132,14 @@
                 </a>
             @endif
 
-            <div class="mt-4 flex items-center gap-3">
-                <span class="text-3xl font-bold text-brand-600">{{ $book->formattedPrice() }}</span>
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+                @if($isPromoMode)
+                    <span class="text-3xl font-bold text-green-600">GRATIS</span>
+                    <span class="text-lg text-slate-400 line-through">{{ $book->formattedPrice() }}</span>
+                    <span class="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-green-700">🎉 Promo Early Access</span>
+                @else
+                    <span class="text-3xl font-bold text-brand-600">{{ $book->formattedPrice() }}</span>
+                @endif
                 @if($book->category)
                     <a href="{{ route('kategori.show', $book->category) }}"
                        class="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100">
@@ -178,7 +184,8 @@
                     return base;
                 }
             }">
-                {{-- Voucher input (collapsible) --}}
+                {{-- Voucher input (collapsible) — disembunyikan selama promo gratis --}}
+                @unless($isPromoMode)
                 <div class="mt-5 rounded-lg border border-slate-200 bg-white p-3"
                      :class="result && result.valid ? '!border-green-300 !bg-green-50/50' : ''">
                     <button type="button" @click="open = !open"
@@ -220,13 +227,18 @@
                         </template>
                     </div>
                 </div>
+                @endunless
 
-                {{-- Tombol Beli + Preview — dynamic label kalau voucher applied --}}
+                {{-- Tombol Beli + Preview --}}
                 <div class="mt-4 flex flex-wrap gap-3">
-                    <a :href="buyUrl" href="{{ route('checkout.start', $book) }}" class="btn-primary !py-3">
-                        <span x-show="!(result && result.valid)">🛒 Beli Sekarang</span>
-                        <span x-show="result && result.valid">🛒 Beli dengan Voucher</span>
-                    </a>
+                    @if($isPromoMode)
+                        <a href="{{ route('checkout.start', $book) }}" class="btn-primary !py-3">🎁 Klaim Gratis</a>
+                    @else
+                        <a :href="buyUrl" href="{{ route('checkout.start', $book) }}" class="btn-primary !py-3">
+                            <span x-show="!(result && result.valid)">🛒 Beli Sekarang</span>
+                            <span x-show="result && result.valid">🛒 Beli dengan Voucher</span>
+                        </a>
+                    @endif
                     @if(!empty($book->preview_image_paths))
                         <a href="#preview" class="btn-outline !py-3">👁️ Lihat Preview ({{ count($book->preview_image_paths) }} hal)</a>
                     @elseif($book->preview_pdf_path)
@@ -472,11 +484,15 @@
             </div>
 
             <div class="mt-6 rounded-xl bg-gradient-to-br from-brand-50 to-white p-6 text-center">
-                <p class="text-sm text-slate-700">Suka previewnya? Beli untuk akses {{ $book->page_count ?? 'semua' }} halaman tanpa watermark DEMO.</p>
+                <p class="text-sm text-slate-700">Suka previewnya? Akses {{ $book->page_count ?? 'semua' }} halaman penuh, tanpa watermark DEMO.</p>
                 @auth
-                    <a href="{{ route('checkout.start', $book) }}" class="btn-primary mt-3">🛒 Beli {{ $book->formattedPrice() }}</a>
+                    @if($isPromoMode)
+                        <a href="{{ route('checkout.start', $book) }}" class="btn-primary mt-3">🎁 Klaim Gratis (Promo)</a>
+                    @else
+                        <a href="{{ route('checkout.start', $book) }}" class="btn-primary mt-3">🛒 Beli {{ $book->formattedPrice() }}</a>
+                    @endif
                 @else
-                    <a href="{{ route('login') }}?redirect={{ urlencode(route('checkout.start', $book)) }}" class="btn-primary mt-3">🔒 Masuk untuk Beli</a>
+                    <a href="{{ route('login') }}?redirect={{ urlencode(route('checkout.start', $book)) }}" class="btn-primary mt-3">🔒 Masuk untuk {{ $isPromoMode ? 'Klaim' : 'Beli' }}</a>
                 @endauth
             </div>
         </section>
