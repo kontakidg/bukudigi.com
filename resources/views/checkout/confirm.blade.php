@@ -40,12 +40,12 @@
     </div>
 
     @if(($snap['mode'] ?? null) === 'stub')
-        <div class="mt-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
-            <p class="font-semibold">🛈 Mode Demo</p>
-            <p class="mt-1">Midtrans belum dikonfigurasi. Klik tombol di bawah untuk simulasi pembayaran sukses.</p>
+        <div class="mt-6 rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-sm text-amber-900">
+            <p class="font-semibold">🎉 Promo Early Access!</p>
+            <p class="mt-1">Selamat! Kamu dapat akses gratis selama masa promo pembukaan bukudigi.com. Klik tombol di bawah untuk klaim buku ini sekarang — langsung masuk ke Perpustakaan kamu.</p>
         </div>
         <div class="mt-6 flex gap-3">
-            <a href="{{ $snap['redirect_url'] }}" class="btn-primary flex-1 !py-3">Simulasi Bayar (STUB)</a>
+            <a href="{{ $snap['redirect_url'] }}" class="btn-primary flex-1 !py-3">🎁 Klaim Sekarang</a>
             <a href="{{ route('books.show', $order->book) }}" class="btn-outline !py-3">Batal</a>
         </div>
     @elseif(($snap['mode'] ?? null) === 'live')
