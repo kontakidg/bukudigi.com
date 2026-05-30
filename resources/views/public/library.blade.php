@@ -1,12 +1,5 @@
 @extends('layouts.app')
 
-@if(($hasProcessing ?? false))
-    @push('head')
-        {{-- Auto-refresh tiap 8 detik selama masih ada order yang sedang diwatermark --}}
-        <meta http-equiv="refresh" content="8">
-    @endpush
-@endif
-
 @section('content')
 <section class="mx-auto max-w-7xl px-4 py-8">
     <div class="flex flex-wrap items-end justify-between gap-4">
@@ -19,25 +12,6 @@
             <a href="{{ route('profile.edit') }}" class="btn-ghost !py-2 !text-sm">⚙ Profil</a>
         </div>
     </div>
-
-    @if(($hasProcessing ?? false))
-        <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <div class="flex items-start gap-3">
-                <svg class="mt-0.5 h-5 w-5 flex-shrink-0 animate-spin text-amber-600" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <div class="flex-1 text-sm">
-                    <p class="font-semibold text-amber-900">Buku kamu sedang disiapkan…</p>
-                    <p class="mt-1 text-amber-800">
-                        Sistem sedang menambahkan watermark personal (nama & email kamu) ke PDF. Biasanya selesai dalam <strong>30 detik – 2 menit</strong>.
-                        Halaman ini akan otomatis refresh tiap 8 detik — tunggu sebentar, atau
-                        <a href="{{ route('library') }}" class="font-semibold underline hover:text-amber-900">refresh manual</a>.
-                    </p>
-                </div>
-            </div>
-        </div>
-    @endif
 
     @if($orders->isEmpty())
         <div class="mt-8 rounded-xl border-2 border-dashed border-slate-300 bg-white p-12 text-center">
@@ -79,16 +53,13 @@
                                             </a>
                                         </div>
                                     @endif
-                                @elseif($order->status === 'watermarking')
-                                    <span class="flex items-center justify-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700" title="PDF sedang diwatermark — biasanya 30 dtk - 2 menit">
-                                        <svg class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                        Watermarking…
-                                    </span>
-                                @elseif($order->status === 'paid')
-                                    <span class="flex items-center justify-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600" title="Order baru masuk antrian, segera diproses">
-                                        <svg class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                        Memproses…
-                                    </span>
+                                @elseif(in_array($order->status, ['paid', 'watermarking']))
+                                    <form action="{{ route('library.retry', $order->order_code) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn-primary w-full !py-2 !text-xs">
+                                            Siapkan Download
+                                        </button>
+                                    </form>
                                 @elseif($order->status === 'pending')
                                     <span class="block rounded-lg bg-slate-50 px-3 py-2 text-center text-xs font-medium text-slate-500">⌛ Menunggu pembayaran</span>
                                 @else

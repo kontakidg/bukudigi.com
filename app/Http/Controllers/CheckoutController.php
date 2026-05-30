@@ -163,20 +163,29 @@ class CheckoutController extends Controller
             $order->book->increment('sales_count');
             $order->book->increment('total_revenue', $order->net_amount ?: $order->gross_amount);
 
-            // Dispatch watermark job
-            WatermarkPdfJob::dispatch($order->id);
-
-            // Kalau buku punya EPUB master, dispatch EPUB watermark job juga (parallel)
-            if ($order->book->epub_master_path) {
-                WatermarkEpubJob::dispatch($order->id);
-            }
-
             // Email konfirmasi pembayaran + link download
             try {
                 $order->load('book.author', 'book.penName', 'user');
                 Mail::to($order->user->email)->queue(new OrderPaidMail($order));
             } catch (\Throwable $e) {
                 Log::warning('OrderPaidMail queue failed: '.$e->getMessage());
+            }
+        }
+
+        // Dispatch watermark kalau belum selesai (status paid/watermarking = belum ready).
+        // Pakai dispatchSync agar job jalan langsung, bukan via destructor PendingDispatch.
+        if (in_array($order->fresh()->status, ['paid', 'watermarking'])) {
+            try {
+                WatermarkPdfJob::dispatchSync($order->id);
+
+                if ($order->book->epub_master_path) {
+                    WatermarkEpubJob::dispatchSync($order->id);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Watermark sync failed, using fallback', [
+                    'order' => $order->order_code,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 

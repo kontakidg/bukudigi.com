@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\WatermarkEpubJob;
+use App\Jobs\WatermarkPdfJob;
 use App\Models\Order;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class LibraryController extends Controller
 {
@@ -15,9 +19,29 @@ class LibraryController extends Controller
             ->latest('created_at')
             ->paginate(20);
 
-        // Auto-refresh halaman kalau masih ada order yang sedang diproses (watermark job)
-        $hasProcessing = $orders->contains(fn ($o) => in_array($o->status, ['paid', 'watermarking']));
+        return view('public.library', compact('orders'));
+    }
 
-        return view('public.library', compact('orders', 'hasProcessing'));
+    public function retry(Request $request, string $orderCode): RedirectResponse
+    {
+        $order = Order::where('order_code', $orderCode)
+            ->where('user_id', $request->user()->id)
+            ->whereIn('status', ['paid', 'watermarking'])
+            ->firstOrFail();
+
+        try {
+            WatermarkPdfJob::dispatchSync($order->id);
+
+            if ($order->book->epub_master_path) {
+                WatermarkEpubJob::dispatchSync($order->id);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Watermark retry failed', [
+                'order' => $order->order_code,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return redirect()->route('library');
     }
 }

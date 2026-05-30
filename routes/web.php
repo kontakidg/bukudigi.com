@@ -117,6 +117,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/download/{orderCode}/epub', [DownloadController::class, 'epub'])->name('download.epub');
     Route::get('/read/{orderCode}', [DownloadController::class, 'readEpub'])->name('download.epub.read');
     Route::get('/read/{orderCode}/stream', [DownloadController::class, 'streamEpub'])->name('download.epub.stream');
+    Route::post('/library/retry/{orderCode}', [\App\Http\Controllers\LibraryController::class, 'retry'])->name('library.retry');
 });
 
 // Midtrans webhook (POST, no CSRF, no auth) — Midtrans hit this URL untuk notifikasi
