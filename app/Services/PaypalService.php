@@ -134,12 +134,23 @@ class PaypalService
                 ]);
 
             if (! $response->ok()) {
+                $body = $response->json();
                 Log::warning('[PayPal] createOrder failed', [
                     'order' => $order->order_code,
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
-                return ['error' => 'PayPal create order gagal: '.$response->json('message', 'unknown')];
+
+                // Extract detail PayPal v2 error structure (name + message + details[].issue)
+                $name = $body['name'] ?? null;
+                $msg = $body['message'] ?? null;
+                $issue = $body['details'][0]['issue'] ?? null;
+                $description = $body['details'][0]['description'] ?? null;
+
+                $errorParts = array_filter([$name, $issue, $msg, $description]);
+                $errorText = $errorParts ? implode(' — ', $errorParts) : ('HTTP '.$response->status());
+
+                return ['error' => 'PayPal: '.$errorText];
             }
 
             $paypalOrderId = $response->json('id');
