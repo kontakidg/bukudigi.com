@@ -91,7 +91,7 @@ class PaypalService
                     'grant_type' => 'client_credentials',
                 ]);
 
-            if (! $response->ok()) {
+            if (! $response->successful()) {
                 throw new RuntimeException('PayPal OAuth failed: '.$response->status().' '.$response->body());
             }
 
@@ -133,7 +133,7 @@ class PaypalService
                     ],
                 ]);
 
-            if (! $response->ok()) {
+            if (! $response->successful()) {
                 $body = $response->json();
                 Log::warning('[PayPal] createOrder failed', [
                     'order' => $order->order_code,
@@ -190,7 +190,7 @@ class PaypalService
                 ])
                 ->post($this->apiBase().'/v2/checkout/orders/'.$paypalOrderId.'/capture');
 
-            if (! $response->ok()) {
+            if (! $response->successful()) {
                 Log::warning('[PayPal] captureOrder failed', [
                     'paypal_order_id' => $paypalOrderId,
                     'status' => $response->status(),
