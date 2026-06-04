@@ -30,9 +30,34 @@ class BookController extends Controller
             return $author;
         }
 
-        $books = $author->books()->with('category')->latest()->paginate(15);
+        $search  = trim((string) $request->input('q', ''));
+        $sort    = $request->input('sort', 'latest');
+        $status  = $request->input('status', '');  // filter by status
+        $allowed = ['latest', 'title', 'price', 'terjual', 'status'];
+        if (! in_array($sort, $allowed, true)) {
+            $sort = 'latest';
+        }
 
-        return view('author.books.index', compact('books'));
+        $q = $author->books()->with('category');
+
+        if ($search !== '') {
+            $q->where('title', 'like', '%'.$search.'%');
+        }
+        if ($status !== '' && in_array($status, ['active','pending_review','draft','rejected','archived'], true)) {
+            $q->where('status', $status);
+        }
+
+        $q = match ($sort) {
+            'title'   => $q->orderBy('title'),
+            'price'   => $q->orderByDesc('price'),
+            'terjual' => $q->orderByDesc('sales_count'),
+            'status'  => $q->orderBy('status'),
+            default   => $q->latest(),
+        };
+
+        $books = $q->paginate(15)->withQueryString();
+
+        return view('author.books.index', compact('books', 'search', 'sort', 'status'));
     }
 
     public function create(Request $request): View|RedirectResponse
@@ -236,6 +261,50 @@ class BookController extends Controller
 
         return redirect()->route('author.books.index')
             ->with('status', "Buku \"{$book->title}\" di-archive. Pembeli existing tetap bisa download.");
+    }
+
+    /**
+     * POST /author/books/bulk
+     * Bulk action: archive | submit
+     */
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $author = $this->ensureVerifiedAuthor($request);
+        if ($author instanceof RedirectResponse) {
+            return $author;
+        }
+
+        $request->validate([
+            'action'  => ['required', 'in:archive,submit'],
+            'ids'     => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*'   => ['integer'],
+        ]);
+
+        $action = $request->input('action');
+        $ids    = $request->input('ids');
+
+        // Hanya proses buku milik author ini
+        $books = $author->books()->whereIn('id', $ids)->get();
+
+        $done = 0;
+        foreach ($books as $book) {
+            if ($action === 'archive' && $book->status !== 'archived') {
+                $book->update(['status' => 'archived']);
+                $done++;
+            } elseif ($action === 'submit' && in_array($book->status, ['draft', 'rejected'], true)) {
+                $book->update([
+                    'status'           => 'pending_review',
+                    'submitted_at'     => now(),
+                    'rejection_reason' => null,
+                ]);
+                $done++;
+            }
+        }
+
+        $label = $action === 'archive' ? 'di-archive' : 'dikirim ulang ke moderasi';
+
+        return redirect()->route('author.books.index', $request->only(['q','sort','status']))
+            ->with('status', "{$done} buku berhasil {$label}.");
     }
 
     // === helpers ===

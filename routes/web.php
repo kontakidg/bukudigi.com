@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
     // Author book CRUD
     Route::prefix('author/books')->name('author.books.')->group(function () {
         Route::get('/', [AuthorBookController::class, 'index'])->name('index');
+        Route::post('/bulk', [AuthorBookController::class, 'bulkAction'])->name('bulk');
         Route::get('/create', [AuthorBookController::class, 'create'])->name('create');
         Route::post('/', [AuthorBookController::class, 'store'])->name('store');
         Route::get('/{book:slug}/edit', [AuthorBookController::class, 'edit'])->name('edit');
