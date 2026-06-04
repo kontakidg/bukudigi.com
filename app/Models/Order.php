@@ -24,6 +24,7 @@ class Order extends Model
         'net_amount',
         'commission',
         'author_earning',
+        'author_earning_credited',
         'gateway_fee',
         'status',
         'payment_gateway',
@@ -58,6 +59,7 @@ class Order extends Model
             'commission' => 'integer',
             'affiliate_commission' => 'integer',
             'author_earning' => 'integer',
+            'author_earning_credited' => 'boolean',
             'gateway_fee' => 'integer',
             'download_count' => 'integer',
         ];

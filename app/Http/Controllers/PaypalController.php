@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Jobs\WatermarkEpubJob;
 use App\Jobs\WatermarkPdfJob;
+use App\Mail\AuthorBookSoldMail;
 use App\Mail\OrderPaidMail;
 use App\Models\Order;
 use App\Services\AffiliateService;
+use App\Services\AuthorService;
 use App\Services\PaypalService;
 use App\Services\VoucherService;
 use Illuminate\Http\JsonResponse;
@@ -47,7 +49,7 @@ class PaypalController extends Controller
      * POST /api/paypal/capture/{orderCode}
      * Frontend onApprove → backend capture → mark order paid + dispatch watermark.
      */
-    public function capture(Request $request, string $orderCode, PaypalService $paypal, VoucherService $voucherService, AffiliateService $affiliateService): JsonResponse
+    public function capture(Request $request, string $orderCode, PaypalService $paypal, VoucherService $voucherService, AffiliateService $affiliateService, AuthorService $authorService): JsonResponse
     {
         $order = Order::with('book', 'user')
             ->where('order_code', $orderCode)
@@ -98,6 +100,9 @@ class PaypalController extends Controller
         // Affiliate earning record
         $affiliateService->recordEarning($fresh);
 
+        // Author royalti → balance_pending
+        $authorService->recordEarning($fresh);
+
         // Increment sales counter (pakai net amount)
         $order->book->increment('sales_count');
         $order->book->increment('total_revenue', $order->net_amount ?: $order->gross_amount);
@@ -115,12 +120,22 @@ class PaypalController extends Controller
             ]);
         }
 
-        // Email notif
+        // Email notif — pembeli
         try {
             $order->load('book.author', 'book.penName', 'user');
             Mail::to($order->user->email)->queue(new OrderPaidMail($order));
         } catch (Throwable $e) {
             Log::warning('[PayPal] OrderPaidMail queue failed: '.$e->getMessage());
+        }
+
+        // Email notif — author (buku terjual)
+        try {
+            $authorUser = $order->book->author?->user;
+            if ($authorUser) {
+                Mail::to($authorUser->email)->queue(new AuthorBookSoldMail($order));
+            }
+        } catch (Throwable $e) {
+            Log::warning('[PayPal] AuthorBookSoldMail queue failed: '.$e->getMessage());
         }
 
         return response()->json([

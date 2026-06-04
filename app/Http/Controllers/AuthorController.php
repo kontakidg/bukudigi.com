@@ -167,7 +167,7 @@ class AuthorController extends Controller
         }
 
         $author = $user->author;
-        $books = $author->books()->latest()->take(10)->get();
+        $books = $author->books()->latest()->paginate(15);
 
         $stats = [
             'total_books' => $author->books()->count(),

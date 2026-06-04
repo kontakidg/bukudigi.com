@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Jobs\WatermarkEpubJob;
 use App\Jobs\WatermarkPdfJob;
+use App\Mail\AuthorBookSoldMail;
 use App\Mail\OrderPaidMail;
 use App\Models\Order;
 use App\Services\AffiliateService;
+use App\Services\AuthorService;
 use App\Services\MidtransService;
 use App\Services\VoucherService;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +27,7 @@ use Throwable;
  */
 class MidtransWebhookController extends Controller
 {
-    public function handle(Request $request, MidtransService $midtrans, VoucherService $voucherService, AffiliateService $affiliateService): JsonResponse
+    public function handle(Request $request, MidtransService $midtrans, VoucherService $voucherService, AffiliateService $affiliateService, AuthorService $authorService): JsonResponse
     {
         if ($midtrans->isStub()) {
             return response()->json(['message' => 'Midtrans mode = stub, webhook disabled'], 200);
@@ -91,7 +93,7 @@ class MidtransWebhookController extends Controller
             return response()->json(['message' => 'Order already processed'], 200);
         }
 
-        DB::transaction(function () use ($order, $notif, $newStatus, $voucherService, $midtrans, $affiliateService) {
+        DB::transaction(function () use ($order, $notif, $newStatus, $voucherService, $midtrans, $affiliateService, $authorService) {
             $update = [
                 'status' => $newStatus,
                 'midtrans_order_id' => $notif['transaction_id'] ?: $order->order_code,
@@ -116,6 +118,9 @@ class MidtransWebhookController extends Controller
                 // Record affiliate earning (no-op kalau order ga pakai affiliate)
                 $affiliateService->recordEarning($fresh);
 
+                // Author royalti → balance_pending
+                $authorService->recordEarning($fresh);
+
                 // Increment sales counter pakai net amount
                 $order->book->increment('sales_count');
                 $order->book->increment('total_revenue', $order->net_amount ?: $order->gross_amount);
@@ -126,12 +131,22 @@ class MidtransWebhookController extends Controller
                     WatermarkEpubJob::dispatch($order->id);
                 }
 
-                // Email notif
+                // Email notif — pembeli
                 try {
                     $order->load('book.author', 'book.penName', 'user');
                     Mail::to($order->user->email)->queue(new OrderPaidMail($order));
                 } catch (Throwable $e) {
                     Log::warning('[Midtrans Webhook] OrderPaidMail queue failed: '.$e->getMessage());
+                }
+
+                // Email notif — author (buku terjual)
+                try {
+                    $authorUser = $order->book->author?->user;
+                    if ($authorUser) {
+                        Mail::to($authorUser->email)->queue(new AuthorBookSoldMail($order));
+                    }
+                } catch (Throwable $e) {
+                    Log::warning('[Midtrans Webhook] AuthorBookSoldMail queue failed: '.$e->getMessage());
                 }
             }
 
@@ -142,6 +157,9 @@ class MidtransWebhookController extends Controller
                 $voucherService->rollbackUsage($freshFailed);
                 // Cancel affiliate earning kalau ada
                 $affiliateService->cancelEarning($freshFailed);
+
+                // Rollback author royalti
+                $authorService->cancelEarning($freshFailed);
             }
         });
 

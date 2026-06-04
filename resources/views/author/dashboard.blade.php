@@ -346,7 +346,7 @@
                         <tbody>
                             @foreach($books as $book)
                                 <tr class="border-t border-slate-100">
-                                    <td class="px-4 py-3">{{ $book->title }}</td>
+                                    <td class="px-4 py-3"><a href="{{ route('author.books.edit', $book) }}" class="text-brand-600 hover:underline">{{ $book->title }}</a></td>
                                     <td class="px-4 py-3">
                                         @switch($book->status)
                                             @case('active')<span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Live</span>@break
@@ -363,6 +363,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if($books->hasPages())
+                    <div class="mt-4">
+                        {{ $books->links() }}
+                    </div>
+                @endif
             @endif
         </div>
     </div>
