@@ -255,7 +255,7 @@ class BookResource extends Resource
         }
 
         // Auto-post ke Facebook Page (kalau env sudah dikonfigurasi)
-        \App\Jobs\PostBookToFacebookJob::dispatch($r->id)->delay(now()->addSeconds(30));
+        \App\Jobs\PostBookToFacebookJob::dispatch($r->id)->delay(now()->addSeconds(5));
 
         if ($notify) {
             Notification::make()->title('Buku disetujui & author dinotifikasi')->success()->send();
