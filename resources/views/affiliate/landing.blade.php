@@ -10,7 +10,7 @@
     <div class="relative mx-auto max-w-4xl px-4 text-center">
         <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">🔗 Program Affiliate bukudigi</span>
         <h1 class="mt-4 text-3xl font-bold leading-tight drop-shadow-md md:text-5xl">Dapat <strong>10% komisi</strong><br>tiap orang beli buku lewat link kamu.</h1>
-        <p class="mt-4 text-lg text-brand-50">Cocok buat content creator, reviewer buku, dosen, komunitas baca. Cookie 30 hari, payout bulanan tgl 5.</p>
+        <p class="mt-4 text-lg text-brand-50">Cocok buat content creator, reviewer buku, dosen, komunitas baca. Cookie 30 hari, payout bulanan tgl 5 dalam <strong class="text-white">Rupiah</strong>.</p>
         <div class="mt-8">
             @auth
                 @if(auth()->user()->affiliate)
@@ -70,10 +70,10 @@
 <section class="mx-auto max-w-4xl px-4 py-12">
     <h2 class="text-center text-2xl font-bold md:text-3xl">FAQ</h2>
     <div class="mt-6 space-y-3">
-        <details class="card p-4"><summary class="cursor-pointer font-semibold">Berapa komisi yang saya dapat?</summary><p class="mt-2 text-sm text-slate-600">10% dari net amount transaksi (setelah voucher kalau ada). Misal pembeli bayar Rp 50.000, kamu dapat Rp 5.000.</p></details>
+        <details class="card p-4"><summary class="cursor-pointer font-semibold">Berapa komisi yang saya dapat?</summary><p class="mt-2 text-sm text-slate-600">10% dari net amount transaksi (setelah voucher kalau ada). Misal pembeli bayar Rp 50.000, kamu dapat <strong>Rp 5.000</strong>. Komisi selalu dalam <strong>Rupiah (IDR)</strong> — termasuk untuk transaksi yang dibayar pembeli via PayPal.</p></details>
         <details class="card p-4"><summary class="cursor-pointer font-semibold">Apakah penulis juga bisa jadi affiliate?</summary><p class="mt-2 text-sm text-slate-600">Bisa. Penulis bisa daftar affiliate juga — tapi tidak boleh refer buku sendiri (akan terdeteksi self-refer dan tidak dihitung).</p></details>
         <details class="card p-4"><summary class="cursor-pointer font-semibold">Berapa lama cookie tracking?</summary><p class="mt-2 text-sm text-slate-600">30 hari sejak klik terakhir. Last-click model — kalau pengunjung klik link affiliate lain di tengah jalan, kreditnya pindah.</p></details>
-        <details class="card p-4"><summary class="cursor-pointer font-semibold">Kapan saya dibayar?</summary><p class="mt-2 text-sm text-slate-600">Tanggal 5 tiap bulan, untuk saldo yang sudah lewat cooling period 7 hari sejak transaksi. Minimum payout Rp 100.000. Kalau belum tercapai, di-carry over ke bulan berikutnya.</p></details>
+        <details class="card p-4"><summary class="cursor-pointer font-semibold">Kapan dan bagaimana saya dibayar?</summary><p class="mt-2 text-sm text-slate-600">Tanggal 5 tiap bulan via <strong>transfer bank Indonesia dalam Rupiah (IDR)</strong>, untuk saldo yang sudah lewat cooling period 7 hari sejak transaksi. Minimum payout Rp 100.000. Kalau belum tercapai, di-carry over ke bulan berikutnya. Wajib punya rekening bank Indonesia atas nama sendiri.</p></details>
         <details class="card p-4"><summary class="cursor-pointer font-semibold">Kenapa harus di-approve admin?</summary><p class="mt-2 text-sm text-slate-600">Untuk menjaga kualitas program — kami review channel promosi & motivasi kamu agar program ini tetap sustainable buat semua pihak.</p></details>
     </div>
 </section>

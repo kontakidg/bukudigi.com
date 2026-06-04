@@ -4,7 +4,7 @@
 @include('info._layout', [
     'title' => 'Syarat & Ketentuan Layanan',
     'lead' => 'Aturan main penggunaan bukudigi.com. Dengan mendaftar, kamu menyetujui semua poin di bawah.',
-    'updated' => '20 Mei 2026',
+    'updated' => '4 Juni 2026',
 ])
 
 <section class="mx-auto max-w-3xl px-4 py-12">
@@ -79,7 +79,7 @@
         <ul>
             <li>Menentukan harga Karya dalam rentang Rp 15.000 – Rp 500.000.</li>
             <li>Menerima 70% dari harga gross setiap penjualan (affiliate 10%, platform 20%, lihat <a href="{{ route('info.komisi') }}" class="text-brand-600">halaman komisi</a>).</li>
-            <li>Menerima royalti via transfer bank setiap tanggal 5 bulan berikutnya (dengan threshold &amp; cooling).</li>
+            <li>Menerima royalti <strong>dalam Rupiah (IDR)</strong> via transfer bank Indonesia setiap tanggal 5 bulan berikutnya (dengan threshold Rp 100.000 &amp; cooling 7 hari).</li>
             <li>Mengedit, archive, atau menarik Karya kapan saja (Pembeli existing tetap dapat mengakses download).</li>
             <li>Melihat statistik penjualan real-time di dashboard Penulis.</li>
         </ul>
@@ -176,12 +176,14 @@
 
         <h2 id="10-pembayaran">10. Pembayaran &amp; Royalti</h2>
         <ul>
-            <li>Pembayaran diproses oleh penyedia pihak ketiga (Midtrans). Pembeli tunduk juga pada Syarat Layanan Midtrans saat bertransaksi.</li>
-            <li>Pembagian komisi: <strong>Penulis 70%, Affiliate 10%, Platform 20%</strong> dari harga gross.</li>
+            <li>Pembayaran oleh Pembeli diproses oleh penyedia pihak ketiga (Midtrans untuk QRIS/VA/e-wallet, atau PayPal untuk pembayaran internasional). Pembeli tunduk juga pada Syarat Layanan masing-masing penyedia saat bertransaksi.</li>
+            <li><strong>Mata uang pembayaran pembeli:</strong> harga buku ditetapkan dalam <strong>Rupiah (IDR)</strong>. Untuk transaksi via PayPal, harga dikonversi ke USD saat checkout menggunakan kurs real-time (sumber: open.er-api.com). Selisih kurs kecil antara tampilan checkout dan settlement bank PayPal adalah risiko Pembeli.</li>
+            <li><strong>Mata uang royalti &amp; komisi: seluruhnya dalam Rupiah (IDR)</strong>, tanpa pengecualian. Penulis dan affiliate tidak menerima pembayaran dalam USD atau mata uang asing lain.</li>
+            <li>Pembagian komisi: <strong>Penulis 70%, Affiliate 10%, Platform 20%</strong> dari harga gross dalam Rupiah — dihitung dan dicatat dalam Rupiah terlepas dari metode bayar yang Pembeli gunakan.</li>
             <li>Biaya transfer bank saat payout: <strong>50:50</strong> antara Penulis &amp; Platform (estimasi Rp 6.500 → ditanggung Rp 3.250 masing-masing).</li>
-            <li><strong>PPh 23</strong> sesuai Pasal 23 UU PPh: 2% (dengan NPWP) atau 4% (tanpa NPWP) dari penghasilan bruto royalti, dipotong otomatis oleh Platform sebagai wajib pungut.</li>
+            <li><strong>PPh 23</strong> sesuai Pasal 23 UU PPh: 2% (dengan NPWP) atau 4% (tanpa NPWP) dari penghasilan bruto royalti dalam Rupiah, dipotong otomatis oleh Platform sebagai wajib pungut.</li>
             <li><strong>PPN</strong> sesuai PMK 60/2022 untuk perdagangan digital: dipungut oleh Platform dari harga jual ke Pembeli akhir, disetor ke negara.</li>
-            <li>Payout royalti: <strong>tanggal 5 bulan berikutnya</strong>, untuk transaksi yang sudah lewat masa cooling 7 hari, dengan threshold minimum Rp 100.000. Saldo di bawah threshold carry-over.</li>
+            <li>Payout royalti &amp; komisi affiliate: <strong>tanggal 5 bulan berikutnya, ditransfer ke rekening bank Indonesia dalam Rupiah</strong>, untuk transaksi yang sudah lewat masa cooling 7 hari, dengan threshold minimum Rp 100.000. Saldo di bawah threshold carry-over.</li>
             <li>Platform berhak menahan payout dalam kasus dugaan fraud, sengketa, atau kewajiban pajak yang belum terselesaikan.</li>
         </ul>
 
@@ -233,10 +235,10 @@
 
         <h2 id="14-pihak-ketiga">14. Layanan &amp; Tautan Pihak Ketiga</h2>
         <p>
-            Platform menggunakan layanan pihak ketiga termasuk Midtrans (pembayaran), Cloudflare (CDN &amp; storage),
-            Fonnte (WhatsApp), Google (OAuth), dan layanan AI moderasi. Penggunaan layanan tersebut tunduk pada
-            ketentuan masing-masing penyedia. Kami tidak bertanggung jawab atas tindakan/pelanggaran/kelalaian
-            pihak ketiga.
+            Platform menggunakan layanan pihak ketiga termasuk Midtrans (pembayaran lokal), PayPal (pembayaran internasional),
+            Cloudflare (CDN &amp; storage), Fonnte (WhatsApp), Google (OAuth), dan layanan AI moderasi.
+            Penggunaan layanan tersebut tunduk pada ketentuan masing-masing penyedia. Kami tidak bertanggung jawab atas
+            tindakan/pelanggaran/kelalaian pihak ketiga.
         </p>
 
         <h2 id="15-disclaimer">15. Penolakan Jaminan (Disclaimer)</h2>

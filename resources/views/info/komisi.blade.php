@@ -30,9 +30,16 @@
         <p class="text-sm text-slate-600">
             <em>Catatan:</em> kalau pembeli datang tanpa link affiliate, porsi 10% affiliate menjadi bonus untuk penulis (jadi penulis dapat 80%).
         </p>
+        <div class="not-prose my-4 rounded-lg border border-brand-200 bg-brand-50 px-5 py-4 text-sm text-brand-900">
+            <strong>💡 Mata uang royalti & komisi: selalu Rupiah (IDR)</strong><br>
+            Semua perhitungan, pencatatan saldo, dan payout ke rekening bank — baik untuk penulis maupun affiliate — menggunakan <strong>Rupiah</strong>.
+            Ini berlaku terlepas dari metode pembayaran yang digunakan pembeli (Midtrans/Rupiah <em>maupun</em> PayPal/USD).
+            Untuk transaksi PayPal, platform mengkonversi harga dari USD ke IDR menggunakan kurs saat pembayaran diterima,
+            lalu menghitung royalti dari nilai IDR tersebut.
+        </div>
 
         <h2>Contoh perhitungan</h2>
-        <p>Buku kamu dijual seharga <strong>Rp 50.000</strong>, dibeli oleh seorang pembeli pakai QRIS. Begini alur uangnya:</p>
+        <p>Buku kamu dijual seharga <strong>Rp 50.000</strong>, dibeli oleh seorang pembeli pakai QRIS (atau PayPal — hasilnya sama untuk penulis). Begini alur uangnya:</p>
 
         <div class="not-prose my-4 overflow-hidden rounded-lg border border-slate-200">
             <table class="w-full text-sm">
@@ -117,6 +124,7 @@
 
         <h2>Aturan payout</h2>
         <ul>
+            <li><strong>Mata uang payout: Rupiah (IDR)</strong> — transfer ke rekening bank Indonesia atas nama Penulis.</li>
             <li><strong>Jadwal:</strong> tanggal 5 setiap bulan, untuk semua transaksi bulan sebelumnya yang sudah lewat masa cooling 7 hari sejak <em>paid_at</em>.</li>
             <li><strong>Cooling period:</strong> 7 hari sejak transaksi sukses — selama window ini, pembeli masih bisa minta refund kalau ada masalah teknis (lihat <a href="{{ route('info.syarat') }}#11-refund">§Refund</a>).</li>
             <li><strong>Threshold minimum:</strong> Rp 100.000. Kalau saldo available di bawah ini, akan <strong>carry-over</strong> ke bulan depan sampai mencapai threshold.</li>

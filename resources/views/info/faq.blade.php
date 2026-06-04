@@ -14,8 +14,9 @@
             ['Apa itu bukudigi.com?', 'Marketplace ebook PDF & EPUB dari penulis Indonesia. Beli sekali, watermark personal, baca online di reader atau download permanen ke perangkat kamu (sampai limit 10× re-download dalam 30 hari).'],
             ['Format apa saja yang tersedia?', 'Setiap buku tersedia dalam format PDF. Banyak buku juga punya versi EPUB — bisa dibaca online di reader bukudigi.com (HP/laptop) atau di-download untuk app lain (Apple Books, Calibre, Kindle, dll). Buku yang punya EPUB ditandai badge "📖 EPUB" di katalog.'],
             ['Apa bedanya dengan Google Play Books / Gramedia Digital?', 'Pembayaran lokal (QRIS/VA, gak butuh kartu kredit), terbuka untuk penulis indie tanpa kontrak penerbit, watermark personal bukan DRM yang ribet, komisi adil untuk penulis lokal.'],
-            ['Cara bayarnya gimana?', 'Klik Beli Sekarang → pilih metode bayar via Midtrans (QRIS, Virtual Account BCA/BNI/Mandiri/Permata, GoPay, OVO, DANA, ShopeePay, kartu kredit). Setelah bayar sukses, langsung redirect ke Perpustakaan Saya.'],
-            ['Saya gak punya kartu kredit, bisa beli?', 'Bisa banget. Yang paling mudah pakai QRIS (semua mobile banking & e-wallet support) atau Virtual Account.'],
+            ['Cara bayarnya gimana?', 'Klik Beli Sekarang → pilih metode bayar. Tersedia dua gateway: <strong>Midtrans</strong> (QRIS, Virtual Account BCA/BNI/Mandiri/Permata, GoPay, OVO, DANA, ShopeePay, kartu kredit — semua dalam Rupiah) atau <strong>PayPal</strong> (untuk yang punya akun PayPal, dibayar dalam USD). Setelah bayar sukses, langsung redirect ke Perpustakaan Saya.'],
+            ['Saya gak punya kartu kredit, bisa beli?', 'Bisa banget. Yang paling mudah pakai QRIS (semua mobile banking & e-wallet support) atau Virtual Account — semuanya bayar dalam Rupiah, tidak perlu kartu kredit.'],
+            ['Bayar via PayPal kena kurs apa?', 'Harga buku ditetapkan dalam Rupiah. Saat checkout PayPal, sistem otomatis konversi ke USD pakai kurs real-time (diperbarui tiap 6 jam dari open.er-api.com). Kurs & perhitungannya ditampilkan transparan di halaman checkout sebelum kamu konfirmasi bayar. Selisih kecil antara kurs tampilan dan kurs settlement PayPal/bank kamu adalah hal wajar dalam transaksi forex.'],
             ['File PDF-nya aman gak? Ada watermark apa?', 'PDF kamu punya watermark berisi nama, email, dan order code di footer setiap halaman + watermark diagonal samar "PREVIEW" tidak ada (cuma di preview gratis, bukan di file beli). Watermark ini supaya kalau ada yang membocorkan, terlacak ke akun aslinya.'],
             ['Bisa baca offline?', 'Bisa. Download sekali, file disimpan di device kamu (HP, laptop, tablet), bisa dibuka kapan saja tanpa internet.'],
             ['Berapa kali bisa download file yang sama?', 'Maks 10× dalam 30 hari sejak pembelian. Setelah expired, hubungi support kalau perlu reset.'],
@@ -42,7 +43,7 @@
     <div class="mt-4 space-y-3">
         @foreach([
             ['Saya bukan penulis terkenal. Bisa daftar?', 'Bisa! bukudigi.com terbuka untuk semua penulis individu yang punya karya orisinal. Tidak ada syarat portofolio atau followers minimum.'],
-            ['Biaya pendaftaran berapa?', 'Gratis. Tidak ada biaya bulanan, tidak ada minimum sales. Penulis dapat 70% per pembelian (affiliate 10%, platform 20%).'],
+            ['Biaya pendaftaran berapa?', 'Gratis. Tidak ada biaya bulanan, tidak ada minimum sales. Penulis dapat 70% per pembelian (affiliate 10%, platform 20%). Royalti selalu dibayarkan dalam <strong>Rupiah (IDR)</strong> ke rekening bank Indonesia kamu — tidak peduli pembeli bayar pakai PayPal USD atau Midtrans.'],
             ['Kenapa harus kasih NIK & KTP?', 'Untuk verifikasi identitas (mencegah fraud, pembajakan, akun palsu) dan kewajiban pajak (PPh 23). Data disimpan terenkripsi, hanya admin verifikator yang akses.'],
             ['Saya gak punya NPWP. Tetap bisa?', 'Bisa. Tanpa NPWP, PPh 23 dipotong 4% (vs 2% dengan NPWP). Sangat dianjurkan punya NPWP — gratis daftar di kantor pajak terdekat atau online di pajak.go.id.'],
             ['Berapa lama verifikasi admin?', '1-2 hari kerja sejak submit. Kamu akan dapat WhatsApp notifikasi (kalau sudah verifikasi WA) saat sudah disetujui atau ditolak (dengan alasan).'],
@@ -52,6 +53,7 @@
             ['Bisa hapus buku setelah upload?', 'Bisa archive (sembunyikan dari publik), tapi tidak bisa hapus permanen kalau sudah ada pembeli. Pembeli existing tetap bisa download buku yang sudah dibeli.'],
             ['Boleh saya menjual buku yang sama di platform lain (Tokopedia, Shopee, blog pribadi)?', 'Boleh — lisensi yang kami pegang non-eksklusif. Tapi ingat: tiap platform punya cara watermarking sendiri. Pastikan kamu tidak melanggar T&amp;C platform lain.'],
             ['Bagaimana kalau pembeli membocorkan PDF saya ke grup Telegram?', 'Watermark personal mempermudah lacak ke pembeli asli. Kalau ada bocoran terdeteksi, lapor ke support@bukudigi.com — kami suspend akun pelanggar dan, jika kerugian besar, bisa proses hukum.'],
+            ['Royalti saya dibayar dalam mata uang apa?', '<strong>Seluruhnya dalam Rupiah (IDR)</strong>, ditransfer ke rekening bank Indonesia. Tidak ada pembayaran dalam USD, Euro, atau mata uang asing lain. Bahkan untuk transaksi yang dibayar pembeli via PayPal (USD), Platform tetap menghitung dan membayarkan royalti kamu dalam Rupiah berdasarkan harga gross IDR buku kamu.'],
             ['PPN-nya bagaimana?', 'PPN dipungut oleh platform dari pembeli (12% sesuai PMK 60/2022), kami setor ke negara. Penulis tidak perlu urus PPN. Detail di <a href="' . route('info.komisi') . '" class="text-brand-600 underline">halaman komisi</a>.'],
         ] as $i => $qa)
             <div class="card overflow-hidden">
