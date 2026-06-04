@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\AffiliateService;
+use App\Services\ArticleService;
 use App\Services\AuthorService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -25,3 +26,11 @@ Artisan::command('author:mature-earnings', function (AuthorService $svc) {
 })->purpose('Move author earnings from pending to available after cooling period');
 
 Schedule::command('author:mature-earnings')->dailyAt('02:35');
+
+// Publish artikel blog terjadwal yang published_at-nya sudah lewat + auto-post FB.
+Artisan::command('articles:publish-scheduled', function (ArticleService $svc) {
+    $n = $svc->publishDue();
+    $this->info("Published {$n} scheduled articles.");
+})->purpose('Publish scheduled blog articles whose time has arrived');
+
+Schedule::command('articles:publish-scheduled')->everyFiveMinutes();

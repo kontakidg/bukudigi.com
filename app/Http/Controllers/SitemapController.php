@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Article;
 use App\Models\Book;
 use App\Models\Category;
 use Illuminate\Http\Response;
@@ -17,6 +18,7 @@ class SitemapController extends Controller
         $urls[] = ['loc' => route('home'),            'priority' => '1.0', 'changefreq' => 'daily'];
         $urls[] = ['loc' => route('books.index'),     'priority' => '0.9', 'changefreq' => 'daily'];
         $urls[] = ['loc' => route('kategori.index'),  'priority' => '0.8', 'changefreq' => 'weekly'];
+        $urls[] = ['loc' => route('blog.index'),      'priority' => '0.7', 'changefreq' => 'daily'];
         $urls[] = ['loc' => route('jual'),            'priority' => '0.7', 'changefreq' => 'monthly'];
         $urls[] = ['loc' => route('affiliate.landing'), 'priority' => '0.6', 'changefreq' => 'monthly'];
 
@@ -47,6 +49,27 @@ class SitemapController extends Controller
                 'image' => $coverUrl ? [
                     'loc' => $coverUrl,
                     'title' => $book->title,
+                ] : null,
+            ];
+        }
+
+        // Blog articles (published only)
+        foreach (Article::published()->get(['id', 'slug', 'title', 'cover_path', 'updated_at', 'published_at']) as $article) {
+            $coverUrl = null;
+            if ($article->cover_path) {
+                $coverUrl = Str::startsWith($article->cover_path, ['http://', 'https://'])
+                    ? $article->cover_path
+                    : asset('storage/'.$article->cover_path);
+            }
+
+            $urls[] = [
+                'loc' => route('blog.show', $article->slug),
+                'priority' => '0.6',
+                'changefreq' => 'weekly',
+                'lastmod' => ($article->updated_at ?? $article->published_at)?->toIso8601String(),
+                'image' => $coverUrl ? [
+                    'loc' => $coverUrl,
+                    'title' => $article->title,
                 ] : null,
             ];
         }

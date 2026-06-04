@@ -17,6 +17,7 @@
                 <li><a href="{{ route('kategori.index') }}" class="hover:text-brand-400">Kategori</a></li>
                 <li><a href="{{ route('books.index', ['sort' => 'popular']) }}" class="hover:text-brand-400">Buku Populer</a></li>
                 <li><a href="{{ route('books.index', ['sort' => 'newest']) }}" class="hover:text-brand-400">Buku Terbaru</a></li>
+                <li><a href="{{ route('blog.index') }}" class="hover:text-brand-400">Blog</a></li>
             </ul>
         </div>
         <div>

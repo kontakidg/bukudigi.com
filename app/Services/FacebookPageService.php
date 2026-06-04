@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Article;
 use App\Models\Book;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -103,6 +104,62 @@ class FacebookPageService
             'book'   => $book->slug,
             'status' => $response->status(),
             'body'   => $response->json(),
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Post artikel blog ke Facebook Page.
+     * Return post ID kalau sukses, null kalau gagal/nonaktif.
+     */
+    public function postArticle(Article $article): ?string
+    {
+        if (! $this->isActive()) {
+            return null;
+        }
+
+        $url = route('blog.show', $article->slug);
+
+        $excerpt = strip_tags($article->excerpt ?: $article->content);
+        $excerpt = trim(preg_replace('/\s+/', ' ', $excerpt));
+        $excerpt = mb_strlen($excerpt) > 220 ? mb_substr($excerpt, 0, 217) . '…' : $excerpt;
+
+        $message = "📝 Artikel baru di blog bukudigi.com!\n\n"
+            . "✦ {$article->title}\n\n"
+            . ($excerpt ? "{$excerpt}\n\n" : '')
+            . "Baca selengkapnya 👇\n{$url}\n\n"
+            . "#blog #bukudigi"
+            . ($article->category ? " #" . $this->toHashtag($article->category) : '')
+            . " #literasi #ebookindonesia";
+
+        $token  = config('services.facebook.page_access_token');
+        $proof  = $this->appsecretProof();
+        $pageId = config('services.facebook.page_id');
+
+        $response = Http::timeout(15)->post(
+            "{$this->graphUrl}/{$pageId}/feed",
+            [
+                'message'         => $message,
+                'link'            => $url,
+                'access_token'    => $token,
+                'appsecret_proof' => $proof,
+            ]
+        );
+
+        if ($response->successful()) {
+            $postId = $response->json('post_id') ?? $response->json('id');
+            Log::info('[Facebook] Artikel dipost', [
+                'article' => $article->slug,
+                'post_id' => $postId,
+            ]);
+            return $postId;
+        }
+
+        Log::warning('[Facebook] Post artikel gagal', [
+            'article' => $article->slug,
+            'status'  => $response->status(),
+            'body'    => $response->json(),
         ]);
 
         return null;

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\WhatsAppOtpController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\Author\BookController as AuthorBookController;
 use App\Http\Controllers\Author\PenNameController as AuthorPenNameController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DownloadController;
@@ -28,6 +29,10 @@ Route::get('/buku/{book:slug}', [BookController::class, 'show'])->name('books.sh
 
 Route::get('/kategori', [CategoryController::class, 'index'])->name('kategori.index');
 Route::get('/kategori/{category:slug}', [CategoryController::class, 'show'])->name('kategori.show');
+
+// === Blog ===
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{article:slug}', [BlogController::class, 'show'])->name('blog.show');
 
 // === Author landing (public) ===
 Route::get('/jual', [AuthorController::class, 'landing'])->name('jual');
