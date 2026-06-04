@@ -127,8 +127,9 @@
                         <p class="text-slate-600">✓ Semua kartu kredit <strong>Visa</strong>, <strong>Mastercard</strong>, <strong>American Express</strong> dari bank manapun dapat digunakan langsung.</p>
                     </div>
                     <div>
-                        <p class="font-semibold text-slate-800 mb-1">Tidak punya kartu Visa/MC?</p>
-                        <p class="text-slate-600">Tutup halaman ini → kembali ke buku → klik <strong>Beli</strong> saat Midtrans sudah aktif (QRIS, VA, GoPay, OVO, dll dalam Rupiah).</p>
+                        <p class="font-semibold text-slate-800 mb-1">Belum punya kartu Visa/Mastercard?</p>
+                        <p class="text-slate-600">Buka rekening <strong>Bank Jago</strong> atau <strong>Jenius</strong> secara online — kartu Visa debit aktif dalam beberapa hari dan langsung bisa dipakai di PayPal.</p>
+                        <p class="mt-1.5 text-[10px] text-slate-400">⏳ QRIS, Transfer Bank, GoPay, OVO akan segera hadir.</p>
                     </div>
                 </div>
             </details>

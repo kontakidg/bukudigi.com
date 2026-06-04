@@ -176,7 +176,7 @@
 
         <h2 id="10-pembayaran">10. Pembayaran &amp; Royalti</h2>
         <ul>
-            <li>Pembayaran oleh Pembeli diproses oleh penyedia pihak ketiga (Midtrans untuk QRIS/VA/e-wallet, atau PayPal untuk pembayaran internasional). Pembeli tunduk juga pada Syarat Layanan masing-masing penyedia saat bertransaksi.</li>
+            <li>Pembayaran oleh Pembeli saat ini diproses via <strong>PayPal</strong> (kartu debit/kredit Visa, Mastercard, Amex). Metode pembayaran lokal (QRIS, Virtual Account, e-wallet) akan diaktifkan via Midtrans dalam waktu dekat. Pembeli tunduk juga pada Syarat Layanan penyedia pembayaran yang digunakan saat bertransaksi.</li>
             <li><strong>Mata uang pembayaran pembeli:</strong> harga buku ditetapkan dalam <strong>Rupiah (IDR)</strong>. Untuk transaksi via PayPal, harga dikonversi ke USD saat checkout menggunakan kurs real-time (sumber: open.er-api.com). Selisih kurs kecil antara tampilan checkout dan settlement bank PayPal adalah risiko Pembeli.</li>
             <li><strong>Mata uang royalti &amp; komisi: seluruhnya dalam Rupiah (IDR)</strong>, tanpa pengecualian. Penulis dan affiliate tidak menerima pembayaran dalam USD atau mata uang asing lain.</li>
             <li>Pembagian komisi: <strong>Penulis 70%, Affiliate 10%, Platform 20%</strong> dari harga gross dalam Rupiah — dihitung dan dicatat dalam Rupiah terlepas dari metode bayar yang Pembeli gunakan.</li>
@@ -235,7 +235,7 @@
 
         <h2 id="14-pihak-ketiga">14. Layanan &amp; Tautan Pihak Ketiga</h2>
         <p>
-            Platform menggunakan layanan pihak ketiga termasuk Midtrans (pembayaran lokal), PayPal (pembayaran internasional),
+            Platform menggunakan layanan pihak ketiga termasuk PayPal (pembayaran aktif), Midtrans (pembayaran lokal — segera aktif),
             Cloudflare (CDN &amp; storage), Fonnte (WhatsApp), Google (OAuth), dan layanan AI moderasi.
             Penggunaan layanan tersebut tunduk pada ketentuan masing-masing penyedia. Kami tidak bertanggung jawab atas
             tindakan/pelanggaran/kelalaian pihak ketiga.
