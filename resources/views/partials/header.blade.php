@@ -57,6 +57,7 @@
                                 <a href="{{ route('author.books.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">📕 Buku Saya</a>
                                 <a href="{{ route('author.pen-names.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">🖋️ Pen Name</a>
                                 <a href="{{ route('author.bank.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">💳 Rekening Bank</a>
+                                <a href="{{ route('author.payout.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">💸 Payout Royalti</a>
                             @endif
                             <a href="{{ route('library') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">📚 Perpustakaan</a>
                             @if(auth()->user()->affiliate)
@@ -114,6 +115,7 @@
                     <a href="{{ route('author.dashboard') }}" class="block rounded p-2 hover:bg-slate-100">📊 Dashboard Penulis</a>
                     <a href="{{ route('author.books.index') }}" class="block rounded p-2 hover:bg-slate-100">📕 Buku Saya</a>
                     <a href="{{ route('author.pen-names.index') }}" class="block rounded p-2 hover:bg-slate-100">🖋️ Pen Name</a>
+                    <a href="{{ route('author.payout.index') }}" class="block rounded p-2 hover:bg-slate-100">💸 Payout Royalti</a>
                 @endif
                 <a href="{{ route('library') }}" class="block rounded p-2 hover:bg-slate-100">📚 Perpustakaan</a>
                 <a href="{{ route('profile.edit') }}" class="block rounded p-2 hover:bg-slate-100">⚙ Profil &amp; Password</a>
