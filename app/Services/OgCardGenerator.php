@@ -205,10 +205,10 @@ class OgCardGenerator
         imagerectangle($canvas, $x, $y, $x + 60, $y + 2, $lineColor);
         imagefilledrectangle($canvas, $x, $y, $x + 60, $y + 2, $lineColor);
 
-        // Price (big, prominent)
-        $y += 50;
-        $priceText = 'Rp '.number_format($book->price, 0, ',', '.');
-        imagettftext($canvas, 38, 0, $x, $y, $priceColor, $font, $priceText);
+        // Kategori atau badge "Preview Gratis"
+        $y += 42;
+        $categoryText = $book->category?->name ? '📂 '.$book->category->name : '📚 Ebook Indonesia';
+        imagettftext($canvas, 22, 0, $x, $y, $mutedColor, $font, mb_substr($categoryText, 0, 40));
 
         // Footer CTA — "⬇ Beli & download instan"
         $cta = '⬇ Beli & download instan di bukudigi.com';
@@ -224,7 +224,7 @@ class OgCardGenerator
         imagestring($canvas, 5, 500, 100, '📚 bukudigi.com', $brand);
         imagestring($canvas, 5, 500, 200, mb_substr($book->title, 0, 40), $dark);
         imagestring($canvas, 4, 500, 260, 'oleh '.$book->displayAuthor(), $dark);
-        imagestring($canvas, 5, 500, 360, 'Rp '.number_format($book->price, 0, ',', '.'), $brand);
+        imagestring($canvas, 4, 500, 360, $book->category?->name ?? 'Ebook Indonesia', $brand);
     }
 
     /**
