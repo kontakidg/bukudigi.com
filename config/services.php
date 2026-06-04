@@ -49,8 +49,12 @@ return [
 
     'facebook' => [
         // App ID untuk OG meta tag fb:app_id (recommended untuk Facebook Insights tracking).
-        // Kosongkan kalau belum punya Facebook App.
         'app_id' => env('FACEBOOK_APP_ID'),
+
+        // Auto-post ke Facebook Page saat buku di-approve.
+        // Isi page_id + page_access_token untuk aktifkan.
+        'page_id'            => env('FACEBOOK_PAGE_ID'),
+        'page_access_token'  => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
     ],
 
     /*
