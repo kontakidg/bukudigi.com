@@ -44,9 +44,10 @@
                     class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100">
                 <option value="latest"  @selected($sort==='latest') >Terbaru</option>
                 <option value="title"   @selected($sort==='title')  >Judul A–Z</option>
-                <option value="terjual" @selected($sort==='terjual')>Terjual ↓</option>
-                <option value="price"   @selected($sort==='price')  >Harga ↓</option>
-                <option value="status"  @selected($sort==='status') >Status</option>
+                <option value="terjual"    @selected($sort==='terjual')   >Terjual ↓</option>
+                <option value="pendapatan" @selected($sort==='pendapatan')>Pendapatan ↓</option>
+                <option value="price"      @selected($sort==='price')     >Harga ↓</option>
+                <option value="status"     @selected($sort==='status')    >Status</option>
             </select>
 
             <button type="submit" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cari</button>
@@ -133,6 +134,12 @@
                                         Terjual @if($sort==='terjual')<span class="ml-0.5">↓</span>@endif
                                     </a>
                                 </th>
+                                <th class="px-4 py-3 text-right">
+                                    <a href="{{ route('author.books.index', array_merge(request()->except(['sort','page']), ['sort'=>'pendapatan'])) }}"
+                                       class="hover:text-slate-800 {{ $sort==='pendapatan' ? 'text-brand-600 font-bold' : '' }}">
+                                        Pendapatan @if($sort==='pendapatan')<span class="ml-0.5">↓</span>@endif
+                                    </a>
+                                </th>
                                 <th class="px-4 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -187,6 +194,16 @@
                                         {{ number_format($book->sales_count) }}
                                     </td>
 
+                                    {{-- Pendapatan --}}
+                                    @php $earned = (int) ($book->author_earned ?? 0); @endphp
+                                    <td class="px-4 py-3 text-right font-semibold {{ $earned > 0 ? 'text-green-700' : 'text-slate-400' }}">
+                                        @if($earned > 0)
+                                            Rp {{ number_format($earned, 0, ',', '.') }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+
                                     {{-- Aksi --}}
                                     <td class="px-4 py-3 text-right">
                                         <div class="flex justify-end gap-2 text-xs">
@@ -213,7 +230,7 @@
                                 </tr>
                                 @if($book->status === 'rejected' && $book->rejection_reason)
                                     <tr class="border-t border-red-100 bg-red-50">
-                                        <td colspan="6" class="px-4 py-2 text-xs text-red-700">
+                                        <td colspan="7" class="px-4 py-2 text-xs text-red-700">
                                             <strong>Alasan ditolak:</strong> {{ $book->rejection_reason }}
                                         </td>
                                     </tr>

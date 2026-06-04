@@ -33,12 +33,17 @@ class BookController extends Controller
         $search  = trim((string) $request->input('q', ''));
         $sort    = $request->input('sort', 'latest');
         $status  = $request->input('status', '');  // filter by status
-        $allowed = ['latest', 'title', 'price', 'terjual', 'status'];
+        $allowed = ['latest', 'title', 'price', 'terjual', 'pendapatan', 'status'];
         if (! in_array($sort, $allowed, true)) {
             $sort = 'latest';
         }
 
-        $q = $author->books()->with('category');
+        $q = $author->books()->with('category')
+            ->withSum(
+                ['orders as author_earned' => fn ($q) =>
+                    $q->whereIn('status', ['paid', 'watermarking', 'ready'])],
+                'author_earning'
+            );
 
         if ($search !== '') {
             $q->where('title', 'like', '%'.$search.'%');
@@ -48,11 +53,12 @@ class BookController extends Controller
         }
 
         $q = match ($sort) {
-            'title'   => $q->orderBy('title'),
-            'price'   => $q->orderByDesc('price'),
-            'terjual' => $q->orderByDesc('sales_count'),
-            'status'  => $q->orderBy('status'),
-            default   => $q->latest(),
+            'title'      => $q->orderBy('title'),
+            'price'      => $q->orderByDesc('price'),
+            'terjual'    => $q->orderByDesc('sales_count'),
+            'pendapatan' => $q->orderByDesc('author_earned'),
+            'status'     => $q->orderBy('status'),
+            default      => $q->latest(),
         };
 
         $books = $q->paginate(15)->withQueryString();
