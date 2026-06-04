@@ -82,6 +82,56 @@
                 @endif
                 · Sumber: open.er-api.com · Kurs saat settlement PayPal dapat berbeda sedikit.
             </p>
+
+            {{-- Info kartu yang bisa dipakai --}}
+            <details class="mt-3 rounded-lg border border-blue-200 bg-white text-xs text-slate-700">
+                <summary class="cursor-pointer select-none px-3 py-2 font-semibold text-blue-800 hover:bg-blue-50">
+                    💳 Kartu apa saja yang bisa dipakai di PayPal? ▾
+                </summary>
+                <div class="border-t border-blue-100 px-3 py-3 space-y-3">
+                    <div>
+                        <p class="font-semibold text-slate-800 mb-1.5">Kartu Debit — harus berlogo <span class="text-blue-700">Visa</span> atau <span class="text-red-600">Mastercard</span></p>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-600">
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase text-slate-400 mb-1">Bank Digital (paling mudah)</p>
+                                <ul class="space-y-0.5">
+                                    <li>✓ Bank Jago <span class="text-slate-400">(Visa)</span></li>
+                                    <li>✓ Jenius BTPN <span class="text-slate-400">(Visa)</span></li>
+                                    <li>✓ SeaBank <span class="text-slate-400">(Visa)</span></li>
+                                    <li>✓ Line Bank <span class="text-slate-400">(Visa)</span></li>
+                                    <li>✓ Bank Neo (NEO+) <span class="text-slate-400">(Visa)</span></li>
+                                    <li>✓ Blu by BCA Digital <span class="text-slate-400">(Mastercard)</span></li>
+                                    <li>✓ Superbank <span class="text-slate-400">(Mastercard)</span></li>
+                                    <li>✓ Motion Banking <span class="text-slate-400">(Visa)</span></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase text-slate-400 mb-1">Bank Konvensional <span class="font-normal normal-case">(tipe Visa/MC)</span></p>
+                                <ul class="space-y-0.5">
+                                    <li>✓ BNI <span class="text-slate-400">(Visa Debit International)</span></li>
+                                    <li>✓ Mandiri <span class="text-slate-400">(Visa Debit)</span></li>
+                                    <li>✓ BCA <span class="text-slate-400">(Mastercard — bukan GPN)</span></li>
+                                    <li>✓ BRI <span class="text-slate-400">(Visa/Mastercard)</span></li>
+                                    <li>✓ CIMB Niaga <span class="text-slate-400">(Visa/Mastercard)</span></li>
+                                    <li>✓ Permata <span class="text-slate-400">(Visa)</span></li>
+                                    <li>✓ Danamon <span class="text-slate-400">(Visa)</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-[10px] text-amber-700 bg-amber-50 rounded px-2 py-1">
+                            ⚠️ Kartu debit <strong>GPN-only</strong> (tidak ada logo Visa/Mastercard) tidak bisa dipakai di PayPal. Cek kartu fisik/aplikasi bank kamu.
+                        </p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-800 mb-1">Kartu Kredit — semua bisa</p>
+                        <p class="text-slate-600">✓ Semua kartu kredit <strong>Visa</strong>, <strong>Mastercard</strong>, <strong>American Express</strong> dari bank manapun dapat digunakan langsung.</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-800 mb-1">Tidak punya kartu Visa/MC?</p>
+                        <p class="text-slate-600">Tutup halaman ini → kembali ke buku → klik <strong>Beli</strong> saat Midtrans sudah aktif (QRIS, VA, GoPay, OVO, dll dalam Rupiah).</p>
+                    </div>
+                </div>
+            </details>
         </div>
         <div id="paypal-button-container" class="mt-6"></div>
         <div id="paypal-loading" class="mt-4 text-center text-sm text-slate-500">⏳ Memuat tombol PayPal…</div>
