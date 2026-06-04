@@ -101,14 +101,16 @@ class CheckoutController extends Controller
         $snap = null;
         $paypal = null;
 
-        if ($gateway === 'paypal' && $paypalService->isActive()) {
-            $payable  = $netAmount;
+        if ($netAmount === 0) {
+            // Gratis 100% (voucher penuh) — langsung stub/free flow, skip PayPal
+            $snap = $midtrans->createSnapToken($order);
+        } elseif ($gateway === 'paypal' && $paypalService->isActive()) {
             $rateInfo = $paypalService->liveRate();
-            $usd      = round($payable / $rateInfo['rate'], 2);
+            $usd      = round($netAmount / $rateInfo['rate'], 2);
             $paypal = [
                 'mode'        => 'live',
                 'sdk_url'     => $paypalService->sdkScriptUrl(),
-                'amount_idr'  => $payable,
+                'amount_idr'  => $netAmount,
                 'amount_usd'  => $usd,
                 'rate'        => $rateInfo['rate'],
                 'rate_source' => $rateInfo['source'],

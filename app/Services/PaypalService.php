@@ -164,9 +164,10 @@ class PaypalService
      */
     public function createOrder(Order $order): array
     {
-        $payable  = $order->net_amount ?: $order->gross_amount;
+        // Gunakan net_amount (setelah diskon), fallback ke gross hanya jika null
+        $payable  = $order->net_amount !== null ? (int) $order->net_amount : (int) $order->gross_amount;
         $rateInfo = $this->liveRate();
-        $usd      = round((int) $payable / $rateInfo['rate'], 2);
+        $usd      = round($payable / $rateInfo['rate'], 2);
 
         if ($usd < 0.5) {
             return ['error' => 'Nominal terlalu kecil ($'.$usd.'). PayPal minimum $0.50.'];
