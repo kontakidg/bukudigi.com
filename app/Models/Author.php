@@ -65,6 +65,11 @@ class Author extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(\App\Models\AuthorPayout::class);
+    }
+
     public function hasNpwp(): bool
     {
         return ! empty($this->npwp);

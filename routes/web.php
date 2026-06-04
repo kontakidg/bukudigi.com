@@ -74,6 +74,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/author/dashboard', [AuthorController::class, 'dashboard'])->name('author.dashboard');
     Route::get('/author/bank', [AuthorController::class, 'showBank'])->name('author.bank.edit');
     Route::patch('/author/bank', [AuthorController::class, 'updateBank'])->name('author.bank.update');
+    Route::get('/author/payout', [AuthorController::class, 'payoutIndex'])->name('author.payout.index');
+    Route::post('/author/payout/request', [AuthorController::class, 'payoutRequest'])->name('author.payout.request');
+    Route::get('/author/payout/{payout}/slip', [AuthorController::class, 'payoutSlip'])->name('author.payout.slip');
 
     // Author pen names CRUD
     Route::prefix('author/pen-names')->name('author.pen-names.')->group(function () {

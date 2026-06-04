@@ -294,7 +294,10 @@
             <div class="card p-5">
                 <p class="text-xs font-medium text-slate-500">Saldo Tersedia</p>
                 <p class="mt-1 text-xl font-bold text-brand-600">Rp {{ number_format($author->balance_available, 0, ',', '.') }}</p>
-                <p class="mt-1 text-[10px] text-slate-400">Akan ditransfer tgl 5</p>
+                <a href="{{ route('author.payout.index') }}"
+                   class="mt-2 inline-block rounded-lg bg-brand-600 px-3 py-1 text-[10px] font-semibold text-white hover:bg-brand-700">
+                    💸 Minta Payout
+                </a>
             </div>
             <div class="card p-5">
                 <p class="text-xs font-medium text-slate-500">Saldo Menahan</p>

@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Mail\AuthorRegisteredMail;
 use App\Models\Author;
+use App\Models\AuthorPayout;
 use App\Models\Book;
 use App\Models\BookView;
 use App\Models\Order;
 use App\Models\Setting;
+use App\Services\AuthorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -379,5 +381,69 @@ class AuthorController extends Controller
             'days' => $days,
             'granularity' => $granularity,
         ];
+    }
+
+    // =========================================================
+    // PAYOUT
+    // =========================================================
+
+    /** GET /author/payout — riwayat + form request payout */
+    public function payoutIndex(Request $request): View|RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user->author) {
+            return redirect()->route('author.register.show');
+        }
+
+        $author  = $user->author;
+        $service = app(AuthorService::class);
+        $calc    = $service->calcPayout($author);
+        $payouts = $author->payouts()->latest()->paginate(15);
+
+        return view('author.payout.index', compact('author', 'calc', 'payouts'));
+    }
+
+    /** POST /author/payout/request — kirim permintaan payout */
+    public function payoutRequest(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->author, 403);
+
+        $author = $user->author;
+
+        if (empty($author->bank_account) || empty($author->bank_name) || empty($author->bank_holder)) {
+            return redirect()->route('author.bank.edit')
+                ->withErrors(['bank' => 'Lengkapi data rekening bank dulu sebelum request payout.']);
+        }
+
+        try {
+            $payout = app(AuthorService::class)->requestPayout($author);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['payout' => $e->getMessage()]);
+        }
+
+        return redirect()->route('author.payout.index')
+            ->with('status', 'Permintaan payout Rp '.number_format($payout->net_transfer, 0, ',', '.').' berhasil dikirim. Admin akan memproses dalam 1-3 hari kerja.');
+    }
+
+    /** GET /author/payout/{payout}/slip — cetak slip */
+    public function payoutSlip(Request $request, AuthorPayout $payout): View
+    {
+        $user = $request->user();
+        abort_unless($payout->author_id === $user->author?->id || $user->isAdmin(), 403);
+
+        // Earning per buku di periode ini
+        $periodStart = \Carbon\Carbon::createFromFormat('Y-m', $payout->period)->startOfMonth();
+        $periodEnd   = $periodStart->copy()->endOfMonth();
+
+        $earnings = Order::where('author_id', $payout->author_id)
+            ->whereIn('status', ['paid', 'watermarking', 'ready'])
+            ->whereBetween('paid_at', [$periodStart, $periodEnd])
+            ->with('book:id,title,price')
+            ->select('book_id', 'net_amount', 'gross_amount', 'author_earning', 'paid_at', 'order_code', 'payment_gateway')
+            ->latest('paid_at')
+            ->get();
+
+        return view('author.payout.slip', compact('payout', 'earnings'));
     }
 }
