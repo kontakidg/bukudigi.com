@@ -113,6 +113,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout/buku/{book:slug}', [CheckoutController::class, 'start'])->name('checkout.start');
     Route::post('/checkout/voucher-preview/{book:slug}', [CheckoutController::class, 'previewVoucher'])->name('checkout.voucher.preview');
     Route::get('/checkout/stub/{orderCode}/pay', [CheckoutController::class, 'stubPay'])->name('checkout.stub.pay');
+
+    // PayPal Smart Buttons endpoints
+    Route::post('/api/paypal/create-order/{orderCode}', [\App\Http\Controllers\PaypalController::class, 'createOrder'])->name('paypal.create');
+    Route::post('/api/paypal/capture/{orderCode}', [\App\Http\Controllers\PaypalController::class, 'capture'])->name('paypal.capture');
     Route::get('/download/{orderCode}', [DownloadController::class, 'show'])->name('download.show');
     Route::get('/download/{orderCode}/epub', [DownloadController::class, 'epub'])->name('download.epub');
     Route::get('/read/{orderCode}', [DownloadController::class, 'readEpub'])->name('download.epub.read');

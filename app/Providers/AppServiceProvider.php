@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Services\MidtransService;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,8 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Mode promo Early Access aktif selama Midtrans masih stub (belum live).
-        // Saat stub: semua buku "gratis klaim", harga dicoret + badge promo.
-        View::share('isPromoMode', app(MidtransService::class)->isStub());
+        // Promo Early Access aktif kalau payment gateway = stub (belum ada gateway live).
+        // PAYMENT_GATEWAY=paypal atau midtrans → promo OFF, harga normal.
+        View::share('isPromoMode', config('services.payment_gateway', 'stub') === 'stub');
     }
 }

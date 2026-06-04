@@ -53,6 +53,24 @@ return [
         'app_id' => env('FACEBOOK_APP_ID'),
     ],
 
+    /*
+     * Payment gateway selector — entah satu gateway aktif.
+     * Values: 'stub' (promo gratis), 'paypal', 'midtrans'.
+     * Set via env: PAYMENT_GATEWAY=paypal
+     */
+    'payment_gateway' => env('PAYMENT_GATEWAY', 'stub'),
+
+    'paypal' => [
+        'mode' => env('PAYPAL_MODE', 'sandbox'),  // 'sandbox' | 'live'
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
+        'currency' => env('PAYPAL_CURRENCY', 'USD'),
+        // Kurs IDR → USD untuk konversi harga buku (admin update manual periodically).
+        // Mis. PAYPAL_USD_TO_IDR=16000 berarti $1 = Rp 16.000.
+        'usd_to_idr' => (float) env('PAYPAL_USD_TO_IDR', 16000),
+    ],
+
     'midtrans' => [
         // 'stub' = simulasi tanpa Midtrans (dev). 'live' = beneran call API.
         'mode' => env('MIDTRANS_MODE', 'stub'),

@@ -9,6 +9,7 @@ use App\Models\Book;
 use App\Models\Order;
 use App\Services\AffiliateService;
 use App\Services\MidtransService;
+use App\Services\PaypalService;
 use App\Services\VoucherService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -94,11 +95,34 @@ class CheckoutController extends Controller
             ]);
         });
 
-        $snap = $midtrans->createSnapToken($order);
+        // Tentukan gateway aktif: paypal | midtrans | stub
+        $gateway = config('services.payment_gateway', 'stub');
+        $paypalService = app(PaypalService::class);
+        $snap = null;
+        $paypal = null;
+
+        if ($gateway === 'paypal' && $paypalService->isActive()) {
+            $payable = $netAmount;
+            $paypal = [
+                'mode' => 'live',
+                'sdk_url' => $paypalService->sdkScriptUrl(),
+                'amount_idr' => $payable,
+                'amount_usd' => $paypalService->convertIdrToUsd((int) $payable),
+                'create_url' => route('paypal.create', $order->order_code),
+                'capture_url' => route('paypal.capture', $order->order_code),
+            ];
+        } elseif ($gateway === 'midtrans') {
+            $snap = $midtrans->createSnapToken($order);
+        } else {
+            // stub mode (promo gratis)
+            $snap = $midtrans->createSnapToken($order);
+        }
 
         return view('checkout.confirm', [
             'order' => $order->fresh()->load('book.author', 'voucher'),
             'snap' => $snap,
+            'paypal' => $paypal,
+            'gateway' => $gateway,
             'voucherInfo' => $voucherInfo,
         ]);
     }

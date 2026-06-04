@@ -39,7 +39,80 @@
         </div>
     </div>
 
-    @if(($snap['mode'] ?? null) === 'stub')
+    @if($paypal)
+        {{-- PayPal Smart Buttons --}}
+        <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+            <p class="font-semibold">💳 Bayar via PayPal</p>
+            <p class="mt-1">Total bayar: <strong>${{ number_format($paypal['amount_usd'], 2) }} USD</strong>
+                (≈ Rp {{ number_format($paypal['amount_idr'], 0, ',', '.') }}).
+                Klik tombol PayPal di bawah untuk lanjut.</p>
+        </div>
+        <div id="paypal-button-container" class="mt-6"></div>
+        <div id="paypal-loading" class="mt-4 text-center text-sm text-slate-500">⏳ Memuat tombol PayPal…</div>
+        <div id="paypal-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"></div>
+        <a href="{{ route('books.show', $order->book) }}" class="btn-outline mt-6 w-full !py-3">Batal</a>
+
+        @push('scripts')
+            <script src="{{ $paypal['sdk_url'] }}"></script>
+            <script>
+                (function () {
+                    const loading = document.getElementById('paypal-loading');
+                    const errorBox = document.getElementById('paypal-error');
+                    const showError = (msg) => {
+                        errorBox.textContent = msg;
+                        errorBox.classList.remove('hidden');
+                    };
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+
+                    if (typeof paypal === 'undefined') {
+                        showError('PayPal SDK gagal di-load. Cek koneksi internet & refresh halaman.');
+                        loading.style.display = 'none';
+                        return;
+                    }
+
+                    paypal.Buttons({
+                        style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
+                        createOrder: function () {
+                            return fetch(@json($paypal['create_url']), {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                            }).then(r => r.json()).then(data => {
+                                if (data.error) throw new Error(data.error);
+                                return data.id;
+                            });
+                        },
+                        onApprove: function (data) {
+                            loading.textContent = '⏳ Memproses pembayaran…';
+                            loading.style.display = 'block';
+                            return fetch(@json($paypal['capture_url']), {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                            }).then(r => r.json()).then(result => {
+                                if (result.success) {
+                                    window.location.href = result.redirect;
+                                } else {
+                                    showError('Pembayaran gagal: ' + (result.error || 'unknown'));
+                                    loading.style.display = 'none';
+                                }
+                            }).catch(e => {
+                                showError('Capture error: ' + e.message);
+                                loading.style.display = 'none';
+                            });
+                        },
+                        onError: function (err) {
+                            showError('PayPal error: ' + (err?.message || 'unknown'));
+                            loading.style.display = 'none';
+                        },
+                        onCancel: function () {
+                            // user close popup
+                        }
+                    }).render('#paypal-button-container').then(() => {
+                        loading.style.display = 'none';
+                    });
+                })();
+            </script>
+        @endpush
+    @elseif(($snap['mode'] ?? null) === 'stub')
         <div class="mt-6 rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-sm text-amber-900">
             <p class="font-semibold">🎉 Promo Early Access!</p>
             <p class="mt-1">Selamat! Kamu dapat akses gratis selama masa promo pembukaan bukudigi.com. Klik tombol di bawah untuk klaim buku ini sekarang — langsung masuk ke Perpustakaan kamu.</p>
