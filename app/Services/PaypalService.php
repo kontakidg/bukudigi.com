@@ -188,7 +188,7 @@ class PaypalService
     {
         try {
             $response = Http::withToken($this->accessToken())
-                ->asJson()
+                ->withBody('{}', 'application/json')
                 ->withHeaders(['Prefer' => 'return=representation'])
                 ->post($this->apiBase().'/v2/checkout/orders/'.$paypalOrderId.'/capture');
 
