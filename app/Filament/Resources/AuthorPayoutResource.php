@@ -41,9 +41,9 @@ class AuthorPayoutResource extends Resource
 
             Forms\Components\Section::make('Rekening (snapshot)')->schema([
                 Forms\Components\TextInput::make('bank_name')->label('Bank'),
-                Forms\Components\TextInput::make('bank_account')->label('No. Rekening')->fontFamily('mono'),
+                Forms\Components\TextInput::make('bank_account')->label('No. Rekening'),
                 Forms\Components\TextInput::make('bank_holder')->label('Atas Nama'),
-                Forms\Components\TextInput::make('npwp')->label('NPWP')->fontFamily('mono'),
+                Forms\Components\TextInput::make('npwp')->label('NPWP'),
             ])->columns(2),
 
             Forms\Components\Section::make('Status & Bukti')->schema([
@@ -53,7 +53,7 @@ class AuthorPayoutResource extends Resource
                     'processed'  => 'Sudah Ditransfer',
                     'failed'     => 'Gagal',
                 ])->required()->default('requested'),
-                Forms\Components\TextInput::make('bank_ref')->label('No. Referensi Transfer Bank')->fontFamily('mono'),
+                Forms\Components\TextInput::make('bank_ref')->label('No. Referensi Transfer Bank'),
                 Forms\Components\DateTimePicker::make('processed_at')->label('Waktu Transfer'),
                 Forms\Components\Textarea::make('admin_note')->label('Catatan Admin')->rows(2)->columnSpanFull(),
                 Forms\Components\FileUpload::make('bank_proof_path')->label('Bukti Transfer')
@@ -83,7 +83,7 @@ class AuthorPayoutResource extends Resource
                     'requested'  => 'warning',
                     'failed'     => 'danger',
                     default      => 'gray',
-                })->formatStateUsing(fn (AuthorPayout $r) => $r->statusLabel()),
+                })->formatStateUsing(fn ($state, AuthorPayout $record) => $record->statusLabel()),
                 Tables\Columns\TextColumn::make('requested_at')->label('Diminta')->date()->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('processed_at')->label('Diproses')->date()->sortable()->toggleable(),
             ])
