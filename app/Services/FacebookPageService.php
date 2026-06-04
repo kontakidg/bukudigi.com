@@ -23,7 +23,21 @@ class FacebookPageService
     public function isActive(): bool
     {
         return ! empty(config('services.facebook.page_id'))
-            && ! empty(config('services.facebook.page_access_token'));
+            && ! empty(config('services.facebook.page_access_token'))
+            && ! empty(config('services.facebook.app_secret'));
+    }
+
+    /**
+     * Generate appsecret_proof — wajib untuk server-side API calls.
+     * HMAC-SHA256 dari access token pakai app_secret sebagai key.
+     */
+    protected function appsecretProof(): string
+    {
+        return hash_hmac(
+            'sha256',
+            config('services.facebook.page_access_token'),
+            config('services.facebook.app_secret')
+        );
     }
 
     /**
@@ -70,22 +84,28 @@ class FacebookPageService
 
         // Post dengan foto cover (kalau ada) pakai endpoint /photos
         // Kalau tidak ada cover, pakai /feed dengan link
+        $token = config('services.facebook.page_access_token');
+        $proof = $this->appsecretProof();
+        $pageId = config('services.facebook.page_id');
+
         if ($coverUrl) {
             $response = Http::timeout(15)->post(
-                "{$this->graphUrl}/" . config('services.facebook.page_id') . "/photos",
+                "{$this->graphUrl}/{$pageId}/photos",
                 [
-                    'url'          => $coverUrl,
-                    'caption'      => $message,
-                    'access_token' => config('services.facebook.page_access_token'),
+                    'url'              => $coverUrl,
+                    'caption'          => $message,
+                    'access_token'     => $token,
+                    'appsecret_proof'  => $proof,
                 ]
             );
         } else {
             $response = Http::timeout(15)->post(
-                "{$this->graphUrl}/" . config('services.facebook.page_id') . "/feed",
+                "{$this->graphUrl}/{$pageId}/feed",
                 [
-                    'message'      => $message,
-                    'link'         => $bookUrl,
-                    'access_token' => config('services.facebook.page_access_token'),
+                    'message'          => $message,
+                    'link'             => $bookUrl,
+                    'access_token'     => $token,
+                    'appsecret_proof'  => $proof,
                 ]
             );
         }

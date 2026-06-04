@@ -52,9 +52,10 @@ return [
         'app_id' => env('FACEBOOK_APP_ID'),
 
         // Auto-post ke Facebook Page saat buku di-approve.
-        // Isi page_id + page_access_token untuk aktifkan.
+        // Isi page_id + page_access_token + app_secret untuk aktifkan.
         'page_id'            => env('FACEBOOK_PAGE_ID'),
         'page_access_token'  => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
+        'app_secret'         => env('FACEBOOK_APP_SECRET'),
     ],
 
     /*
