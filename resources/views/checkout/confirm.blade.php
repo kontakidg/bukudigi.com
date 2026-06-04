@@ -43,9 +43,45 @@
         {{-- PayPal Smart Buttons --}}
         <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
             <p class="font-semibold">💳 Bayar via PayPal</p>
-            <p class="mt-1">Total bayar: <strong>${{ number_format($paypal['amount_usd'], 2) }} USD</strong>
-                (≈ Rp {{ number_format($paypal['amount_idr'], 0, ',', '.') }}).
-                Klik tombol PayPal di bawah untuk lanjut.</p>
+
+            {{-- Rincian konversi kurs --}}
+            <div class="mt-3 overflow-hidden rounded-lg border border-blue-200 bg-white text-slate-700">
+                <table class="w-full text-xs">
+                    <tr class="border-b border-blue-100">
+                        <td class="px-3 py-2 text-slate-500">Harga buku</td>
+                        <td class="px-3 py-2 text-right font-medium">Rp {{ number_format($paypal['amount_idr'], 0, ',', '.') }}</td>
+                    </tr>
+                    <tr class="border-b border-blue-100">
+                        <td class="px-3 py-2 text-slate-500">
+                            Kurs USD/IDR
+                            @if($paypal['rate_source'] === 'live')
+                                <span class="ml-1 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">live</span>
+                            @else
+                                <span class="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">fallback</span>
+                            @endif
+                        </td>
+                        <td class="px-3 py-2 text-right font-medium">1 USD = Rp {{ number_format($paypal['rate'], 0, ',', '.') }}</td>
+                    </tr>
+                    <tr class="border-b border-blue-100">
+                        <td class="px-3 py-2 text-slate-500">Perhitungan</td>
+                        <td class="px-3 py-2 text-right text-slate-500">
+                            Rp {{ number_format($paypal['amount_idr'], 0, ',', '.') }} ÷ {{ number_format($paypal['rate'], 0, ',', '.') }}
+                        </td>
+                    </tr>
+                    <tr class="bg-blue-50">
+                        <td class="px-3 py-2 font-semibold text-blue-900">Total dibayar ke PayPal</td>
+                        <td class="px-3 py-2 text-right text-lg font-bold text-blue-700">${{ number_format($paypal['amount_usd'], 2) }} USD</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p class="mt-2 text-[11px] text-slate-500">
+                ⏱ Kurs diperbarui: {{ $paypal['rate_updated'] }}
+                @if($paypal['rate_age'] > 0)
+                    ({{ $paypal['rate_age'] }} menit lalu)
+                @endif
+                · Sumber: open.er-api.com · Kurs saat settlement PayPal dapat berbeda sedikit.
+            </p>
         </div>
         <div id="paypal-button-container" class="mt-6"></div>
         <div id="paypal-loading" class="mt-4 text-center text-sm text-slate-500">⏳ Memuat tombol PayPal…</div>

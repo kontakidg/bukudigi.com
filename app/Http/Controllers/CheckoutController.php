@@ -102,13 +102,19 @@ class CheckoutController extends Controller
         $paypal = null;
 
         if ($gateway === 'paypal' && $paypalService->isActive()) {
-            $payable = $netAmount;
+            $payable  = $netAmount;
+            $rateInfo = $paypalService->liveRate();
+            $usd      = round($payable / $rateInfo['rate'], 2);
             $paypal = [
-                'mode' => 'live',
-                'sdk_url' => $paypalService->sdkScriptUrl(),
-                'amount_idr' => $payable,
-                'amount_usd' => $paypalService->convertIdrToUsd((int) $payable),
-                'create_url' => route('paypal.create', $order->order_code),
+                'mode'        => 'live',
+                'sdk_url'     => $paypalService->sdkScriptUrl(),
+                'amount_idr'  => $payable,
+                'amount_usd'  => $usd,
+                'rate'        => $rateInfo['rate'],
+                'rate_source' => $rateInfo['source'],
+                'rate_updated'=> $rateInfo['updated_at'],
+                'rate_age'    => $rateInfo['age_minutes'],
+                'create_url'  => route('paypal.create', $order->order_code),
                 'capture_url' => route('paypal.capture', $order->order_code),
             ];
         } elseif ($gateway === 'midtrans') {

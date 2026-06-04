@@ -63,13 +63,72 @@ class PaypalService
     }
 
     /**
-     * Konversi IDR → USD (2 desimal).
+     * Ambil kurs USD/IDR real-time dari open.er-api.com.
+     * Di-cache 6 jam. Fallback ke .env PAYPAL_USD_TO_IDR kalau API gagal.
+     *
+     * Return array:
+     *   rate        float   — berapa IDR per 1 USD
+     *   source      string  — 'live' | 'fallback'
+     *   updated_at  string  — waktu update (human readable WIB)
+     *   age_minutes int     — usia cache dalam menit
+     */
+    public function liveRate(): array
+    {
+        $fallback = (float) config('services.paypal.usd_to_idr', 16000);
+        $cacheKey = 'paypal_usd_idr_rate';
+
+        $cached = Cache::get($cacheKey);
+        if ($cached) {
+            $ageMinutes = (int) round((time() - $cached['fetched_at']) / 60);
+            return [
+                'rate'        => $cached['rate'],
+                'source'      => 'live',
+                'updated_at'  => \Carbon\Carbon::createFromTimestamp($cached['fetched_at'])
+                                    ->timezone('Asia/Jakarta')->format('d M Y H:i') . ' WIB',
+                'age_minutes' => $ageMinutes,
+            ];
+        }
+
+        // Fetch dari open.er-api.com (free, no key)
+        try {
+            $response = Http::timeout(5)->get('https://open.er-api.com/v6/latest/USD');
+
+            if ($response->successful()) {
+                $idrRate = (float) ($response->json('rates.IDR') ?? 0);
+
+                if ($idrRate > 1000) {   // sanity check: IDR pasti > 1000 per USD
+                    $data = ['rate' => $idrRate, 'fetched_at' => time()];
+                    Cache::put($cacheKey, $data, now()->addHours(6));
+
+                    return [
+                        'rate'        => $idrRate,
+                        'source'      => 'live',
+                        'updated_at'  => now()->timezone('Asia/Jakarta')->format('d M Y H:i') . ' WIB',
+                        'age_minutes' => 0,
+                    ];
+                }
+            }
+        } catch (Throwable $e) {
+            Log::warning('[PayPal] Fetch live rate failed, using fallback', ['error' => $e->getMessage()]);
+        }
+
+        // Fallback ke .env
+        return [
+            'rate'        => $fallback,
+            'source'      => 'fallback',
+            'updated_at'  => 'dari konfigurasi',
+            'age_minutes' => 0,
+        ];
+    }
+
+    /**
+     * Konversi IDR → USD (2 desimal) pakai kurs live.
      */
     public function convertIdrToUsd(int $idr): float
     {
-        $rate = (float) config('services.paypal.usd_to_idr', 16000);
+        $rate = $this->liveRate()['rate'];
         if ($rate <= 0) {
-            throw new RuntimeException('Kurs USD ke IDR belum dikonfigurasi.');
+            throw new RuntimeException('Kurs USD ke IDR tidak tersedia.');
         }
         return round($idr / $rate, 2);
     }
@@ -105,8 +164,9 @@ class PaypalService
      */
     public function createOrder(Order $order): array
     {
-        $payable = $order->net_amount ?: $order->gross_amount;
-        $usd = $this->convertIdrToUsd((int) $payable);
+        $payable  = $order->net_amount ?: $order->gross_amount;
+        $rateInfo = $this->liveRate();
+        $usd      = round((int) $payable / $rateInfo['rate'], 2);
 
         if ($usd < 0.5) {
             return ['error' => 'Nominal terlalu kecil ($'.$usd.'). PayPal minimum $0.50.'];
@@ -164,7 +224,7 @@ class PaypalService
                 'payment_gateway' => 'paypal',
                 'paypal_order_id' => $paypalOrderId,
                 'paypal_amount_usd' => $usd,
-                'paypal_usd_rate' => (float) config('services.paypal.usd_to_idr'),
+                'paypal_usd_rate' => $rateInfo['rate'],
             ]);
 
             return [
