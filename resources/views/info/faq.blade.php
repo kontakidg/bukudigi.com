@@ -34,7 +34,7 @@
                     <svg class="h-5 w-5 flex-shrink-0 text-slate-400 transition" :class="open === 'b{{$i}}' && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div x-show="open === 'b{{$i}}'" x-cloak x-transition class="border-t border-slate-100 bg-slate-50 px-5 py-4 text-sm text-slate-700">
-                    {{ $qa[1] }}
+                    {!! $qa[1] !!}
                 </div>
             </div>
         @endforeach
