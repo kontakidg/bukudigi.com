@@ -154,6 +154,16 @@
     </div>
     @endif
 
+    {{-- Watermark DRAFT jika belum processed --}}
+    @if($payout->status !== 'processed')
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:80px;font-weight:900;color:rgba(239,68,68,0.12);pointer-events:none;white-space:nowrap;z-index:0;">
+        BELUM DIPROSES
+    </div>
+    <div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:8px;padding:12px 16px;font-size:13px;color:#991b1b;margin-top:16px;text-align:center;">
+        ⚠️ Slip ini belum resmi — transfer belum diproses oleh admin. Simpan setelah status berubah jadi <strong>Sudah Ditransfer</strong>.
+    </div>
+    @endif
+
     {{-- Footer --}}
     <div class="footer">
         <div>
@@ -162,8 +172,22 @@
             <p style="margin-top:8px;font-size:10px;">Dokumen ini diterbitkan secara otomatis oleh sistem bukudigi.com.<br>Bukti potong PPh 23 akan dikirim terpisah setiap akhir tahun pajak.</p>
         </div>
         <div class="sign-area">
+            @if($payout->status === 'processed')
+            {{-- Stamp LUNAS --}}
+            <div style="position:relative;display:inline-block;margin-right:20px;vertical-align:top;margin-top:8px;">
+                <div style="border:3px solid #16a34a;border-radius:50%;width:80px;height:80px;display:flex;align-items:center;justify-content:center;transform:rotate(-15deg);opacity:0.85;">
+                    <div style="text-align:center;">
+                        <div style="font-size:16px;font-weight:900;color:#16a34a;letter-spacing:1px;">LUNAS</div>
+                        <div style="font-size:9px;color:#16a34a;font-weight:700;">{{ $payout->processed_at?->format('d/m/Y') }}</div>
+                    </div>
+                </div>
+            </div>
+            @endif
             <div class="box">
                 <p>Disetujui oleh</p>
+                @if($payout->status === 'processed')
+                    <p style="font-size:10px;color:#64748b;margin-top:4px;">{{ $payout->processed_at?->timezone('Asia/Jakarta')->format('d M Y, H:i') }} WIB</p>
+                @endif
                 <div class="name">Tim bukudigi.com</div>
             </div>
         </div>

@@ -146,8 +146,12 @@
                                         {{ ($payout->processed_at ?? $payout->requested_at)?->format('d M Y') }}
                                     </td>
                                     <td class="px-4 py-3 text-right">
-                                        <a href="{{ route('author.payout.slip', $payout) }}" target="_blank"
-                                           class="text-xs text-brand-600 hover:underline">🖨 Cetak</a>
+                                        @if($payout->status === 'processed')
+                                            <a href="{{ route('author.payout.slip', $payout) }}" target="_blank"
+                                               class="text-xs text-brand-600 hover:underline font-medium">🖨 Cetak Slip</a>
+                                        @else
+                                            <span class="text-xs text-slate-400 italic">Menunggu proses</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
