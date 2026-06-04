@@ -77,13 +77,21 @@ class AuthorPayoutResource extends Resource
                 Tables\Columns\TextColumn::make('bank_account')->label('Rekening')->fontFamily('mono')->toggleable()->copyable(),
                 Tables\Columns\TextColumn::make('bank_ref')->label('Ref Transfer')->fontFamily('mono')->toggleable()->copyable()
                     ->placeholder('—'),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn ($s) => match ($s) {
-                    'processed'  => 'success',
-                    'processing' => 'info',
-                    'requested'  => 'warning',
-                    'failed'     => 'danger',
-                    default      => 'gray',
-                })->formatStateUsing(fn ($state, AuthorPayout $record) => $record->statusLabel()),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->color(fn (string $state) => match ($state) {
+                        'processed'  => 'success',
+                        'processing' => 'info',
+                        'requested'  => 'warning',
+                        'failed'     => 'danger',
+                        default      => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'requested'  => 'Menunggu Proses',
+                        'processing' => 'Sedang Diproses',
+                        'processed'  => 'Sudah Ditransfer',
+                        'failed'     => 'Gagal',
+                        default      => ucfirst($state),
+                    }),
                 Tables\Columns\TextColumn::make('requested_at')->label('Diminta')->date()->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('processed_at')->label('Diproses')->date()->sortable()->toggleable(),
             ])
