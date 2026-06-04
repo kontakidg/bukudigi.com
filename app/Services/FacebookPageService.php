@@ -57,18 +57,6 @@ class FacebookPageService
             ? 'Rp ' . number_format($book->price, 0, ',', '.')
             : 'GRATIS';
 
-        // Cover image URL (public)
-        $coverUrl = null;
-        if ($book->og_card_path) {
-            $coverUrl = \Illuminate\Support\Str::startsWith($book->og_card_path, ['http://', 'https://'])
-                ? $book->og_card_path
-                : url('storage/' . $book->og_card_path);
-        } elseif ($book->cover_path) {
-            $coverUrl = \Illuminate\Support\Str::startsWith($book->cover_path, ['http://', 'https://'])
-                ? $book->cover_path
-                : url('storage/' . $book->cover_path);
-        }
-
         // Potong deskripsi maks 200 karakter
         $desc = strip_tags($book->description ?? '');
         $desc = mb_strlen($desc) > 200 ? mb_substr($desc, 0, 197) . '…' : $desc;
@@ -84,31 +72,21 @@ class FacebookPageService
 
         // Post dengan foto cover (kalau ada) pakai endpoint /photos
         // Kalau tidak ada cover, pakai /feed dengan link
-        $token = config('services.facebook.page_access_token');
-        $proof = $this->appsecretProof();
+        $token  = config('services.facebook.page_access_token');
+        $proof  = $this->appsecretProof();
         $pageId = config('services.facebook.page_id');
 
-        if ($coverUrl) {
-            $response = Http::timeout(15)->post(
-                "{$this->graphUrl}/{$pageId}/photos",
-                [
-                    'url'              => $coverUrl,
-                    'caption'          => $message,
-                    'access_token'     => $token,
-                    'appsecret_proof'  => $proof,
-                ]
-            );
-        } else {
-            $response = Http::timeout(15)->post(
-                "{$this->graphUrl}/{$pageId}/feed",
-                [
-                    'message'          => $message,
-                    'link'             => $bookUrl,
-                    'access_token'     => $token,
-                    'appsecret_proof'  => $proof,
-                ]
-            );
-        }
+        // Pakai /feed + link — Facebook auto-scrape cover dari OG tag halaman buku.
+        // Lebih sedikit permission dibanding /photos, cukup pages_manage_posts.
+        $response = Http::timeout(15)->post(
+            "{$this->graphUrl}/{$pageId}/feed",
+            [
+                'message'         => $message,
+                'link'            => $bookUrl,
+                'access_token'    => $token,
+                'appsecret_proof' => $proof,
+            ]
+        );
 
         if ($response->successful()) {
             $postId = $response->json('post_id') ?? $response->json('id');
