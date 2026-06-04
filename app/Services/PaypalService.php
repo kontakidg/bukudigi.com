@@ -113,25 +113,29 @@ class PaypalService
         }
 
         try {
-            $response = Http::withToken($this->accessToken())
-                ->withHeaders(['Content-Type' => 'application/json'])
-                ->post($this->apiBase().'/v2/checkout/orders', [
-                    'intent' => 'CAPTURE',
-                    'purchase_units' => [[
-                        'reference_id' => $order->order_code,
-                        'description' => mb_substr('Ebook: '.$order->book?->title, 0, 127),
-                        'custom_id' => $order->order_code,
-                        'amount' => [
-                            'currency_code' => $this->currency(),
-                            'value' => number_format($usd, 2, '.', ''),
-                        ],
-                    ]],
-                    'application_context' => [
-                        'brand_name' => 'bukudigi.com',
-                        'shipping_preference' => 'NO_SHIPPING',
-                        'user_action' => 'PAY_NOW',
+            $payload = [
+                'intent' => 'CAPTURE',
+                'purchase_units' => [[
+                    'reference_id' => $order->order_code,
+                    'description' => mb_substr('Ebook: '.$order->book?->title, 0, 127),
+                    'custom_id' => $order->order_code,
+                    'amount' => [
+                        'currency_code' => $this->currency(),
+                        'value' => (string) number_format($usd, 2, '.', ''),
                     ],
-                ]);
+                ]],
+                'application_context' => [
+                    'brand_name' => 'bukudigi.com',
+                    'shipping_preference' => 'NO_SHIPPING',
+                    'user_action' => 'PAY_NOW',
+                ],
+            ];
+
+            Log::debug('[PayPal] createOrder request payload', ['payload' => $payload, 'usd' => $usd]);
+
+            $response = Http::withToken($this->accessToken())
+                ->asJson()
+                ->post($this->apiBase().'/v2/checkout/orders', $payload);
 
             if (! $response->successful()) {
                 $body = $response->json();
@@ -184,10 +188,8 @@ class PaypalService
     {
         try {
             $response = Http::withToken($this->accessToken())
-                ->withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Prefer' => 'return=representation',
-                ])
+                ->asJson()
+                ->withHeaders(['Prefer' => 'return=representation'])
                 ->post($this->apiBase().'/v2/checkout/orders/'.$paypalOrderId.'/capture');
 
             if (! $response->successful()) {
