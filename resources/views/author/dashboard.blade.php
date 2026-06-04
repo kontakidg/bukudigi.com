@@ -330,23 +330,91 @@
 
         {{-- Books list --}}
         <div class="mt-8">
-            <h2 class="text-lg font-bold">Buku Saya</h2>
-            @if($books->isEmpty())
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-lg font-bold">Buku Saya</h2>
+                @if($author->status === 'verified')
+                    <a href="{{ route('author.books.create') }}" class="btn-primary text-sm !py-1.5 !px-4">+ Upload Buku</a>
+                @endif
+            </div>
+
+            {{-- Search & Sort bar --}}
+            <form method="GET" action="{{ route('author.dashboard') }}" class="mt-3 flex flex-wrap gap-2" id="book-filter-form">
+                {{-- Preserve chart params --}}
+                @foreach(request()->except(['q','sort','page']) as $k => $v)
+                    @if(is_array($v))
+                        @foreach($v as $item)
+                            <input type="hidden" name="{{ $k }}[]" value="{{ $item }}">
+                        @endforeach
+                    @else
+                        <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                    @endif
+                @endforeach
+
+                <div class="relative flex-1 min-w-[200px]">
+                    <span class="absolute inset-y-0 left-3 flex items-center text-slate-400">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
+                    </span>
+                    <input type="text" name="q" value="{{ $search }}"
+                           placeholder="Cari judul buku…"
+                           class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100">
+                </div>
+
+                <select name="sort" onchange="document.getElementById('book-filter-form').submit()"
+                        class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100">
+                    <option value="latest"  @selected($sort==='latest') >Terbaru</option>
+                    <option value="title"   @selected($sort==='title')  >Judul A–Z</option>
+                    <option value="terjual" @selected($sort==='terjual')>Terjual ↓</option>
+                    <option value="price"   @selected($sort==='price')  >Harga ↓</option>
+                    <option value="status"  @selected($sort==='status') >Status</option>
+                </select>
+
+                <button type="submit" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cari</button>
+
+                @if($search || $sort !== 'latest')
+                    <a href="{{ route('author.dashboard') }}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-500 hover:bg-slate-50">Reset</a>
+                @endif
+            </form>
+
+            @if($books->isEmpty() && !$search)
                 <div class="mt-3 rounded-xl border-2 border-dashed border-slate-300 bg-white p-12 text-center">
                     <p class="text-4xl">📕</p>
                     <p class="mt-2 font-semibold">Belum ada buku.</p>
                     <p class="mt-1 text-sm text-slate-500">@if($author->status === 'verified')Mulai upload buku pertama kamu.@else Tunggu verifikasi admin dulu sebelum upload.@endif</p>
                 </div>
+            @elseif($books->isEmpty() && $search)
+                <div class="mt-3 rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+                    Tidak ada buku dengan judul "<strong>{{ $search }}</strong>".
+                    <a href="{{ route('author.dashboard') }}" class="ml-1 text-brand-600 hover:underline">Reset</a>
+                </div>
             @else
                 <div class="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
                     <table class="w-full text-sm">
-                        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
-                            <tr><th class="px-4 py-2">Judul</th><th class="px-4 py-2">Status</th><th class="px-4 py-2 text-right">Harga</th><th class="px-4 py-2 text-right">Terjual</th></tr>
+                        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                            <tr>
+                                <th class="px-4 py-3">
+                                    <a href="{{ route('author.dashboard', array_merge(request()->except(['sort','page']), ['sort' => 'title'])) }}"
+                                       class="hover:text-slate-800 {{ $sort==='title' ? 'text-brand-600 font-bold' : '' }}">Judul</a>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <a href="{{ route('author.dashboard', array_merge(request()->except(['sort','page']), ['sort' => 'status'])) }}"
+                                       class="hover:text-slate-800 {{ $sort==='status' ? 'text-brand-600 font-bold' : '' }}">Status</a>
+                                </th>
+                                <th class="px-4 py-3 text-right">
+                                    <a href="{{ route('author.dashboard', array_merge(request()->except(['sort','page']), ['sort' => 'price'])) }}"
+                                       class="hover:text-slate-800 {{ $sort==='price' ? 'text-brand-600 font-bold' : '' }}">Harga</a>
+                                </th>
+                                <th class="px-4 py-3 text-right">
+                                    <a href="{{ route('author.dashboard', array_merge(request()->except(['sort','page']), ['sort' => 'terjual'])) }}"
+                                       class="hover:text-slate-800 {{ $sort==='terjual' ? 'text-brand-600 font-bold' : '' }}">Terjual</a>
+                                </th>
+                            </tr>
                         </thead>
                         <tbody>
                             @foreach($books as $book)
-                                <tr class="border-t border-slate-100">
-                                    <td class="px-4 py-3"><a href="{{ route('author.books.edit', $book) }}" class="text-brand-600 hover:underline">{{ $book->title }}</a></td>
+                                <tr class="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3">
+                                        <a href="{{ route('author.books.edit', $book) }}" class="font-medium text-brand-600 hover:underline">{{ $book->title }}</a>
+                                    </td>
                                     <td class="px-4 py-3">
                                         @switch($book->status)
                                             @case('active')<span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Live</span>@break
@@ -356,8 +424,10 @@
                                             @default<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{{ $book->status }}</span>
                                         @endswitch
                                     </td>
-                                    <td class="px-4 py-3 text-right">{{ $book->formattedPrice() }}</td>
-                                    <td class="px-4 py-3 text-right">{{ $book->sales_count }}</td>
+                                    <td class="px-4 py-3 text-right text-slate-700">{{ $book->formattedPrice() }}</td>
+                                    <td class="px-4 py-3 text-right font-semibold {{ $book->sales_count > 0 ? 'text-green-700' : 'text-slate-400' }}">
+                                        {{ number_format($book->sales_count) }}
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

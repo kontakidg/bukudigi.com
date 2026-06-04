@@ -167,7 +167,30 @@ class AuthorController extends Controller
         }
 
         $author = $user->author;
-        $books = $author->books()->latest()->paginate(15);
+
+        // === Search & Sort buku ===
+        $search   = trim((string) $request->input('q', ''));
+        $sort     = $request->input('sort', 'latest');
+        $allowedSorts = ['latest', 'title', 'price', 'terjual', 'status'];
+        if (! in_array($sort, $allowedSorts, true)) {
+            $sort = 'latest';
+        }
+
+        $booksQuery = $author->books();
+
+        if ($search !== '') {
+            $booksQuery->where('title', 'like', '%'.$search.'%');
+        }
+
+        $booksQuery = match ($sort) {
+            'title'   => $booksQuery->orderBy('title'),
+            'price'   => $booksQuery->orderByDesc('price'),
+            'terjual' => $booksQuery->orderByDesc('sales_count'),
+            'status'  => $booksQuery->orderBy('status'),
+            default   => $booksQuery->latest(),   // latest = created_at desc
+        };
+
+        $books = $booksQuery->paginate(15)->withQueryString();
 
         $stats = [
             'total_books' => $author->books()->count(),
@@ -235,7 +258,8 @@ class AuthorController extends Controller
 
         return view('author.dashboard', compact(
             'author', 'books', 'stats', 'showBankReminder', 'needsBankInfo',
-            'allBooks', 'selectedBooks', 'chart', 'chartRange'
+            'allBooks', 'selectedBooks', 'chart', 'chartRange',
+            'search', 'sort'
         ));
     }
 
