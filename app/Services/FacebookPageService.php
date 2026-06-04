@@ -61,14 +61,16 @@ class FacebookPageService
         $desc = strip_tags($book->description ?? '');
         $desc = mb_strlen($desc) > 200 ? mb_substr($desc, 0, 197) . '…' : $desc;
 
-        $message = "📚 Buku baru di bukudigi.com!\n\n"
-            . "📖 *{$book->title}*\n"
-            . "✍️ {$book->displayAuthor()}\n"
-            . ($book->category ? "🏷️ {$book->category->name}\n" : '')
-            . "💰 {$price}\n\n"
+        $message = "📚 Buku baru tersedia di bukudigi.com!\n\n"
+            . "✦ {$book->title}\n"
+            . "✍️ oleh {$book->displayAuthor()}"
+            . ($book->category ? " · {$book->category->name}" : '') . "\n\n"
             . ($desc ? "{$desc}\n\n" : '')
-            . "👉 Baca preview & beli: {$bookUrl}\n\n"
-            . "#ebook #bukudigital #bukudigi #" . $this->toHashtag($book->category?->name ?? 'buku');
+            . "Penasaran? Baca 5 halaman pertama gratis — langsung di website tanpa daftar.\n\n"
+            . "👉 {$bookUrl}\n\n"
+            . "#ebook #bukudigital #bukudigi"
+            . ($book->category ? " #" . $this->toHashtag($book->category->name) : '')
+            . " #bacanline #ebookindonesia";
 
         // Post dengan foto cover (kalau ada) pakai endpoint /photos
         // Kalau tidak ada cover, pakai /feed dengan link
