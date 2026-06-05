@@ -12,7 +12,7 @@
     <header class="text-center">
         <h1 class="text-3xl font-bold md:text-4xl">📝 Blog bukudigi</h1>
         <p class="mx-auto mt-2 max-w-2xl text-slate-500">
-            Tips menulis, panduan ebook, dan kabar terbaru dari komunitas penulis Indonesia.
+            Tips menulis, panduan ebook, dan kabar terbaru seputar buku dan ebook.
         </p>
     </header>
 
