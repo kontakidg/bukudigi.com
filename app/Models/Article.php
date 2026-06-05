@@ -25,6 +25,9 @@ class Article extends Model
         'fb_posted_at',
         'fb_post_id',
         'created_by',
+        'ai_generated',
+        'ai_status',
+        'ai_error',
     ];
 
     protected function casts(): array
@@ -33,6 +36,7 @@ class Article extends Model
             'published_at' => 'datetime',
             'fb_posted_at' => 'datetime',
             'views_count'  => 'integer',
+            'ai_generated' => 'boolean',
         ];
     }
 
@@ -89,6 +93,17 @@ class Article extends Model
             'published' => 'Terbit',
             'archived'  => 'Arsip',
             default     => ucfirst($this->status),
+        };
+    }
+
+    public function aiStatusLabel(): ?string
+    {
+        return match ($this->ai_status) {
+            'pending'    => 'Antri',
+            'generating' => 'Proses',
+            'done'       => 'Selesai',
+            'failed'     => 'Gagal',
+            default      => null,
         };
     }
 }

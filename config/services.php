@@ -59,6 +59,24 @@ return [
     ],
 
     /*
+     * AI Article Generator — Anthropic (teks) + KIE Nano Banana (gambar).
+     */
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        // Default Sonnet 4.6 — kualitas prosa Indonesia bagus, biaya moderat.
+        // Bisa override: claude-haiku-4-5 (lebih murah) / claude-opus-4-8 (terbaik).
+        'model'   => env('ANTHROPIC_MODEL', 'claude-sonnet-4-6'),
+    ],
+
+    'kie' => [
+        'api_key' => env('KIE_API_KEY'),
+        // Default Nano Banana 1 (original) — TERMURAH ~$0.02/gambar.
+        // Override via env: google/nano-banana-2 / google/nano-banana-pro.
+        'image_model' => env('KIE_IMAGE_MODEL', 'google/nano-banana'),
+        'base_url'    => env('KIE_BASE_URL', 'https://api.kie.ai'),
+    ],
+
+    /*
      * Payment gateway selector — entah satu gateway aktif.
      * Values: 'stub' (promo gratis), 'paypal', 'midtrans'.
      * Set via env: PAYMENT_GATEWAY=paypal

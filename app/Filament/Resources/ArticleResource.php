@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ArticleResource\Pages;
+use App\Jobs\GenerateArticleJob;
 use App\Jobs\PostArticleToFacebookJob;
 use App\Models\Article;
 use Filament\Forms;
@@ -143,6 +144,25 @@ class ArticleResource extends Resource
                         'archived'  => 'Arsip',
                         default     => ucfirst($state),
                     }),
+                Tables\Columns\TextColumn::make('ai_status')
+                    ->label('AI')
+                    ->badge()
+                    ->placeholder('—')
+                    ->color(fn (?string $state) => match ($state) {
+                        'done'       => 'success',
+                        'generating' => 'info',
+                        'pending'    => 'gray',
+                        'failed'     => 'danger',
+                        default      => 'gray',
+                    })
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'pending'    => 'Antri',
+                        'generating' => 'Proses',
+                        'done'       => 'Selesai',
+                        'failed'     => 'Gagal',
+                        default      => '—',
+                    })
+                    ->tooltip(fn (Article $r) => $r->ai_error),
                 Tables\Columns\IconColumn::make('fb_posted_at')
                     ->label('FB')
                     ->boolean()
@@ -184,6 +204,30 @@ class ArticleResource extends Resource
                     ->action(function (Article $r) {
                         PostArticleToFacebookJob::dispatch($r->id);
                         Notification::make()->title('Antrian post Facebook dikirim')->success()->send();
+                    }),
+                Tables\Actions\Action::make('regenerate')
+                    ->label('Regenerate')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(fn (Article $r) => $r->ai_status === 'failed')
+                    ->form([
+                        Forms\Components\TextInput::make('topic')->label('Topik')->required()
+                            ->default(fn (Article $r) => $r->title),
+                        Forms\Components\Select::make('length')->label('Panjang')
+                            ->options(['pendek' => 'Pendek', 'sedang' => 'Sedang', 'panjang' => 'Panjang'])
+                            ->default('sedang'),
+                        Forms\Components\Select::make('image_style')->label('Gaya Gambar')
+                            ->options(['ilustrasi' => 'Ilustrasi', 'foto' => 'Foto', 'minimalis' => 'Minimalis'])
+                            ->default('ilustrasi'),
+                    ])
+                    ->action(function (Article $r, array $data) {
+                        $words = match ($data['length']) {
+                            'pendek' => 500, 'panjang' => 1200, default => 800,
+                        };
+                        $r->update(['ai_status' => 'pending', 'ai_error' => null]);
+                        GenerateArticleJob::dispatch($r->id, $data['topic'], $words, $data['image_style']);
+                        Notification::make()->title('Artikel diantrekan ulang')->success()->send();
                     }),
                 Tables\Actions\EditAction::make(),
             ])
