@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -93,38 +94,83 @@ class AnthropicService
      */
     public function generateArticle(string $title, string $topic, int $words = 800): array
     {
+        // Pakai format DELIMITER (bukan JSON) — HTML panjang di JSON sering rusak
+        // karena newline/quote tak ter-escape. Penanda = nol escaping, tahan banting.
         $system = "Kamu adalah penulis blog profesional berbahasa Indonesia untuk bukudigi.com, "
-            . "marketplace ebook penulis Indonesia. Kamu menulis artikel yang informatif, "
-            . "terstruktur, enak dibaca, dan SEO-friendly. Gunakan HTML sederhana "
+            . "marketplace ebook penulis Indonesia. Kamu menulis artikel informatif, terstruktur, "
+            . "enak dibaca, dan SEO-friendly. Gunakan HTML sederhana "
             . "(<p>, <h2>, <h3>, <ul>, <li>, <strong>, <em>). JANGAN sertakan <html>, <head>, "
-            . "<body>, atau <h1> (judul sudah terpisah). Selalu balas HANYA dengan JSON valid, "
-            . "tanpa penjelasan tambahan, tanpa markdown fence.";
+            . "<body>, atau <h1> (judul sudah terpisah). JANGAN bungkus dengan markdown fence.\n\n"
+            . "Balas PERSIS dengan format penanda berikut, tanpa teks lain di luar penanda:\n"
+            . "===META===\n"
+            . "(satu baris meta description SEO, maksimal 155 karakter)\n"
+            . "===EXCERPT===\n"
+            . "(satu sampai dua kalimat ringkasan artikel)\n"
+            . "===CONTENT===\n"
+            . "(isi lengkap artikel dalam HTML)";
 
         $user = "Tulis artikel blog dengan judul: \"{$title}\".\n"
             . "Topik umum: \"{$topic}\".\n"
             . "Target panjang: sekitar {$words} kata.\n\n"
-            . "Struktur: paragraf pembuka yang menarik, beberapa subjudul <h2>/<h3>, "
-            . "isi yang padat & praktis, dan paragraf penutup. Sertakan ajakan halus "
-            . "untuk membaca/menjual ebook di bukudigi.com bila relevan (jangan memaksa).\n\n"
-            . "Balas HANYA dalam format JSON object dengan struktur PERSIS:\n"
-            . '{"content_html": "<p>...</p>", "excerpt": "ringkasan 1-2 kalimat", "meta_description": "deskripsi SEO maks 155 karakter"}';
+            . "Struktur: paragraf pembuka menarik, beberapa subjudul <h2>/<h3>, isi padat & praktis, "
+            . "paragraf penutup. Sertakan ajakan halus untuk membaca/menjual ebook di bukudigi.com "
+            . "bila relevan (jangan memaksa).\n\n"
+            . "Ingat: balas PERSIS dengan penanda ===META===, ===EXCERPT===, ===CONTENT=== seperti instruksi.";
 
-        // Hitung max_tokens proporsional dgn target kata (1 kata ~ 1.5 token + overhead HTML)
+        // max_tokens proporsional (1 kata ~ 1.5 token + overhead HTML)
         $maxTokens = (int) min(8000, max(1500, $words * 4));
 
-        $data = $this->call($system, $user, maxTokens: $maxTokens);
+        $text = $this->call($system, $user, maxTokens: $maxTokens);
 
-        $json = $this->extractJson($data);
-        $parsed = json_decode($json, true);
+        return $this->parseArticleSections($text);
+    }
 
-        if (! is_array($parsed) || empty($parsed['content_html'])) {
-            throw new RuntimeException('Format artikel dari AI tidak valid.');
+    /**
+     * Parse respons berpenanda ===META===/===EXCERPT===/===CONTENT===.
+     * Fallback robust: kalau penanda CONTENT tidak ada, pakai seluruh teks
+     * sebagai content (lebih baik daripada gagal total).
+     *
+     * @return array{content_html:string, excerpt:string, meta_description:string}
+     */
+    private function parseArticleSections(string $text): array
+    {
+        // Buang markdown fence kalau model nakal membungkusnya
+        $text = preg_replace('/```[a-z]*\s*/i', '', $text);
+        $text = str_replace('```', '', $text);
+
+        $meta = '';
+        $excerpt = '';
+        $content = '';
+
+        // Tangkap tiap section pakai regex (penanda bisa di awal baris)
+        if (preg_match('/===\s*META\s*===\s*(.*?)\s*===\s*EXCERPT\s*===/is', $text, $m)) {
+            $meta = trim($m[1]);
+        }
+        if (preg_match('/===\s*EXCERPT\s*===\s*(.*?)\s*===\s*CONTENT\s*===/is', $text, $m)) {
+            $excerpt = trim($m[1]);
+        }
+        if (preg_match('/===\s*CONTENT\s*===\s*(.*)$/is', $text, $m)) {
+            $content = trim($m[1]);
+        }
+
+        // Fallback: tidak ada penanda CONTENT → anggap seluruh teks (tanpa baris penanda) sbg HTML
+        if ($content === '') {
+            $content = trim(preg_replace('/===\s*(META|EXCERPT|CONTENT)\s*===/i', '', $text));
+        }
+
+        if ($content === '') {
+            throw new RuntimeException('AI mengembalikan artikel kosong.');
+        }
+
+        // Excerpt fallback: ambil teks dari paragraf pertama
+        if ($excerpt === '') {
+            $excerpt = Str::limit(trim(strip_tags($content)), 160);
         }
 
         return [
-            'content_html'     => (string) $parsed['content_html'],
-            'excerpt'          => trim((string) ($parsed['excerpt'] ?? '')),
-            'meta_description' => trim((string) ($parsed['meta_description'] ?? '')),
+            'content_html'     => $content,
+            'excerpt'          => $excerpt,
+            'meta_description' => $meta,
         ];
     }
 
