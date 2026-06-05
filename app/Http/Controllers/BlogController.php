@@ -45,6 +45,16 @@ class BlogController extends Controller
             ->take(3)
             ->get();
 
-        return view('public.blog-show', compact('article', 'related'));
+        // Buku relevan berdasarkan kategori artikel
+        $relevantBooks = \App\Models\Book::active()
+            ->when($article->category, fn ($q) => $q->whereHas('category',
+                fn ($c) => $c->where('name', $article->category)
+            ))
+            ->orderBy('rating_avg', 'desc')
+            ->orderBy('sales_count', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('public.blog-show', compact('article', 'related', 'relevantBooks'));
     }
 }
