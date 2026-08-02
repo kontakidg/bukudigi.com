@@ -242,9 +242,15 @@ class ArticleResource extends Resource
                             $n = 0;
                             foreach ($records as $r) {
                                 if ($r->status !== 'published') {
+                                    // "Terbitkan sekarang": kalau published_at kosong ATAU masih
+                                    // di masa depan (sisa jadwal), set ke now() supaya artikel
+                                    // langsung live di front-end. Tanggal lampau asli dipertahankan.
+                                    $publishedAt = ($r->published_at && $r->published_at->isPast())
+                                        ? $r->published_at
+                                        : now();
                                     $r->update([
                                         'status'       => 'published',
-                                        'published_at' => $r->published_at ?? now(),
+                                        'published_at' => $publishedAt,
                                     ]);
                                     PostArticleToFacebookJob::dispatch($r->id);
                                     $n++;

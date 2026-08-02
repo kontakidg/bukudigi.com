@@ -79,10 +79,12 @@ class Article extends Model
         return asset('og-default.png');
     }
 
-    /** Siap dipost ke FB: published & belum pernah dipost. */
+    /** Siap dipost ke FB: sudah live (published & published_at lewat) & belum pernah dipost. */
     public function isReadyToPost(): bool
     {
-        return $this->status === 'published' && $this->fb_posted_at === null;
+        return $this->status === 'published'
+            && $this->fb_posted_at === null
+            && (! $this->published_at || $this->published_at->isPast());
     }
 
     public function statusLabel(): string
